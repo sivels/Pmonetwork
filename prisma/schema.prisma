@@ -135,4 +135,20 @@ model PasswordResetToken {
   user User @relation("UserPasswordResetTokens", fields: [userId], references: [id])
 }
 
+model ContactSubmission {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String
+  phone     String?
+  company   String?
+  jobTitle  String?
+  userType  String   // CANDIDATE, EMPLOYER, OTHER
+  subject   String
+  message   String
+  status    String   @default("NEW") // NEW, IN_PROGRESS, RESOLVED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // Role and Availability enums removed for SQLite compatibility; use string fields instead

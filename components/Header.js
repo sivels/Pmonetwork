@@ -6,7 +6,7 @@ export default function Header() {
   const router = useRouter();
   const path = router?.pathname || '/';
   const isHome = path === '/';
-  const showNav = ['/', '/about', '/services', '/faq'].includes(path);
+  const showNav = ['/', '/about', '/services', '/faq', '/contact'].includes(path);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const toggleMenu = () => setMenuOpen(o => !o);
@@ -38,6 +38,7 @@ export default function Header() {
               <li><Link href="/about" aria-current={path === '/about' ? 'page' : undefined}>About</Link></li>
               <li><Link href="/services" aria-current={path === '/services' ? 'page' : undefined}>Services</Link></li>
               <li><Link href="/faq" aria-current={path === '/faq' ? 'page' : undefined}>FAQ</Link></li>
+              <li><Link href="/contact" aria-current={path === '/contact' ? 'page' : undefined}>Contact</Link></li>
             </ul>
           </nav>
         </>

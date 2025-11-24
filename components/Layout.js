@@ -13,6 +13,7 @@ export default function Layout({ children }) {
             <li><a href="/services">Services</a></li>
             <li><a href="/about">About</a></li>
             <li><a href="/faq">FAQ</a></li>
+            <li><a href="/contact">Contact</a></li>
             <li><a href="/terms">Terms</a></li>
             <li><a href="/privacy">Privacy</a></li>
             <li><a href="/auth/register">Register</a></li>

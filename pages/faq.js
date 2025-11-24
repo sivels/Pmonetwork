@@ -1,6 +1,5 @@
 import Head from 'next/head';
 import { useState, useRef } from 'react';
-import Layout from '../components/Layout';
 
 const faqs = [
   {
@@ -113,17 +112,15 @@ export default function FAQPage() {
           }}
         />
       </Head>
-      <Layout>
-        <section className="max-w-4xl mx-auto px-6 py-14">
-          <h1 className="text-3xl md:text-4xl font-extrabold mb-8">FAQ</h1>
-          <p className="text-slate-600 mb-10 max-w-2xl">Answers to common questions about PMO Network’s platform, candidate features, employer subscriptions, verified profiles, security and support. Explore how we help PMO professionals advance their careers and employers hire top PMO talent.</p>
-          <div>
-            {faqs.map((f, i) => (
-              <FaqItem key={i} index={i} q={f.q} a={f.a} />
-            ))}
-          </div>
-        </section>
-      </Layout>
+      <section className="max-w-4xl mx-auto px-6 py-14">
+        <h1 className="text-3xl md:text-4xl font-extrabold mb-8">FAQ</h1>
+        <p className="text-slate-600 mb-10 max-w-2xl">Answers to common questions about PMO Network’s platform, candidate features, employer subscriptions, verified profiles, security and support. Explore how we help PMO professionals advance their careers and employers hire top PMO talent.</p>
+        <div>
+          {faqs.map((f, i) => (
+            <FaqItem key={i} index={i} q={f.q} a={f.a} />
+          ))}
+        </div>
+      </section>
     </>
   );
 }
