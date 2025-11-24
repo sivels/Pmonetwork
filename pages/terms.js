@@ -1,5 +1,4 @@
 import Head from 'next/head';
-import Layout from '../components/Layout';
 
 export default function Terms() {
   return (
@@ -9,8 +8,7 @@ export default function Terms() {
         <meta name="description" content="PMO Network Terms of Service covering platform use, user responsibilities, subscriptions and acceptable conduct." />
         <link rel="canonical" href="https://www.pmonetwork.example/terms" />
       </Head>
-      <Layout>
-        <section className="max-w-3xl mx-auto px-6 py-14">
+      <section className="max-w-3xl mx-auto px-6 py-14">
           <h1 className="text-3xl font-extrabold mb-6">Terms of Service</h1>
           <p className="text-slate-600 mb-4">These Terms of Service ("Terms") govern your use of the PMO Network platform. By accessing or using the site you agree to be bound by these Terms.</p>
           <h2 className="text-xl font-semibold mt-8 mb-2">1. Use of the Platform</h2>
@@ -31,7 +29,6 @@ export default function Terms() {
           <p className="text-slate-600">We may update these Terms periodically. Continued use constitutes acceptance of changes.</p>
           <p className="mt-8 text-sm text-slate-500">Last updated: Placeholder date.</p>
         </section>
-      </Layout>
     </>
   );
 }

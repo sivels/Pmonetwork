@@ -6,7 +6,7 @@ export default function Header() {
   const router = useRouter();
   const path = router?.pathname || '/';
   const isHome = path === '/';
-  const showNav = ['/', '/about', '/services', '/faq', '/contact'].includes(path);
+  const showNav = ['/', '/about', '/services', '/faq', '/contact', '/terms', '/privacy', '/auth/register'].includes(path);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const toggleMenu = () => setMenuOpen(o => !o);

@@ -1,5 +1,4 @@
 import Head from 'next/head';
-import Layout from '../components/Layout';
 
 export default function Privacy() {
   return (
@@ -9,8 +8,7 @@ export default function Privacy() {
         <meta name="description" content="PMO Network Privacy Policy detailing data collection, usage, security, retention and user rights (GDPR-ready)." />
         <link rel="canonical" href="https://www.pmonetwork.example/privacy" />
       </Head>
-      <Layout>
-        <section className="max-w-3xl mx-auto px-6 py-14">
+      <section className="max-w-3xl mx-auto px-6 py-14">
           <h1 className="text-3xl font-extrabold mb-6">Privacy Policy</h1>
           <p className="text-slate-600 mb-4">This Privacy Policy explains how PMO Network collects, uses, stores and protects personal data for candidates and employers.</p>
           <h2 className="text-xl font-semibold mt-8 mb-2">1. Data Collected</h2>
@@ -33,7 +31,6 @@ export default function Privacy() {
           <p className="text-slate-600">For privacy requests contact: privacy@pmonetwork.example</p>
           <p className="mt-8 text-sm text-slate-500">Last updated: Placeholder date.</p>
         </section>
-      </Layout>
     </>
   );
 }
