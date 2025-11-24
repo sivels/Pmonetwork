@@ -1,0 +1,138 @@
+model SharedDocument {
+  id          String          @id @default(cuid())
+  employerId  String
+  candidateId String
+  filename    String
+  url         String
+  status      String @default("SHARED")
+  auditTrail  String? // JSON string: [{action, by, at}]
+  sentAt      DateTime        @default(now())
+  signedAt    DateTime?
+  returnedAt  DateTime?
+
+  employer  EmployerProfile  @relation(fields: [employerId], references: [id])
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id])
+}
+
+// Enums removed for SQLite compatibility; use string fields instead
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                        String               @id @default(cuid())
+  email                     String               @unique
+  password                  String
+  emailVerified             DateTime?
+  role                      String               @default("CANDIDATE")
+  createdAt                 DateTime             @default(now())
+  updatedAt                 DateTime             @updatedAt
+  candidateCandidateProfile CandidateProfile?    @relation("UserCandidate")
+  employerEmployerProfile   EmployerProfile?     @relation("UserEmployer")
+  verificationTokens        VerificationToken[]  @relation("UserVerificationTokens")
+  passwordResetTokens       PasswordResetToken[] @relation("UserPasswordResetTokens")
+}
+
+model CandidateProfile {
+  id               String          @id @default(cuid())
+  userId           String          @unique
+  fullName         String
+  jobTitle         String?
+  summary          String?
+  yearsExperience  Int?
+  sector           String?
+  certifications   Certification[]
+  skills           Skill[]
+  personalityType  String?
+  personalityDesc  String?
+  availability     String          @default("AVAILABLE_IMMEDIATE")
+  dayRate          Int?
+  location         String?
+  remotePreference Boolean         @default(false)
+  cvUrl            String?
+  videoUrl         String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  documents       Document[]
+  savedBy         SavedCandidate[]
+  sharedDocuments SharedDocument[]
+
+  user User @relation("UserCandidate", fields: [userId], references: [id])
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  candidateId String
+  filename    String
+  url         String
+  isPublic    Boolean  @default(false)
+  uploadedAt  DateTime @default(now())
+
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id])
+}
+
+model EmployerProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  companyName String?
+  contactName String?
+  website     String?
+  phone       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user            User             @relation("UserEmployer", fields: [userId], references: [id])
+  savedCandidates SavedCandidate[]
+  sharedDocuments SharedDocument[]
+}
+
+model Skill {
+  id         String             @id @default(cuid())
+  name       String             @unique
+  candidates CandidateProfile[]
+}
+
+model Certification {
+  id         String             @id @default(cuid())
+  name       String             @unique
+  candidates CandidateProfile[]
+}
+
+model SavedCandidate {
+  id          String   @id @default(cuid())
+  employerId  String
+  candidateId String
+  createdAt   DateTime @default(now())
+
+  employer  EmployerProfile  @relation(fields: [employerId], references: [id])
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id])
+}
+
+model VerificationToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation("UserVerificationTokens", fields: [userId], references: [id])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation("UserPasswordResetTokens", fields: [userId], references: [id])
+}
+
+// Role and Availability enums removed for SQLite compatibility; use string fields instead
