@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { cn } from "@/components/utils/cn";
+import { cn } from "../utils/cn";
 
 export function Sheet({ open, onOpenChange, children }: { open: boolean; onOpenChange: (open: boolean) => void; children: React.ReactNode }) {
   return (
