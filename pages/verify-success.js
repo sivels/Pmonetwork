@@ -7,11 +7,3 @@ export default function VerifySuccess() {
     </div>
   );
 }
-export default function VerifySuccess() {
-  return (
-    <div style={{ maxWidth: 720, margin: '48px auto', padding: 16 }}>
-      <h1>Email verified</h1>
-      <p>Your email address has been verified. You can now <a href="/auth/login">sign in</a>.</p>
-    </div>
-  );
-}
