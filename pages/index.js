@@ -67,9 +67,9 @@ export default function Home() {
                 <p className="mt-6 text-lg text-slate-600 max-w-2xl">Join a professional network focused on project management roles and portfolio delivery. Build an expert PMO profile, get matched to the right roles, and connect with employers who understand PMO.</p>
 
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <Link href="/jobs" className="inline-flex items-center justify-center px-5 py-3 rounded-md bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700">Find PMO Jobs</Link>
-                  <Link href="/auth/register" className="inline-flex items-center justify-center px-5 py-3 rounded-md border border-indigo-600 text-indigo-600 font-medium hover:bg-indigo-50">Join as a PMO Professional</Link>
-                  <Link href="/employers/post-job" className="inline-flex items-center justify-center px-5 py-3 rounded-md bg-slate-100 text-slate-800 font-medium hover:bg-slate-200">Hire PMO Talent</Link>
+                  <Link href="/jobs" className="inline-flex items-center justify-center px-5 py-3 rounded-md bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700">Jobs Board</Link>
+                  <Link href="/auth/register" className="inline-flex items-center justify-center px-5 py-3 rounded-md border border-indigo-600 text-indigo-600 font-medium hover:bg-indigo-50">Register Here</Link>
+                  <Link href="/employers/post-job" className="inline-flex items-center justify-center px-5 py-3 rounded-md bg-slate-100 text-slate-800 font-medium hover:bg-slate-200">Demo</Link>
                 </div>
 
                 <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-slate-600">

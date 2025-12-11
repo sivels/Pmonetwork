@@ -41,6 +41,7 @@ export default function Register() {
 
   // Password strength
   const [passwordStrength, setPasswordStrength] = useState('');
+  const returnTo = typeof router.query.returnTo === 'string' ? router.query.returnTo : '';
 
   const skillOptions = [
     'PMO Setup & Governance',
@@ -222,7 +223,11 @@ export default function Register() {
         
         // Redirect after success
         setTimeout(() => {
-          router.push('/auth/login');
+          if (returnTo) {
+            router.push(`/auth/login?returnTo=${encodeURIComponent(returnTo)}`);
+          } else {
+            router.push('/auth/login');
+          }
         }, 3000);
       }
     } catch (err) {
@@ -619,19 +624,20 @@ export default function Register() {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="hiresExpected">Number of Hires Expected <span className="optional">(optional)</span></label>
+                  <label htmlFor="hiresExpected">Monthly Expected Hires <span className="optional">(optional)</span></label>
                   <select
                     id="hiresExpected"
                     value={hiresExpected}
                     onChange={(e) => setHiresExpected(e.target.value)}
                     className="form-input"
                   >
-                    <option value="">Select estimate</option>
-                    <option value="1-3">1-3 hires</option>
-                    <option value="4-10">4-10 hires</option>
-                    <option value="11-20">11-20 hires</option>
-                    <option value="20+">20+ hires</option>
+                    <option value="">Select monthly estimate</option>
+                    <option value="1-3">1–3 / month</option>
+                    <option value="4-10">4–10 / month</option>
+                    <option value="11-20">11–20 / month</option>
+                    <option value="20+">20+ / month</option>
                   </select>
+                  <p className="field-hint">Used to tailor candidate recommendations to your hiring velocity.</p>
                 </div>
 
                 <h3 className="subsection-title payment-section-title">Payment Information</h3>
@@ -746,7 +752,7 @@ export default function Register() {
             )}
 
             <p className="form-footer">
-              Already have an account? <a href="/auth/login">Sign in here</a>
+              Already have an account? <a href={`/auth/login${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`}>Sign in here</a>
             </p>
           </form>
         </div>

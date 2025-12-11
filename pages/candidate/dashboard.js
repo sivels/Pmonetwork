@@ -7,7 +7,7 @@ import ProfileViews from '../../components/dashboard/ProfileViews';
 import DocumentRepository from '../../components/dashboard/DocumentRepository';
 import SidebarNav from '../../components/dashboard/SidebarNav';
 import { getToken } from 'next-auth/jwt';
-import prisma from '../../lib/prisma';
+import { prisma } from '../../lib/prisma';
 
 const DASHBOARD_API = '/api/dashboard/mock';
 
@@ -48,7 +48,7 @@ export default function CandidateDashboard({ initialData }) {
                 <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
                 <div className="flex gap-3">
                   <Link href="/candidate/profile" className="px-4 py-2 bg-white border rounded shadow-sm text-sm">Edit / Design Profile</Link>
-                  <Link href="/candidate/profile" className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Preview Profile</Link>
+                  <Link href="/candidate/preview" className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Preview Profile</Link>
                 </div>
               </div>
             </div>
@@ -67,7 +67,7 @@ export default function CandidateDashboard({ initialData }) {
                   <h3 className="text-lg font-semibold mb-2">Quick Actions</h3>
                   <div className="flex flex-col gap-3">
                     <Link href="/candidate/profile" className="px-3 py-2 bg-blue-600 text-white rounded text-center">Edit Profile</Link>
-                    <Link href="/candidate/profile" className="px-3 py-2 border rounded text-center">Preview Public Profile</Link>
+                    <Link href="/candidate/preview" className="px-3 py-2 border rounded text-center">Preview Public Profile</Link>
                     <button className="px-3 py-2 bg-white border rounded text-left">Account Settings</button>
                   </div>
                 </div>

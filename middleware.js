@@ -1,18 +1,23 @@
 import { NextResponse } from 'next/server';
+import { getToken } from 'next-auth/jwt';
 
-export function middleware(req) {
-  const protectedPaths = ['/dashboard', '/dashboard/candidate', '/dashboard/employer'];
+export async function middleware(req) {
+  const { pathname } = req.nextUrl;
 
-  // Check if user is logged in (Supabase sets this cookie)
-  const supabaseSession = req.cookies.get('sb-access-token');
-
-  const isProtected = protectedPaths.some(path =>
-    req.nextUrl.pathname.startsWith(path)
-  );
-
-  if (isProtected && !supabaseSession) {
-    return NextResponse.redirect(new URL('/login', req.url));
+  // Protect employer area: only employer role may access
+  if (pathname.startsWith('/employer')) {
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    if (!token || (token?.role?.toLowerCase?.() !== 'employer')) {
+      const url = req.nextUrl.clone();
+      url.pathname = '/employer-login';
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
   }
 
   return NextResponse.next();
 }
+
+export const config = {
+  matcher: ['/employer/:path*']
+};

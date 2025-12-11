@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 export default function CandidateProfilePage() {
   const [profile, setProfile] = useState(null);
@@ -149,7 +150,7 @@ export default function CandidateProfilePage() {
           <CompletionWidget profile={profile} />
           <div className="mt-6">
             <button className="btn btn-primary w-full" onClick={save} disabled={loading}>{loading ? 'Saving...' : 'Save Profile'}</button>
-            <button className="btn btn-secondary w-full mt-3" onClick={() => alert('Preview not implemented yet')}>Preview My Public Profile</button>
+            <Link href="/candidate/preview" className="btn btn-secondary w-full mt-3 block text-center">Preview My Public Profile</Link>
           </div>
         </aside>
       </div>

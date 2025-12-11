@@ -1,6 +1,33 @@
 import Header from './Header';
+import { useSession } from 'next-auth/react';
+import CandidateLayout from './CandidateLayout';
+import EmployerLayout from './EmployerLayout';
 
 export default function Layout({ children }) {
+  const { data: session } = useSession();
+  const userRole = session?.user?.role?.toLowerCase();
+  const isCandidate = userRole === 'candidate';
+  const isEmployer = userRole === 'employer';
+  
+  // Build user object with profile data if available
+  const user = isCandidate ? {
+    fullName: session?.user?.name || session?.user?.email?.split('@')[0],
+    email: session?.user?.email,
+    profilePhotoUrl: session?.user?.image || null,
+    ...session?.user
+  } : session?.user;
+
+  // Use candidate layout for authenticated candidates
+  if (isCandidate) {
+    return <CandidateLayout user={user}>{children}</CandidateLayout>;
+  }
+
+  // Use employer layout for authenticated employers
+  if (isEmployer) {
+    return <EmployerLayout>{children}</EmployerLayout>;
+  }
+
+  // Use public layout for guests
   return (
     <div>
       <Header />

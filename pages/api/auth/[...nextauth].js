@@ -1,74 +1,122 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import prisma from '../../../lib/prisma';
+import GoogleProvider from 'next-auth/providers/google';
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
+// LinkedIn & Microsoft (Azure AD) custom/provider placeholders
+import { prisma } from '../../../lib/prisma';
 import bcrypt from 'bcryptjs';
 
-export default NextAuth({
+// Minimal custom LinkedIn provider placeholder (real implementation requires OAuth app)
+const LinkedInProvider = {
+  id: 'linkedin',
+  name: 'LinkedIn',
+  type: 'oauth',
+  version: '2.0',
+  scope: 'r_liteprofile r_emailaddress',
+  params: { grant_type: 'authorization_code' },
+  accessTokenUrl: 'https://www.linkedin.com/oauth/v2/accessToken',
+  authorization: 'https://www.linkedin.com/oauth/v2/authorization',
+  profileUrl: 'https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))',
+  async profile(profile/* raw */, tokens) {
+    // Placeholder mapping – LinkedIn requires additional calls to get name/profile
+    return {
+      id: tokens.access_token.substring(0, 16),
+      name: 'LinkedIn User',
+      email: profile?.elements?.[0]?.['handle~']?.emailAddress || null
+    };
+  },
+  clientId: process.env.LINKEDIN_CLIENT_ID,
+  clientSecret: process.env.LINKEDIN_CLIENT_SECRET
+};
+
+// Azure AD (Microsoft) placeholder provider – needs proper endpoints & tenant config
+const AzureADProvider = {
+  id: 'azure-ad',
+  name: 'Microsoft',
+  type: 'oauth',
+  wellKnown: `https://login.microsoftonline.com/${process.env.AZURE_AD_TENANT_ID}/v2.0/.well-known/openid-configuration`,
+  authorization: { params: { scope: 'openid profile email' } },
+  clientId: process.env.AZURE_AD_CLIENT_ID,
+  clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
+  async profile(profile) {
+    return {
+      id: profile.sub,
+      name: profile.name,
+      email: profile.email
+    };
+  }
+};
+
+export const authOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
-      name: 'Credentials',
+      name: 'Email & Password',
       credentials: {
-        email: { label: 'Email', type: 'text' },
-        password: { label: 'Password', type: 'password' },
-        token: { label: 'One-time token', type: 'text' },
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' }
       },
       async authorize(credentials) {
-        // If a one-time token is provided, validate it and sign the user in
-        if (credentials?.token) {
-          const tokenRecord = await prisma.passwordResetToken.findUnique({ where: { token: credentials.token } });
-          if (!tokenRecord) throw new Error('Invalid or expired token');
-          if (tokenRecord.expiresAt < new Date()) {
-            await prisma.passwordResetToken.delete({ where: { id: tokenRecord.id } }).catch(() => {});
-            throw new Error('Token expired');
-          }
-          const user = await prisma.user.findUnique({ where: { id: tokenRecord.userId } });
-          if (!user) throw new Error('User not found');
-          // consume token
-          await prisma.passwordResetToken.delete({ where: { id: tokenRecord.id } });
-          // Audit token consumption
-          try {
-            const { appendAudit } = await import('../../../lib/tokenAudit');
-            await appendAudit({ action: 'one_time_token_consumed', userId: user.id, token: credentials.token });
-          } catch (err) {
-            console.error('Failed to audit token consumption', err);
-          }
-          return { id: user.id, email: user.email, role: user.role };
+        if (!credentials?.email || !credentials?.password) {
+          console.log('No credentials provided');
+          return null;
         }
-
-        const { email, password } = credentials;
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.user.findUnique({ where: { email: credentials.email } });
         if (!user) {
-          throw new Error('Invalid email or password');
+          console.log('No user found for email:', credentials.email);
+          return null;
         }
-        const valid = await bcrypt.compare(password, user.password);
+        console.log('User found:', user.email, 'Password hash:', user.password);
+        const valid = await bcrypt.compare(credentials.password, user.password);
+        console.log('Password comparison result:', valid, 'Input password:', credentials.password);
         if (!valid) {
-          throw new Error('Invalid email or password');
-        }
-        if (!user.emailVerified) {
-          throw new Error('Please verify your email before signing in');
+          console.log('Invalid password for user:', credentials.email);
+          return null;
         }
         return { id: user.id, email: user.email, role: user.role };
-      },
+      }
     }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || 'GOOGLE_CLIENT_ID',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'GOOGLE_CLIENT_SECRET'
+    }),
+    LinkedInProvider,
+    AzureADProvider
   ],
-  session: {
-    strategy: 'jwt',
-  },
+  session: { strategy: 'jwt' },
+  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.role = user.role;
+        token.role = user.role || token.role;
+      } else if (token.email && !token.role) {
+        const dbUser = await prisma.user.findUnique({ where: { email: token.email } });
+        if (dbUser) token.role = dbUser.role;
+      }
+      // Mark onboarding needed if user lacks candidate/employer profile
+      if (token.email) {
+        const dbUser = await prisma.user.findUnique({ where: { email: token.email }, include: { candidateCandidateProfile: true, employerEmployerProfile: true } });
+        token.onboardingNeeded = dbUser && !dbUser.candidateCandidateProfile && !dbUser.employerEmployerProfile;
       }
       return token;
     },
     async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id;
-        session.user.role = token.role;
-      }
+      if (token?.role) session.user.role = token.role;
+      session.user.onboardingNeeded = token.onboardingNeeded || false;
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      // If URL is relative, prepend baseUrl
+      if (url.startsWith('/')) {
+        return baseUrl + url;
+      }
+      // Only allow redirects to same origin
+      return url.startsWith(baseUrl) ? url : baseUrl;
+    }
   },
-  secret: process.env.NEXTAUTH_SECRET,
-});
+  pages: {
+    signIn: '/auth/login'
+  }
+};
+
+export default NextAuth(authOptions);

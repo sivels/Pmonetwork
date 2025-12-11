@@ -1,5 +1,5 @@
 import { getToken } from 'next-auth/jwt';
-import prisma from '../../../lib/prisma';
+import { prisma } from '../../../lib/prisma';
 import multer from 'multer';
 import nextConnect from 'next-connect';
 import fs from 'fs';

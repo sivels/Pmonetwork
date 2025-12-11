@@ -1,4 +1,4 @@
-import prisma from '../../../lib/prisma';
+import { prisma } from '../../../lib/prisma';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
 import { sendMail } from '../../../lib/email';

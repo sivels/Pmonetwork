@@ -1,5 +1,5 @@
 import { getToken } from 'next-auth/jwt';
-import prisma from '../../../lib/prisma';
+import { prisma } from '../../../lib/prisma';
 import { sendMail } from '../../../lib/email';
 
 export default async function handler(req, res) {
