@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 export default function CandidateProfilePage() {
+  const { data: session, status } = useSession();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   
 
   useEffect(() => {
-    if (userId) fetchProfile();
-  }, [userId]);
+    fetchProfile();
+  }, []);
 
   async function fetchProfile() {
     setLoading(true);
@@ -33,7 +35,7 @@ export default function CandidateProfilePage() {
       const res = await fetch('/api/candidate/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, profile }),
+        body: JSON.stringify({ profile }),
       });
       const data = await res.json();
       setProfile(data);
