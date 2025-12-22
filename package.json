@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "CSS_TRANSFORMER_WASM=1 next dev",
-    "build": "prisma generate && CSS_TRANSFORMER_WASM=1 next build",
+    "build": "prisma generate && prisma migrate deploy && CSS_TRANSFORMER_WASM=1 next build",
     "start": "CSS_TRANSFORMER_WASM=1 next start",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init",
+    "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "node prisma/seed.js",
     "lint": "next lint",
     "test:returnTo": "playwright test tests/returnTo.spec.js"
