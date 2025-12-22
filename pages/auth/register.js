@@ -208,31 +208,33 @@ export default function Register() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'Server error' }));
         setMessageType('error');
-        setMessage(data.error || 'Registration failed. Please try again.');
-      } else {
-        setMessageType('success');
-        setMessage(
-          userType === 'CANDIDATE' 
-            ? 'Registration successful! Check your email to verify your account.' 
-            : 'Your free trial has started! Check your email for confirmation. Your $1,000/month subscription will begin after 7 days.'
-        );
-        
-        // Redirect after success
-        setTimeout(() => {
-          if (returnTo) {
-            router.push(`/auth/login?returnTo=${encodeURIComponent(returnTo)}`);
-          } else {
-            router.push('/auth/login');
-          }
-        }, 3000);
+        setMessage(data.error || data.details || 'Registration failed. Please try again.');
+        return;
       }
+
+      const data = await res.json();
+      setMessageType('success');
+      setMessage(
+        userType === 'CANDIDATE' 
+          ? 'Registration successful! Check your email to verify your account.' 
+          : 'Your free trial has started! Check your email for confirmation. Your $1,000/month subscription will begin after 7 days.'
+      );
+      
+      // Redirect after success
+      setTimeout(() => {
+        if (returnTo) {
+          router.push(`/auth/login?returnTo=${encodeURIComponent(returnTo)}`);
+        } else {
+          router.push('/auth/login');
+        }
+      }, 3000);
     } catch (err) {
+      console.error('Registration error:', err);
       setMessageType('error');
-      setMessage('Network error. Please check your connection and try again.');
+      setMessage(`Network error: ${err.message}. Please check your connection and try again.`);
     } finally {
       setLoading(false);
     }

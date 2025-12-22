@@ -6,50 +6,51 @@ import { sendMail } from '../../../lib/email';
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
   
-  const { 
-    email, 
-    password, 
-    role = 'CANDIDATE',
-    termsAccepted,
-    gdprConsent,
-    // Candidate fields
-    firstName,
-    lastName,
-    phone,
-    jobTitle,
-    yearsExperience,
-    skills,
-    linkedIn,
-    // Employer fields
-    companyName,
-    contactName,
-    contactPhone,
-    website,
-    industry,
-    hiresExpected,
-    payment
-  } = req.body;
+  try {
+    const { 
+      email, 
+      password, 
+      role = 'CANDIDATE',
+      termsAccepted,
+      gdprConsent,
+      // Candidate fields
+      firstName,
+      lastName,
+      phone,
+      jobTitle,
+      yearsExperience,
+      skills,
+      linkedIn,
+      // Employer fields
+      companyName,
+      contactName,
+      contactPhone,
+      website,
+      industry,
+      hiresExpected,
+      payment
+    } = req.body;
 
-  // Basic validation
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Missing email or password' });
-  }
+    // Basic validation
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Missing email or password' });
+    }
 
-  if (!termsAccepted || !gdprConsent) {
-    return res.status(400).json({ error: 'You must accept Terms and provide GDPR consent' });
-  }
+    if (!termsAccepted || !gdprConsent) {
+      return res.status(400).json({ error: 'You must accept Terms and provide GDPR consent' });
+    }
 
-  // Candidate specific validation
-  if (role === 'CANDIDATE' && (!firstName || !lastName || !jobTitle)) {
-    return res.status(400).json({ error: 'Missing required candidate fields' });
-  }
+    // Candidate specific validation
+    if (role === 'CANDIDATE' && (!firstName || !lastName || !jobTitle)) {
+      return res.status(400).json({ error: 'Missing required candidate fields' });
+    }
 
-  // Employer specific validation
-  if (role === 'EMPLOYER' && (!companyName || !contactName || !contactPhone)) {
-    return res.status(400).json({ error: 'Missing required employer fields' });
-  }
+    // Employer specific validation
+    if (role === 'EMPLOYER' && (!companyName || !contactName || !contactPhone)) {
+      return res.status(400).json({ error: 'Missing required employer fields' });
+    }
 
-  const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     return res.status(409).json({ error: 'User already exists with this email address' });
   }
@@ -232,4 +233,11 @@ export default async function handler(req, res) {
   }
 
   return res.status(201).json(resp);
+  } catch (error) {
+    console.error('Registration error:', error);
+    return res.status(500).json({ 
+      error: 'Registration failed. Please try again.',
+      details: process.env.NODE_ENV !== 'production' ? error.message : undefined
+    });
+  }
 }
