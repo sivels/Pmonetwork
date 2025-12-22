@@ -228,15 +228,15 @@ export async function getServerSideProps(context) {
 
   const { candidateId } = context.params;
 
-  const candidate = await prisma.candidate.findUnique({
-    where: { id: parseInt(candidateId) },
+  const candidate = await prisma.candidateProfile.findUnique({
+    where: { id: candidateId },
     include: {
       skills: true,
       experiences: {
         orderBy: { startDate: 'desc' },
       },
       education: {
-        orderBy: { startYear: 'desc' },
+        orderBy: { startDate: 'desc' },
       },
       certifications: true,
     },
