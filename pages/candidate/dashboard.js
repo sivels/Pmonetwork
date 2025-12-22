@@ -106,7 +106,6 @@ export async function getServerSideProps(context) {
   try {
     const candidate = await prisma.candidateProfile.findUnique({
       where: { userId: token.id },
-      include: { documents: true },
     });
 
     if (!candidate) {
@@ -132,7 +131,7 @@ export async function getServerSideProps(context) {
       },
       profile_views: { last_30_days: 0, trending_companies: [] },
       applications: [],
-      documents: (candidate.documents || []).map(d => ({ id: d.id, name: d.filename, type: 'Document', uploadedAt: d.uploadedAt?.toISOString?.() || null })),
+      documents: [],
     };
 
     return { props: { initialData: payload } };
