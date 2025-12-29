@@ -99,105 +99,101 @@ export default function MessagePreviewPanel({ isOpen, onClose }) {
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.3);
+          background: transparent;
           z-index: 1098;
-          animation: fadeIn 0.2s ease;
         }
 
         .message-preview-panel {
           position: fixed;
-          top: 60px;
+          top: 70px;
           right: 20px;
-          width: 380px;
-          max-height: 500px;
+          width: 420px;
+          max-height: 600px;
           background: white;
-          border-radius: 12px;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+          border-radius: 16px;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
           z-index: 1099;
           display: flex;
           flex-direction: column;
-          animation: slideDown 0.25s ease;
+          animation: slideIn 0.3s ease;
         }
 
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        @keyframes slideDown {
-          from { 
+        @keyframes slideIn {
+          from {
             opacity: 0;
             transform: translateY(-10px);
           }
-          to { 
+          to {
             opacity: 1;
             transform: translateY(0);
           }
         }
 
         .message-preview-header {
+          padding: 20px 24px;
+          border-bottom: 2px solid #f1f5f9;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 16px 20px;
-          border-bottom: 1px solid #e5e7eb;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-radius: 16px 16px 0 0;
         }
 
         .message-preview-header h3 {
           margin: 0;
-          font-size: 16px;
-          font-weight: 600;
-          color: #111827;
+          font-size: 18px;
+          font-weight: 700;
+          color: white;
         }
 
         .message-preview-badge {
-          background: #7c3aed;
+          background: rgba(255, 255, 255, 0.3);
           color: white;
-          padding: 2px 8px;
+          padding: 4px 10px;
           border-radius: 12px;
           font-size: 12px;
-          font-weight: 500;
+          font-weight: 600;
         }
 
         .message-preview-list {
           flex: 1;
           overflow-y: auto;
-          max-height: 380px;
+          padding: 16px;
+          background: #fafbfc;
         }
 
         .message-preview-item {
+          position: relative;
+          background: white;
+          border-radius: 12px;
+          padding: 16px;
+          margin-bottom: 12px;
           display: flex;
           gap: 12px;
-          padding: 12px 20px;
-          border-bottom: 1px solid #f3f4f6;
           cursor: pointer;
           text-decoration: none;
           color: inherit;
-          position: relative;
-          transition: background 0.15s ease;
+          transition: all 0.2s;
+          border: 2px solid transparent;
         }
 
         .message-preview-item:hover {
-          background: #f9fafb;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          transform: translateY(-2px);
         }
 
         .message-preview-item.unread {
-          background: #eff6ff;
-        }
-
-        .message-preview-item.unread:hover {
-          background: #dbeafe;
+          border-color: #e0e7ff;
+          background: linear-gradient(to right, #fefefe, #f5f7ff);
         }
 
         .message-preview-avatar {
-          font-size: 32px;
+          font-size: 28px;
           width: 40px;
           height: 40px;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: #f3f4f6;
-          border-radius: 50%;
           flex-shrink: 0;
         }
 
@@ -210,88 +206,104 @@ export default function MessagePreviewPanel({ isOpen, onClose }) {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 2px;
+          margin-bottom: 4px;
         }
 
         .message-preview-company {
           font-weight: 600;
           font-size: 14px;
-          color: #111827;
+          color: #1f2937;
         }
 
         .message-preview-time {
           font-size: 12px;
-          color: #6b7280;
+          color: #94a3b8;
+          font-weight: 500;
         }
 
         .message-preview-job {
           font-size: 13px;
-          color: #4b5563;
-          margin-bottom: 4px;
+          color: #6366f1;
+          margin-bottom: 6px;
           font-weight: 500;
         }
 
         .message-preview-text {
           font-size: 13px;
-          color: #6b7280;
+          color: #64748b;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+          line-height: 1.4;
         }
 
         .message-preview-dot {
           position: absolute;
-          right: 20px;
-          top: 50%;
-          transform: translateY(-50%);
+          top: 20px;
+          left: 8px;
           width: 8px;
           height: 8px;
-          background: #7c3aed;
+          background: #6366f1;
           border-radius: 50%;
+          animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.5;
+          }
         }
 
         .message-preview-empty {
-          padding: 40px 20px;
+          padding: 60px 20px;
           text-align: center;
-          color: #6b7280;
         }
 
         .message-preview-empty p {
-          margin: 0 0 4px 0;
-          font-weight: 500;
-          color: #111827;
+          margin: 0 0 8px 0;
+          font-weight: 600;
+          font-size: 15px;
+          color: #334155;
         }
 
         .message-preview-empty span {
           font-size: 13px;
+          color: #94a3b8;
         }
 
         .message-preview-footer {
-          padding: 12px 20px;
-          border-top: 1px solid #e5e7eb;
+          padding: 16px 20px;
+          border-top: 2px solid #f1f5f9;
+          background: white;
+          border-radius: 0 0 16px 16px;
         }
 
         .message-preview-viewall {
           display: block;
           text-align: center;
-          color: #7c3aed;
-          font-weight: 500;
+          color: #6366f1;
+          font-weight: 600;
           font-size: 14px;
           text-decoration: none;
-          padding: 8px;
-          border-radius: 6px;
-          transition: background 0.15s ease;
+          padding: 10px;
+          border-radius: 8px;
+          transition: all 0.2s;
+          background: #f8fafc;
         }
 
         .message-preview-viewall:hover {
-          background: #f5f3ff;
+          background: #e0e7ff;
+          transform: translateY(-1px);
         }
 
         @media (max-width: 768px) {
           .message-preview-panel {
             right: 10px;
             width: calc(100vw - 20px);
-            max-width: 380px;
+            max-width: 420px;
           }
         }
       `}</style>
