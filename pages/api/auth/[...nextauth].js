@@ -83,15 +83,23 @@ export const authOptions = {
     LinkedInProvider,
     AzureADProvider
   ],
-  session: { strategy: 'jwt' },
+  session: { 
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   secret: process.env.NEXTAUTH_SECRET,
+  useSecureCookies: process.env.NODE_ENV === 'production',
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role || token.role;
+        token.id = user.id;
       } else if (token.email && !token.role) {
         const dbUser = await prisma.user.findUnique({ where: { email: token.email } });
-        if (dbUser) token.role = dbUser.role;
+        if (dbUser) {
+          token.role = dbUser.role;
+          token.id = dbUser.id;
+        }
       }
       // Mark onboarding needed if user lacks candidate/employer profile
       if (token.email) {
@@ -102,6 +110,7 @@ export const authOptions = {
     },
     async session({ session, token }) {
       if (token?.role) session.user.role = token.role;
+      if (token?.id) session.user.id = token.id;
       session.user.onboardingNeeded = token.onboardingNeeded || false;
       return session;
     },
