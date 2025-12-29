@@ -16,7 +16,8 @@ export default function DocumentsSection({ profile, onUpdate }) {
       const res = await fetch('/api/candidate/documents');
       if (res.ok) {
         const data = await res.json();
-        setDocuments(data.documents || []);
+        // API returns array directly
+        setDocuments(Array.isArray(data) ? data : (data.documents || []));
       }
     } catch (err) {
       console.error('Failed to fetch documents:', err);
@@ -107,8 +108,10 @@ export default function DocumentsSection({ profile, onUpdate }) {
     if (!confirm('Delete this document permanently?')) return;
 
     try {
-      const res = await fetch(`/api/candidate/delete-document?id=${docId}`, {
-        method: 'DELETE'
+      const res = await fetch('/api/candidate/documents', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: docId })
       });
 
       if (res.ok) {
@@ -129,6 +132,7 @@ export default function DocumentsSection({ profile, onUpdate }) {
   };
 
   const formatDate = (dateStr) => {
+    if (!dateStr) return 'Unknown date';
     return new Date(dateStr).toLocaleDateString('en-GB', { 
       day: 'numeric', 
       month: 'short', 
@@ -202,7 +206,7 @@ export default function DocumentsSection({ profile, onUpdate }) {
                       {index === 0 && <span className="cv-current-badge">Current</span>}
                     </p>
                     <p className="doc-meta">
-                      Uploaded {formatDate(doc.uploadedAt)} • {formatFileSize(doc.fileSize)}
+                      Uploaded {formatDate(doc.createdAt || doc.uploadedAt)} • {formatFileSize(doc.fileSize)}
                     </p>
                   </div>
                   <div className="doc-actions">
@@ -252,7 +256,7 @@ export default function DocumentsSection({ profile, onUpdate }) {
                   <div className="doc-details">
                     <p className="doc-title">{doc.title || doc.filename}</p>
                     <p className="doc-meta">
-                      Uploaded {formatDate(doc.uploadedAt)} • {formatFileSize(doc.fileSize)}
+                      Uploaded {formatDate(doc.createdAt || doc.uploadedAt)} • {formatFileSize(doc.fileSize)}
                     </p>
                   </div>
                   <div className="doc-actions">
