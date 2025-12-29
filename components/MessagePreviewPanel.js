@@ -48,7 +48,7 @@ export default function MessagePreviewPanel({ isOpen, onClose }) {
       {/* Preview Panel */}
       <div className="message-preview-panel">
         <div className="message-preview-header">
-          <h3>Messages</h3>
+          <h3>Messages Preview</h3>
           {unreadCount > 0 && (
             <span className="message-preview-badge">{unreadCount} new</span>
           )}
