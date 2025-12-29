@@ -9,7 +9,18 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const candidateId = session.user.id;
+  const userId = session.user.id;
+  
+  // Get the CandidateProfile ID (not User ID)
+  const profile = await prisma.candidateProfile.findUnique({
+    where: { userId }
+  });
+  
+  if (!profile) {
+    return res.status(404).json({ error: 'Candidate profile not found' });
+  }
+  
+  const candidateId = profile.id;
 
   try {
     if (req.method === 'GET') {
