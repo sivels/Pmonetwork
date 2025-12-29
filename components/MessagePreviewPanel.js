@@ -100,7 +100,7 @@ export default function MessagePreviewPanel({ isOpen, onClose }) {
           right: 0;
           bottom: 0;
           background: rgba(0, 0, 0, 0.3);
-          z-index: 999;
+          z-index: 1098;
           animation: fadeIn 0.2s ease;
         }
 
@@ -113,7 +113,7 @@ export default function MessagePreviewPanel({ isOpen, onClose }) {
           background: white;
           border-radius: 12px;
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-          z-index: 1000;
+          z-index: 1099;
           display: flex;
           flex-direction: column;
           animation: slideDown 0.25s ease;
