@@ -30,19 +30,13 @@ export default async function handler(req, res) {
     return res.status(404).json({ error: 'Profile not found' });
   }
 
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'documents');
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
+  // Use /tmp directory for serverless compatibility
+  const uploadDir = '/tmp';
 
   const form = formidable({
     uploadDir,
     keepExtensions: true,
     maxFileSize: 10 * 1024 * 1024, // 10MB
-    filename: (name, ext, part) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      return `${name}-${uniqueSuffix}${ext}`;
-    }
   });
 
   form.parse(req, async (err, fields, files) => {
@@ -60,16 +54,23 @@ export default async function handler(req, res) {
     const title = fields.title?.[0] || fields.title;
     const expiryDate = fields.expiryDate?.[0] || fields.expiryDate;
 
-    const relativePath = `/uploads/documents/${path.basename(file.filepath)}`;
-
     try {
+      // Read file and convert to base64
+      const fileBuffer = fs.readFileSync(file.filepath);
+      const base64Data = fileBuffer.toString('base64');
+      const mimeType = file.mimetype || 'application/octet-stream';
+      const dataUrl = `data:${mimeType};base64,${base64Data}`;
+      
+      // Clean up temp file
+      fs.unlinkSync(file.filepath);
+
       const isPublic = category !== 'identity';
 
       const document = await prisma.document.create({
         data: {
           candidateId: user.candidateCandidateProfile.id,
           filename: documentName,
-          url: relativePath,
+          url: dataUrl,
           title: title || category,
           fileSize: file.size,
           documentType: category,
