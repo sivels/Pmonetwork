@@ -73,6 +73,13 @@ export default function CandidateProfilePage() {
         body: JSON.stringify({ profile }),
       });
       const data = await res.json();
+      
+      if (!res.ok) {
+        console.error('Save failed:', res.status, data);
+        alert(`Save failed: ${data.error || 'Unknown error'}`);
+        return;
+      }
+      
       setProfile(data);
       alert('Profile saved');
     } catch (err) {

@@ -5,16 +5,41 @@ import { prisma } from '../../../lib/prisma';
 // GET returns candidate profile with relations.
 // POST/PUT updates candidate profile (limited fields).
 export default async function handler(req, res) {
-  const session = await getServerSession(req, res, authOptions);
-  if (!session || (session.user.role || '').toLowerCase() !== 'candidate') {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  try {
+    const session = await getServerSession(req, res, authOptions);
+    
+    console.log('Session:', JSON.stringify(session, null, 2));
+    console.log('Session user role:', session?.user?.role);
+    
+    if (!session) {
+      console.log('No session found');
+      return res.status(401).json({ error: 'Unauthorized - No session' });
+    }
+    
+    if (!session.user) {
+      console.log('No user in session');
+      return res.status(401).json({ error: 'Unauthorized - No user in session' });
+    }
+    
+    const userRole = (session.user.role || '').toLowerCase();
+    console.log('User role (lowercase):', userRole);
+    
+    if (userRole !== 'candidate') {
+      console.log('User is not a candidate, role:', session.user.role);
+      return res.status(401).json({ error: `Unauthorized - Role is ${session.user.role}, not candidate` });
+    }
 
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    include: { candidateCandidateProfile: { include: { skills: true, certifications: true, documents: true } } }
-  });
-  const profile = user?.candidateCandidateProfile;
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      include: { candidateCandidateProfile: { include: { skills: true, certifications: true, documents: true } } }
+    });
+    
+    if (!user) {
+      console.log('User not found in database:', session.user.email);
+      return res.status(404).json({ error: 'User not found in database' });
+    }
+    
+    const profile = user?.candidateCandidateProfile;
 
   if (req.method === 'GET') {
     if (!profile) {
@@ -94,8 +119,12 @@ export default async function handler(req, res) {
     }
   }
 
-  res.setHeader('Allow', 'GET, POST, PUT');
-  return res.status(405).json({ error: 'Method not allowed' });
+    res.setHeader('Allow', 'GET, POST, PUT');
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (error) {
+    console.error('Handler error:', error);
+    return res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
 }
 
 // Map frontend fields to database fields
