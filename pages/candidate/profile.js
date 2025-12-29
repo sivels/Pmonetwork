@@ -6,6 +6,7 @@ export default function CandidateProfilePage() {
   const { data: session, status } = useSession();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   
 
   useEffect(() => {
@@ -27,6 +28,40 @@ export default function CandidateProfilePage() {
 
   function handleChange(path, value) {
     setProfile((p) => ({ ...p, [path]: value }));
+  }
+
+  async function handlePhotoUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Photo must be less than 5MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+
+      const res = await fetch('/api/candidate/upload-photo', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setProfile((p) => ({ ...p, profilePhotoUrl: data.photoUrl }));
+        alert('Photo uploaded successfully');
+      } else {
+        alert(data.error || 'Upload failed');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Upload failed');
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function save() {
@@ -63,6 +98,29 @@ export default function CandidateProfilePage() {
         <div className="lg:col-span-2">
           <section className="mb-6 bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
+            
+            {/* Profile Photo Upload */}
+            <div className="mb-6 pb-6 border-b">
+              <label className="block text-sm font-medium text-gray-600 mb-2">Profile Photo</label>
+              <div className="flex items-center gap-4">
+                <div 
+                  className="w-24 h-24 rounded-full bg-gray-200 bg-cover bg-center"
+                  style={{ backgroundImage: profile?.profilePhotoUrl ? `url(${profile.profilePhotoUrl})` : 'url(/images/avatar-placeholder.svg)' }}
+                />
+                <div>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handlePhotoUpload}
+                    disabled={uploading}
+                    className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Max 5MB. JPG, PNG or GIF</p>
+                  {uploading && <p className="text-sm text-blue-600 mt-1">Uploading...</p>}
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-600">Full name</label>
