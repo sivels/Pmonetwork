@@ -21,24 +21,31 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email }
+  const userId = session.user.id;
+  
+  // Get the CandidateProfile ID
+  const profile = await prisma.candidateProfile.findUnique({
+    where: { userId }
   });
-  const candidateId = user.id;
+  
+  if (!profile) {
+    // Create profile if it doesn't exist
+    const newProfile = await prisma.candidateProfile.create({
+      data: { userId, fullName: session.user.email?.split('@')[0] || 'User' }
+    });
+    var candidateId = newProfile.id;
+  } else {
+    var candidateId = profile.id;
+  }
 
   try {
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'cvs');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
+    // Use /tmp directory for serverless compatibility
+    const uploadDir = '/tmp';
+    
     const form = formidable({
       uploadDir,
       keepExtensions: true,
       maxFileSize: 10 * 1024 * 1024, // 10MB
-      filename: (name, ext, part) => {
-        return `cv-${candidateId}-${Date.now()}${ext}`;
-      }
     });
 
     form.parse(req, async (err, fields, files) => {
@@ -52,12 +59,19 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'No CV file provided' });
       }
 
-      const cvUrl = `/uploads/cvs/${path.basename(cvFile.filepath)}`;
+      // Read file and convert to base64
+      const fileBuffer = fs.readFileSync(cvFile.filepath);
+      const base64Data = fileBuffer.toString('base64');
+      const mimeType = cvFile.mimetype || 'application/pdf';
+      const dataUrl = `data:${mimeType};base64,${base64Data}`;
+      
+      // Clean up temp file
+      fs.unlinkSync(cvFile.filepath);
 
-      // Update profile with CV URL
+      // Update profile with CV data URL
       await prisma.candidateProfile.update({
-        where: { userId: candidateId },
-        data: { cvUrl }
+        where: { id: candidateId },
+        data: { cvUrl: dataUrl }
       });
 
       // Also create a document entry
@@ -65,14 +79,14 @@ export default async function handler(req, res) {
         data: {
           candidateId,
           title: cvFile.originalFilename || 'CV',
-          filename: path.basename(cvFile.filepath),
-          url: cvUrl,
+          filename: cvFile.originalFilename || 'cv.pdf',
+          url: dataUrl,
           fileSize: cvFile.size,
           documentType: 'cv'
         }
       });
 
-      return res.status(200).json({ cvUrl });
+      return res.status(200).json({ cvUrl: dataUrl });
     });
   } catch (error) {
     console.error('CV upload error:', error);
