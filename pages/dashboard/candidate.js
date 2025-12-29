@@ -9,7 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import NotificationPanel from '../../components/NotificationPanel';
 import ProfileStatusPanel from '../../components/ProfileStatusPanel';
 import DashboardStatusCards from '../../components/DashboardStatusCards';
-import MessagesPanel from '../../components/MessagesPanel';
+import MessagePreviewPanel from '../../components/MessagePreviewPanel';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -424,7 +424,7 @@ export default function CandidateDashboard({ profile, profileScore, userEmail })
           user={{ email: userEmail }}
         />
 
-        <MessagesPanel 
+        <MessagePreviewPanel 
           isOpen={messagesOpen} 
           onClose={() => setMessagesOpen(false)}
         />
