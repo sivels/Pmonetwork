@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import NotificationPanel from '../../components/NotificationPanel';
-import MessagesPanel from '../../components/MessagesPanel';
 import ProfileStatusPanel from '../../components/ProfileStatusPanel';
 import DashboardStatusCards from '../../components/DashboardStatusCards';
 
@@ -95,7 +94,6 @@ export default function CandidateDashboard({ profile, profileScore, userEmail })
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [messagesOpen, setMessagesOpen] = useState(false);
   const [profileStatusOpen, setProfileStatusOpen] = useState(false);
 
   // Calculate missing profile items (original simple list for banner buttons)
@@ -143,23 +141,9 @@ export default function CandidateDashboard({ profile, profileScore, userEmail })
           <div className="topbar-right">
             <button 
               className="topbar-icon-btn" 
-              title="Messages"
-              onClick={() => {
-                setMessagesOpen(!messagesOpen);
-                setNotificationsOpen(false);
-                setProfileStatusOpen(false);
-              }}
-            >
-              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            </button>
-            <button 
-              className="topbar-icon-btn" 
               title="Notifications"
               onClick={() => {
                 setNotificationsOpen(!notificationsOpen);
-                setMessagesOpen(false);
                 setProfileStatusOpen(false);
               }}
             >
@@ -172,7 +156,6 @@ export default function CandidateDashboard({ profile, profileScore, userEmail })
               onClick={() => {
                 setProfileStatusOpen(!profileStatusOpen);
                 setNotificationsOpen(false);
-                setMessagesOpen(false);
               }}
               style={{ cursor: 'pointer' }}
             >
@@ -211,13 +194,7 @@ export default function CandidateDashboard({ profile, profileScore, userEmail })
                 </svg>
                 <span>Saved Jobs</span>
               </Link>
-              <Link href="/dashboard/messages" className={`sidebar-item ${activeTab === 'messages' ? 'active' : ''}`}>
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                </svg>
-                <span>Messages</span>
-                <span className="sidebar-badge">3</span>
-              </Link>
+
               <Link href="/dashboard/documents" className={`sidebar-item ${activeTab === 'documents' ? 'active' : ''}`}>
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -406,7 +383,7 @@ export default function CandidateDashboard({ profile, profileScore, userEmail })
             {/* Placeholder tabs */}
             {activeTab === 'jobs' && <div className="tab-placeholder"><h2>Recommended Jobs</h2><p>Coming soon...</p></div>}
             {activeTab === 'saved' && <div className="tab-placeholder"><h2>Saved Jobs</h2><p>Coming soon...</p></div>}
-            {activeTab === 'messages' && <div className="tab-placeholder"><h2>Messages</h2><p>Coming soon...</p></div>}
+
             {activeTab === 'documents' && <div className="tab-placeholder"><h2>Document Repository</h2><p>Coming soon...</p></div>}
             {activeTab === 'analytics' && <div className="tab-placeholder"><h2>Profile Analytics</h2><p>Coming soon...</p></div>}
             {activeTab === 'settings' && <div className="tab-placeholder"><h2>Account Settings</h2><p>Coming soon...</p></div>}
@@ -418,10 +395,7 @@ export default function CandidateDashboard({ profile, profileScore, userEmail })
           isOpen={notificationsOpen} 
           onClose={() => setNotificationsOpen(false)} 
         />
-        <MessagesPanel 
-          isOpen={messagesOpen} 
-          onClose={() => setMessagesOpen(false)} 
-        />
+
         <ProfileStatusPanel 
           isOpen={profileStatusOpen} 
           onClose={() => setProfileStatusOpen(false)}
