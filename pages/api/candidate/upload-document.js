@@ -1,4 +1,5 @@
-import { getSession } from 'next-auth/react';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
 import formidable from 'formidable';
 import fs from 'fs';
 import path from 'path';
@@ -15,8 +16,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const session = await getSession({ req });
-  if (!session || session.user.role !== 'candidate') {
+  const session = await getServerSession(req, res, authOptions);
+  if (!session || (session.user.role || '').toLowerCase() !== 'candidate') {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
