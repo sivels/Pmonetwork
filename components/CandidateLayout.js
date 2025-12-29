@@ -3,11 +3,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { signOut } from 'next-auth/react';
 import NotificationPanel from './NotificationPanel';
+import MessagePreviewPanel from './MessagePreviewPanel';
 
 export default function CandidateLayout({ children, user }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [messagesOpen, setMessagesOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(5);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const dropdownRef = useRef(null);
@@ -115,9 +117,15 @@ export default function CandidateLayout({ children, user }) {
 
           {/* Right-side quick actions: Messages + Notifications (left of profile), Help (right of profile) */}
           <div className="candidate-quick-actions">
-            <Link
-              href="/dashboard/messages"
-              className={`icon-btn messages-btn ${isActive('/dashboard/messages') ? 'active' : ''}`}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setMessagesOpen(v => !v);
+                setNotificationsOpen(false);
+              }}
+              className={`icon-btn messages-btn ${messagesOpen ? 'active' : ''}`}
               aria-label="Messages"
               title="Messages"
             >
@@ -127,7 +135,7 @@ export default function CandidateLayout({ children, user }) {
                 </svg>
                 {unreadMessages > 0 && <span className="icon-dot" aria-hidden="true"></span>}
               </span>
-            </Link>
+            </button>
             <button
               type="button"
               onClick={() => setNotificationsOpen(v => !v)}
@@ -373,6 +381,12 @@ export default function CandidateLayout({ children, user }) {
         isOpen={notificationsOpen} 
         onClose={() => setNotificationsOpen(false)}
         onUnreadChange={(total) => setUnreadNotifications(total)}
+      />
+
+      {/* Messages Preview Panel */}
+      <MessagePreviewPanel 
+        isOpen={messagesOpen} 
+        onClose={() => setMessagesOpen(false)}
       />
     </div>
   );
