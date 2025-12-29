@@ -166,10 +166,25 @@ body {
 
 /* Navigation list - now burger menu on all screens */
 /* Desktop horizontal nav removed - using burger menu for all screen sizes */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header-sign-in-btn {
+  padding: 8px 16px;
+  background: var(--pmo-blue-dark);
+  color: white;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+.header-sign-in-btn:hover {
+  background: var(--pmo-purple-dark);
+}
 .logout-btn { background: transparent; border: none; padding:10px 12px; border-radius:6px; cursor:pointer; font-size:14px; }
 .logout-btn:hover { background:#f1f5f9; }
-.sign-in-btn { font-weight:500; color: var(--pmo-blue-dark); }
-.sign-in-btn:hover { text-decoration: underline; }
 .register-link { font-weight:600; color: var(--pmo-purple); }
 .register-link:hover { text-decoration: underline; }
 .primary-nav a[aria-current="page"] {
