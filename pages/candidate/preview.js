@@ -272,7 +272,7 @@ export default function Preview({ profile, isOwnProfile, isHiringManager, userEm
                 {profile.documents.map(doc => (
                   <div key={doc.id} className="doc-item">
                     <span className="doc-icon">📄</span>
-                    <span className="doc-name">{doc.fileName}</span>
+                    <span className="doc-name">{doc.title || doc.filename}</span>
                     <a href={doc.url} download className="doc-download">Download</a>
                   </div>
                 ))}
