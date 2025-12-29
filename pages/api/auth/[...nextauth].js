@@ -76,11 +76,12 @@ export const authOptions = {
       }
     }),
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || 'GOOGLE_CLIENT_ID',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'GOOGLE_CLIENT_SECRET'
+      clientId: process.env.GOOGLE_CLIENT_ID || 'dummy-client-id',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'dummy-client-secret'
     }),
-    LinkedInProvider,
-    AzureADProvider
+    // Commented out until properly configured
+    // LinkedInProvider,
+    // AzureADProvider
   ],
   session: { 
     strategy: 'jwt',
@@ -123,7 +124,26 @@ export const authOptions = {
   },
   pages: {
     signIn: '/auth/login'
+  },
+  debug: process.env.NODE_ENV === 'development',
+  logger: {
+    error(code, metadata) {
+      console.error('[NextAuth Error]', code, metadata);
+    },
+    warn(code) {
+      console.warn('[NextAuth Warn]', code);
+    },
+    debug(code, metadata) {
+      console.log('[NextAuth Debug]', code, metadata);
+    }
   }
 };
 
-export default NextAuth(authOptions);
+export default async function handler(req, res) {
+  try {
+    return await NextAuth(req, res, authOptions);
+  } catch (error) {
+    console.error('NextAuth handler error:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+}
