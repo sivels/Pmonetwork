@@ -52,7 +52,7 @@ export default function Header() {
       </div>
       <nav id="primary-nav" aria-label="Primary" className={`primary-nav ${menuOpen ? 'open' : ''}`}>
         <ul className="nav-list">
-          <li><Link href="/" aria-current={isHome ? 'page' : undefined}>Home</Link></li>
+          {!isHome && <li><Link href="/" aria-current={isHome ? 'page' : undefined}>Home</Link></li>}
           <li><Link href="/jobs" aria-current={path === '/jobs' ? 'page' : undefined}>Jobs</Link></li>
           <li><Link href="/about" aria-current={path === '/about' ? 'page' : undefined}>About</Link></li>
           <li><Link href="/services" aria-current={path === '/services' ? 'page' : undefined}>Services</Link></li>
