@@ -157,6 +157,10 @@ export default function DocumentsSection({ profile, onUpdate }) {
   const cvDocuments = documents.filter(d => d.documentType === 'cv');
   const otherDocuments = documents.filter(d => d.documentType !== 'cv');
 
+  console.log('All documents:', documents);
+  console.log('CV documents:', cvDocuments);
+  console.log('Other documents:', otherDocuments);
+
   if (loading) {
     return <div className="section-loading">Loading documents...</div>;
   }
