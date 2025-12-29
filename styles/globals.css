@@ -188,12 +188,13 @@ body {
   box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
 }
 .logout-btn { background: transparent; border: none; padding:10px 12px; border-radius:6px; cursor:pointer; font-size:14px; }
-.logout-btn:hover { background:#f1f5f9; }
+.logout-btn:hover { background:#eff6ff; color: var(--pmo-blue-dark); }
 .register-link { font-weight:600; color: var(--pmo-purple); }
 .register-link:hover { text-decoration: underline; }
 .primary-nav a[aria-current="page"] {
   font-weight: 600;
-  background: #f1f5f9;
+  background: #eff6ff;
+  color: var(--pmo-blue-dark);
 }
 /* Keyboard focus styles */
 a:focus-visible {
@@ -227,8 +228,8 @@ a:focus-visible {
   top: 64px; 
   right: 0; 
   background: #ffffff; 
-  border: 1px solid #e2e8f0; 
-  box-shadow: 0 4px 12px rgba(16,24,40,0.08); 
+  border: 2px solid var(--pmo-blue);
+  box-shadow: 0 4px 12px rgba(21, 94, 168, 0.15); 
   padding: 16px; 
   display: none; 
   z-index: 50;
@@ -258,12 +259,13 @@ a:focus-visible {
 }
 .primary-nav .nav-list a:hover,
 .primary-nav .nav-list button:hover {
-  background: #f1f5f9;
+  background: #eff6ff;
+  color: var(--pmo-blue-dark);
 }
 .primary-nav .auth-list {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 2px solid var(--pmo-blue);
 }
 
 @media (max-width: 720px) {
