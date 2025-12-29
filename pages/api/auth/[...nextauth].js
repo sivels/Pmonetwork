@@ -141,6 +141,14 @@ export const authOptions = {
 
 export default async function handler(req, res) {
   try {
+    // Auto-detect NEXTAUTH_URL from request if not set
+    if (!process.env.NEXTAUTH_URL) {
+      const protocol = req.headers['x-forwarded-proto'] || 'http';
+      const host = req.headers['x-forwarded-host'] || req.headers.host;
+      process.env.NEXTAUTH_URL = `${protocol}://${host}`;
+      console.log('Auto-detected NEXTAUTH_URL:', process.env.NEXTAUTH_URL);
+    }
+    
     return await NextAuth(req, res, authOptions);
   } catch (error) {
     console.error('NextAuth handler error:', error);
