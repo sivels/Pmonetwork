@@ -1,8 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { prisma } from '../../../lib/prisma';
-import fs from 'fs';
-import path from 'path';
 
 export default async function handler(req, res) {
   if (req.method !== 'DELETE') {
@@ -14,7 +12,18 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const candidateId = session.user.id;
+  const userId = session.user.id;
+  
+  // Get the CandidateProfile ID
+  const profile = await prisma.candidateProfile.findUnique({
+    where: { userId }
+  });
+  
+  if (!profile) {
+    return res.status(404).json({ error: 'Candidate profile not found' });
+  }
+  
+  const candidateId = profile.id;
   const { id } = req.query;
 
   if (!id) {
@@ -22,7 +31,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Get document to find file path
+    // Get document to verify ownership
     const document = await prisma.document.findFirst({
       where: { id, candidateId }
     });
@@ -31,13 +40,8 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Document not found' });
     }
 
-    // Delete file from filesystem
-    const filePath = path.join(process.cwd(), 'public', document.url);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-
-    // Delete from database
+    // Files are stored as base64 data URLs, no file system cleanup needed
+    // Just delete from database
     await prisma.document.delete({
       where: { id }
     });
