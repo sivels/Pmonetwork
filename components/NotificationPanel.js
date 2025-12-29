@@ -17,21 +17,6 @@ export default function NotificationPanel({ isOpen, onClose, notifications, onUn
     'applications': [],
     'news': []
   };
-        linkType: 'external',
-        externalUrl: '#'
-      },
-      {
-        id: 9,
-        icon: '🎓',
-        title: 'Free Webinar: Advanced PMO Techniques',
-        description: 'Join our expert panel this Friday at 2pm GMT',
-        timestamp: '2 days ago',
-        unread: false,
-        linkType: 'external',
-        externalUrl: '#'
-      }
-    ]
-  };
 
   const [notifState, setNotifState] = useState(initialNotifications);
 
