@@ -16,13 +16,9 @@ export default function DocumentsSection({ profile, onUpdate }) {
       const res = await fetch('/api/candidate/documents');
       if (res.ok) {
         const data = await res.json();
-        console.log('Documents fetched:', data);
         // API returns array directly
         const docs = Array.isArray(data) ? data : (data.documents || []);
-        console.log('Setting documents:', docs);
         setDocuments(docs);
-      } else {
-        console.error('Failed to fetch documents:', res.status);
       }
     } catch (err) {
       console.error('Failed to fetch documents:', err);
@@ -156,10 +152,6 @@ export default function DocumentsSection({ profile, onUpdate }) {
 
   const cvDocuments = documents.filter(d => d.documentType === 'cv');
   const otherDocuments = documents.filter(d => d.documentType !== 'cv');
-
-  console.log('All documents:', documents);
-  console.log('CV documents:', cvDocuments);
-  console.log('Other documents:', otherDocuments);
 
   if (loading) {
     return <div className="section-loading">Loading documents...</div>;
