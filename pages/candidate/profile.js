@@ -300,7 +300,7 @@ export default function CandidateProfilePage() {
           </section>
 
           <section className="mb-6 bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Documents</h2>
+            <h2 className="text-xl font-semibold mb-4">Documents & CVs</h2>
             <p className="mb-4 text-sm text-gray-600">Upload CVs, certificates, and other professional documents</p>
             
             <div className="mb-4">
@@ -315,35 +315,80 @@ export default function CandidateProfilePage() {
             {documents.length === 0 ? (
               <p className="text-gray-500 text-sm">No documents uploaded yet</p>
             ) : (
-              <div className="space-y-2">
-                {documents.map((doc) => (
-                  <div key={doc.id} className="flex items-center justify-between border rounded p-3 hover:bg-gray-50">
-                    <div className="flex items-center gap-3 flex-1">
-                      <span className="text-2xl">{getFileIcon(doc.filename)}</span>
-                      <div className="flex-1">
-                        <div className="font-medium">{doc.title || doc.filename}</div>
-                        <div className="text-sm text-gray-500">
-                          {doc.documentType} • {formatFileSize(doc.fileSize)}
+              <div className="space-y-4">
+                {/* CVs Section */}
+                {documents.filter(d => d.documentType === 'cv').length > 0 && (
+                  <div>
+                    <h3 className="font-semibold text-sm text-gray-700 mb-2">📄 CVs & Resumes</h3>
+                    <div className="space-y-2">
+                      {documents.filter(d => d.documentType === 'cv').map((doc) => (
+                        <div key={doc.id} className="flex items-center justify-between border-2 border-blue-200 bg-blue-50 rounded p-3 hover:bg-blue-100">
+                          <div className="flex items-center gap-3 flex-1">
+                            <span className="text-2xl">{getFileIcon(doc.filename)}</span>
+                            <div className="flex-1">
+                              <div className="font-medium">{doc.title || doc.filename}</div>
+                              <div className="text-sm text-gray-600">
+                                CV/Resume • {formatFileSize(doc.fileSize)}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <a 
+                              href={doc.url} 
+                              download={doc.filename}
+                              className="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1 rounded border border-blue-600 hover:bg-blue-50"
+                            >
+                              Download
+                            </a>
+                            <button 
+                              onClick={() => deleteDocument(doc.id)}
+                              className="text-red-600 hover:text-red-800 text-sm font-medium px-3 py-1 rounded border border-red-600 hover:bg-red-50"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <a 
-                        href={doc.url} 
-                        download={doc.filename}
-                        className="text-blue-600 hover:text-blue-800 text-sm"
-                      >
-                        Download
-                      </a>
-                      <button 
-                        onClick={() => deleteDocument(doc.id)}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Delete
-                      </button>
+                      ))}
                     </div>
                   </div>
-                ))}
+                )}
+
+                {/* Other Documents Section */}
+                {documents.filter(d => d.documentType !== 'cv').length > 0 && (
+                  <div>
+                    <h3 className="font-semibold text-sm text-gray-700 mb-2">📎 Other Documents</h3>
+                    <div className="space-y-2">
+                      {documents.filter(d => d.documentType !== 'cv').map((doc) => (
+                        <div key={doc.id} className="flex items-center justify-between border rounded p-3 hover:bg-gray-50">
+                          <div className="flex items-center gap-3 flex-1">
+                            <span className="text-2xl">{getFileIcon(doc.filename)}</span>
+                            <div className="flex-1">
+                              <div className="font-medium">{doc.title || doc.filename}</div>
+                              <div className="text-sm text-gray-500">
+                                {doc.documentType} • {formatFileSize(doc.fileSize)}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <a 
+                              href={doc.url} 
+                              download={doc.filename}
+                              className="text-blue-600 hover:text-blue-800 text-sm"
+                            >
+                              Download
+                            </a>
+                            <button 
+                              onClick={() => deleteDocument(doc.id)}
+                              className="text-red-600 hover:text-red-800 text-sm"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
