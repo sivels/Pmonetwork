@@ -114,45 +114,27 @@ export default function Register() {
       return false;
     }
 
-    if (!termsAccepted) {
-      setMessage('You must accept the Terms & Conditions');
-      return false;
-    }
-
     if (!gdprConsent) {
-      setMessage('You must provide GDPR consent to proceed');
+      setMessage('You must provide consent to proceed');
       return false;
     }
 
     // Candidate validation
     if (userType === 'CANDIDATE') {
+      if (!termsAccepted) {
+        setMessage('You must accept the Terms & Conditions');
+        return false;
+      }
       if (!firstName || !lastName || !jobTitle) {
         setMessage('Please fill in all required candidate fields');
         return false;
       }
     }
 
-    // Employer validation
+    // Employer contact validation
     if (userType === 'EMPLOYER') {
       if (!companyName || !contactName || !contactPhone) {
-        setMessage('Please fill in all required company fields');
-        return false;
-      }
-      // Payment validation for trial start
-      if (!cardholderName || !cardNumber || !expiryDate || !cvv) {
-        setMessage('Please complete payment details to start your free trial');
-        return false;
-      }
-      if (cardNumber.replace(/\s/g, '').length < 15) {
-        setMessage('Please enter a valid card number');
-        return false;
-      }
-      if (!/^\d{2}\/\d{2}$/.test(expiryDate)) {
-        setMessage('Expiry date must be in MM/YY format');
-        return false;
-      }
-      if (!/^\d{3,4}$/.test(cvv)) {
-        setMessage('Please enter a valid CVV');
+        setMessage('Please fill in all required fields');
         return false;
       }
     }
@@ -190,15 +172,9 @@ export default function Register() {
           companyName,
           contactName,
           contactPhone,
-          website,
+          message: website,
           industry,
-          hiresExpected,
-          payment: {
-            cardholderName,
-            cardLast4: cardNumber.slice(-4),
-            expiryDate
-            // In production, use Stripe.js to tokenize card before sending
-          }
+          hiresExpected
         })
       };
 
@@ -220,7 +196,7 @@ export default function Register() {
       setMessage(
         userType === 'CANDIDATE' 
           ? 'Registration successful! Check your email to verify your account.' 
-          : 'Your free trial has started! Check your email for confirmation. Your $1,000/month subscription will begin after 7 days.'
+          : 'Thank you for your enquiry! Our team will be in touch with you shortly to discuss your hiring needs.'
       );
       
       // Redirect after success
@@ -507,22 +483,20 @@ export default function Register() {
                 </button>
               </div>
             ) : (
-              // EMPLOYER FORM
+              // EMPLOYER CONTACT FORM
               <div className="form-section employer-form animate-fadeIn">
-                <h2 className="form-section-title">Start Your 7-Day Free Trial</h2>
+                <h2 className="form-section-title">Interested in Hiring PMO Talent?</h2>
                 <p className="trial-info">
-                  Enter your details and payment information to start your free trial. Your $1,000/month subscription will begin automatically after 7 days.
+                  We'd love to hear from you! Please fill out the contact form below and our team will get in touch to discuss how PMO Network can help you find the perfect candidates.
                 </p>
 
-                <h3 className="subsection-title">Company Information</h3>
-
                 <div className="form-group">
-                  <label htmlFor="companyName">Company Name <span className="required">*</span></label>
+                  <label htmlFor="contactName">Your Name <span className="required">*</span></label>
                   <input
                     type="text"
-                    id="companyName"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
+                    id="contactName"
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
                     required
                     className="form-input"
                   />
@@ -540,187 +514,68 @@ export default function Register() {
                   />
                 </div>
 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="contactName">Contact Name <span className="required">*</span></label>
-                    <input
-                      type="text"
-                      id="contactName"
-                      value={contactName}
-                      onChange={(e) => setContactName(e.target.value)}
-                      required
-                      className="form-input"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="contactPhone">Contact Phone <span className="required">*</span></label>
-                    <input
-                      type="tel"
-                      id="contactPhone"
-                      value={contactPhone}
-                      onChange={(e) => setContactPhone(e.target.value)}
-                      required
-                      className="form-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="password">Password <span className="required">*</span></label>
-                    <input
-                      type="password"
-                      id="password"
-                      value={password}
-                      onChange={(e) => handlePasswordChange(e.target.value)}
-                      required
-                      className="form-input"
-                      minLength={8}
-                    />
-                    {password && (
-                      <div className={`password-strength ${passwordStrength}`}>
-                        <div className="strength-bar"></div>
-                        <span className="strength-label">{passwordStrength}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="confirmPassword">Confirm Password <span className="required">*</span></label>
-                    <input
-                      type="password"
-                      id="confirmPassword"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                      className="form-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="website">Company Website</label>
-                    <input
-                      type="url"
-                      id="website"
-                      value={website}
-                      onChange={(e) => setWebsite(e.target.value)}
-                      placeholder="https://yourcompany.com"
-                      className="form-input"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="industry">Industry / Sector</label>
-                    <input
-                      type="text"
-                      id="industry"
-                      value={industry}
-                      onChange={(e) => setIndustry(e.target.value)}
-                      placeholder="e.g., Financial Services, Technology"
-                      className="form-input"
-                    />
-                  </div>
+                <div className="form-group">
+                  <label htmlFor="companyName">Company Name <span className="required">*</span></label>
+                  <input
+                    type="text"
+                    id="companyName"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    required
+                    className="form-input"
+                  />
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="hiresExpected">Monthly Expected Hires <span className="optional">(optional)</span></label>
+                  <label htmlFor="contactPhone">Phone Number <span className="required">*</span></label>
+                  <input
+                    type="tel"
+                    id="contactPhone"
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value)}
+                    required
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="industry">Industry / Sector <span className="optional">(optional)</span></label>
+                  <input
+                    type="text"
+                    id="industry"
+                    value={industry}
+                    onChange={(e) => setIndustry(e.target.value)}
+                    placeholder="e.g., Financial Services, Technology"
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="hiresExpected">Hiring Needs <span className="optional">(optional)</span></label>
                   <select
                     id="hiresExpected"
                     value={hiresExpected}
                     onChange={(e) => setHiresExpected(e.target.value)}
                     className="form-input"
                   >
-                    <option value="">Select monthly estimate</option>
-                    <option value="1-3">1–3 / month</option>
-                    <option value="4-10">4–10 / month</option>
-                    <option value="11-20">11–20 / month</option>
-                    <option value="20+">20+ / month</option>
+                    <option value="">Select your hiring needs</option>
+                    <option value="1-3">1–3 positions</option>
+                    <option value="4-10">4–10 positions</option>
+                    <option value="11-20">11–20 positions</option>
+                    <option value="20+">20+ positions</option>
                   </select>
-                  <p className="field-hint">Used to tailor candidate recommendations to your hiring velocity.</p>
-                </div>
-
-                <h3 className="subsection-title payment-section-title">Payment Information</h3>
-                <div className="payment-notice">
-                  <svg className="info-icon" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                  <p>Your card will not be charged during the 7-day free trial. Subscription billing begins automatically at $1,000/month after trial period.</p>
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="cardholderName">Cardholder Name <span className="required">*</span></label>
-                  <input
-                    type="text"
-                    id="cardholderName"
-                    value={cardholderName}
-                    onChange={(e) => setCardholderName(e.target.value)}
-                    required
+                  <label htmlFor="message">Message <span className="optional">(optional)</span></label>
+                  <textarea
+                    id="message"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                    placeholder="Tell us about your hiring requirements..."
+                    rows="5"
                     className="form-input"
                   />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="cardNumber">Card Number <span className="required">*</span></label>
-                  <input
-                    type="text"
-                    id="cardNumber"
-                    value={cardNumber}
-                    onChange={(e) => setCardNumber(e.target.value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim())}
-                    placeholder="1234 5678 9012 3456"
-                    maxLength={19}
-                    required
-                    className="form-input"
-                  />
-                  <p className="field-hint">In production, this will use Stripe.js for secure tokenization</p>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="expiryDate">Expiry Date <span className="required">*</span></label>
-                    <input
-                      type="text"
-                      id="expiryDate"
-                      value={expiryDate}
-                      onChange={(e) => {
-                        let val = e.target.value.replace(/\D/g, '');
-                        if (val.length >= 2) val = val.slice(0, 2) + '/' + val.slice(2, 4);
-                        setExpiryDate(val);
-                      }}
-                      placeholder="MM/YY"
-                      maxLength={5}
-                      required
-                      className="form-input"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="cvv">CVV <span className="required">*</span></label>
-                    <input
-                      type="text"
-                      id="cvv"
-                      value={cvv}
-                      onChange={(e) => setCvv(e.target.value.replace(/\D/g, ''))}
-                      placeholder="123"
-                      maxLength={4}
-                      required
-                      className="form-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group checkbox-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={termsAccepted}
-                      onChange={(e) => setTermsAccepted(e.target.checked)}
-                      required
-                    />
-                    <span>I accept the <a href="/terms" target="_blank">Terms & Conditions</a> <span className="required">*</span></span>
-                  </label>
                 </div>
 
                 <div className="form-group checkbox-group">
@@ -731,7 +586,7 @@ export default function Register() {
                       onChange={(e) => setGdprConsent(e.target.checked)}
                       required
                     />
-                    <span>I consent to PMO Network processing my data as outlined in the <a href="/privacy" target="_blank">Privacy Policy</a> <span className="required">*</span></span>
+                    <span>I consent to PMO Network contacting me about their services <span className="required">*</span></span>
                   </label>
                 </div>
 
@@ -746,9 +601,9 @@ export default function Register() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Starting Trial...
+                      Sending...
                     </>
-                  ) : 'Start Free Trial'}
+                  ) : 'Submit Enquiry'}
                 </button>
               </div>
             )}
