@@ -40,13 +40,19 @@ export default function Header() {
           <li><Link href="/faq" aria-current={path === '/faq' ? 'page' : undefined}>FAQ</Link></li>
           <li><Link href="/contact" aria-current={path === '/contact' ? 'page' : undefined}>Contact</Link></li>
         </ul>
-        {status === 'authenticated' && (
+        {status === 'authenticated' ? (
           <ul className="nav-list auth-list">
             <li>
               <Link href={session.user.role?.toLowerCase() === 'employer' ? '/dashboard/employer' : '/dashboard/candidate'}>Dashboard</Link>
             </li>
             <li>
               <button type="button" onClick={()=>signOut({ callbackUrl: '/' })} className="logout-btn">Logout</button>
+            </li>
+          </ul>
+        ) : (
+          <ul className="nav-list auth-list">
+            <li>
+              <Link href="/auth/login" className="sign-in-btn">Sign In</Link>
             </li>
           </ul>
         )}
