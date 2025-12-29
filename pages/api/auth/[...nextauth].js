@@ -48,7 +48,8 @@ const AzureADProvider = {
 };
 
 export const authOptions = {
-  adapter: PrismaAdapter(prisma),
+  // Don't use adapter with JWT strategy - they conflict
+  // adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       name: 'Email & Password',
@@ -89,6 +90,17 @@ export const authOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
   useSecureCookies: process.env.NODE_ENV === 'production',
+  cookies: {
+    sessionToken: {
+      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production'
+      }
+    }
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
