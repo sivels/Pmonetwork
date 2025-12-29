@@ -16,8 +16,13 @@ export default function DocumentsSection({ profile, onUpdate }) {
       const res = await fetch('/api/candidate/documents');
       if (res.ok) {
         const data = await res.json();
+        console.log('Documents fetched:', data);
         // API returns array directly
-        setDocuments(Array.isArray(data) ? data : (data.documents || []));
+        const docs = Array.isArray(data) ? data : (data.documents || []);
+        console.log('Setting documents:', docs);
+        setDocuments(docs);
+      } else {
+        console.error('Failed to fetch documents:', res.status);
       }
     } catch (err) {
       console.error('Failed to fetch documents:', err);
