@@ -176,6 +176,10 @@ export default function DocumentsSection({ profile, onUpdate }) {
           <div className={`alert alert-${message.type}`}>
             {message.text}
           </div>
+        )}
+
+        {/* CV Upload Section */}
+        <div className="cv-upload-section">
           <h3 className="subsection-title">Your CV</h3>
           <p className="subsection-description">
             Keep your CV up to date. Upload new versions anytime - we'll keep a history.
