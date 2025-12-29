@@ -141,17 +141,36 @@ export const authOptions = {
 
 export default async function handler(req, res) {
   try {
-    // Auto-detect NEXTAUTH_URL from request if not set
-    if (!process.env.NEXTAUTH_URL) {
-      const protocol = req.headers['x-forwarded-proto'] || 'http';
-      const host = req.headers['x-forwarded-host'] || req.headers.host;
-      process.env.NEXTAUTH_URL = `${protocol}://${host}`;
-      console.log('Auto-detected NEXTAUTH_URL:', process.env.NEXTAUTH_URL);
+    // Set NEXTAUTH_URL for this request if not already set
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
+    const host = req.headers['x-forwarded-host'] || req.headers.host;
+    const baseUrl = `${protocol}://${host}`;
+    
+    // Create request-specific authOptions
+    const requestAuthOptions = {
+      ...authOptions,
+      ...(process.env.NEXTAUTH_URL ? {} : { 
+        // Add URL if not set in env
+        useSecureCookies: protocol === 'https',
+      })
+    };
+    
+    // Temporarily set for this request
+    const originalUrl = process.env.NEXTAUTH_URL;
+    if (!originalUrl) {
+      process.env.NEXTAUTH_URL = baseUrl;
     }
     
-    return await NextAuth(req, res, authOptions);
+    const result = await NextAuth(req, res, requestAuthOptions);
+    
+    // Restore original
+    if (!originalUrl) {
+      delete process.env.NEXTAUTH_URL;
+    }
+    
+    return result;
   } catch (error) {
     console.error('NextAuth handler error:', error);
-    res.status(500).json({ error: 'Internal server error', details: error.message });
+    return res.status(500).json({ error: 'Internal server error', details: error.message, stack: error.stack });
   }
 }
