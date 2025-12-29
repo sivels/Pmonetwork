@@ -1,4 +1,9 @@
 {
+  "build": {
+    "env": {
+      "ENABLE_EXPERIMENTAL_COREPACK": "0"
+    }
+  },
   "functions": {
     "pages/api/**/*.js": {
       "maxDuration": 10
