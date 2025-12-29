@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   const migrationSecret = process.env.MIGRATION_SECRET || 'dev-only';
   
   if (req.query.secret !== migrationSecret) {
-    return res.status(403).json({ error: 'Unauthorized' });
+    return res.status(403).json({ error: 'Unauthorized - migration endpoint' });
   }
 
   let pool;
