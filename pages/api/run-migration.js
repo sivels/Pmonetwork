@@ -16,25 +16,47 @@ export default async function handler(req, res) {
     const migrationPath = join(process.cwd(), 'prisma', 'migrations', '0_init', 'migration.sql');
     const migrationSQL = readFileSync(migrationPath, 'utf-8');
     
-    // Split SQL into individual statements
-    const statements = migrationSQL
-      .split(';')
+    // Split SQL by semicolons, but keep multiline statements together
+    // Remove comments first
+    const cleanSQL = migrationSQL
+      .split('\n')
+      .filter(line => !line.trim().startsWith('--'))
+      .join('\n');
+    
+    // Split by semicolon followed by newline (statement boundary)
+    const statements = cleanSQL
+      .split(/;\s*\n/)
       .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'));
+      .filter(s => s.length > 0);
     
     const results = [];
     
     // Execute each statement
     for (const statement of statements) {
+      if (!statement || statement.length < 5) continue;
+      
       try {
         await prisma.$executeRawUnsafe(statement);
-        results.push({ success: true, statement: statement.substring(0, 50) + '...' });
+        results.push({ 
+          success: true, 
+          type: statement.split(' ')[0],
+          preview: statement.substring(0, 60) + '...' 
+        });
       } catch (err) {
         // Ignore "already exists" errors
-        if (err.message.includes('already exists')) {
-          results.push({ success: true, statement: statement.substring(0, 50) + '...', note: 'Already exists' });
+        if (err.message.includes('already exists') || err.code === '42P07') {
+          results.push({ 
+            success: true, 
+            type: statement.split(' ')[0],
+            preview: statement.substring(0, 60) + '...', 
+            note: 'Already exists' 
+          });
         } else {
-          results.push({ success: false, statement: statement.substring(0, 50) + '...', error: err.message });
+          results.push({ 
+            success: false, 
+            preview: statement.substring(0, 60) + '...', 
+            error: err.message 
+          });
         }
       }
     }
