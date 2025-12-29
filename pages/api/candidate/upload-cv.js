@@ -59,6 +59,10 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'No CV file provided' });
       }
 
+      // Get custom title from fields if provided
+      const customTitle = fields.title?.[0] || fields.title;
+      const cvTitle = customTitle || cvFile.originalFilename || 'CV';
+
       // Read file and convert to base64
       const fileBuffer = fs.readFileSync(cvFile.filepath);
       const base64Data = fileBuffer.toString('base64');
@@ -78,7 +82,7 @@ export default async function handler(req, res) {
       await prisma.document.create({
         data: {
           candidateId,
-          title: cvFile.originalFilename || 'CV',
+          title: cvTitle,
           filename: cvFile.originalFilename || 'cv.pdf',
           url: dataUrl,
           fileSize: cvFile.size,

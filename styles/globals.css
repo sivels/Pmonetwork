@@ -2908,6 +2908,46 @@ textarea { min-height: 120px; }
   margin-bottom: 24px;
 }
 
+.cv-title-input-wrapper {
+  margin-bottom: 20px;
+}
+
+.cv-title-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  margin-bottom: 8px;
+  text-align: left;
+}
+
+.cv-title-input {
+  width: 100%;
+  max-width: 500px;
+  padding: 12px 16px;
+  font-size: 15px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  transition: all 0.2s;
+}
+
+.cv-title-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.cv-title-input:disabled {
+  background: #f1f5f9;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.cv-title-input::placeholder {
+  color: #94a3b8;
+}
+
 .upload-hint {
   font-size: 13px;
   color: #94a3b8;

@@ -5,6 +5,7 @@ export default function DocumentsSection({ profile, onUpdate }) {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState(null);
+  const [cvTitle, setCvTitle] = useState('');
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -82,6 +83,9 @@ export default function DocumentsSection({ profile, onUpdate }) {
     try {
       const formData = new FormData();
       formData.append('cv', file);
+      if (cvTitle.trim()) {
+        formData.append('title', cvTitle.trim());
+      }
 
       const res = await fetch('/api/candidate/upload-cv', {
         method: 'POST',
@@ -93,6 +97,7 @@ export default function DocumentsSection({ profile, onUpdate }) {
         onUpdate({ ...profile, cvUrl: data.cvUrl });
         // Also add to documents list
         fetchDocuments();
+        setCvTitle(''); // Clear the title input
         setMessage({ type: 'success', text: 'CV uploaded successfully!' });
       } else {
         const error = await res.json();
@@ -171,16 +176,26 @@ export default function DocumentsSection({ profile, onUpdate }) {
           <div className={`alert alert-${message.type}`}>
             {message.text}
           </div>
-        )}
-
-        {/* CV Upload Section */}
-        <div className="cv-upload-section">
           <h3 className="subsection-title">Your CV</h3>
           <p className="subsection-description">
             Keep your CV up to date. Upload new versions anytime - we'll keep a history.
           </p>
           
           <div className="cv-upload-area">
+            <div className="cv-title-input-wrapper">
+              <label htmlFor="cv-title-input" className="cv-title-label">
+                CV Title (Optional)
+              </label>
+              <input
+                type="text"
+                id="cv-title-input"
+                value={cvTitle}
+                onChange={(e) => setCvTitle(e.target.value)}
+                placeholder="e.g., Senior Developer CV 2025"
+                className="cv-title-input"
+                disabled={uploading}
+              />
+            </div>
             <input
               type="file"
               accept=".pdf,.doc,.docx"
@@ -190,6 +205,10 @@ export default function DocumentsSection({ profile, onUpdate }) {
               disabled={uploading}
             />
             <label htmlFor="cv-upload-input" className={`btn-primary-lg ${uploading ? 'btn-disabled' : ''}`}>
+              {uploading ? 'Uploading...' : profile?.cvUrl ? 'Upload New CV Version' : 'Upload CV'}
+            </label>
+            <p className="upload-hint">PDF, DOC, or DOCX • Max 10MB</p>
+          </div>el htmlFor="cv-upload-input" className={`btn-primary-lg ${uploading ? 'btn-disabled' : ''}`}>
               {uploading ? 'Uploading...' : profile?.cvUrl ? 'Upload New CV Version' : 'Upload CV'}
             </label>
             <p className="upload-hint">PDF, DOC, or DOCX • Max 10MB</p>
