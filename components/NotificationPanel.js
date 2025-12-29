@@ -13,91 +13,10 @@ export default function NotificationPanel({ isOpen, onClose, notifications, onUn
   ];
 
   const initialNotifications = {
-    'job-alerts': [
-      {
-        id: 1,
-        icon: '💼',
-        title: 'New PMO Role: Senior Project Manager',
-        description: 'Financial Services, London - £75k-£90k - Remote available',
-        timestamp: '2 hours ago',
-        unread: true,
-        jobId: 'j1', // Link to specific job
-        linkType: 'job'
-      },
-      {
-        id: 2,
-        icon: '🎯',
-        title: '5 New Jobs Match Your Profile',
-        description: 'PMO Analyst roles in FinTech sector with hybrid working',
-        timestamp: '5 hours ago',
-        unread: true,
-        linkType: 'search',
-        searchParams: '?sector=fintech&workMode=hybrid'
-      },
-      {
-        id: 3,
-        icon: '⭐',
-        title: 'Premium Job Alert',
-        description: 'Head of PMO - Leading investment bank seeking leadership',
-        timestamp: '1 day ago',
-        unread: false,
-        jobId: 'j2',
-        linkType: 'job'
-      }
-    ],
-    'applications': [
-      {
-        id: 4,
-        icon: '✅',
-        title: 'Application Viewed',
-        description: 'HSBC reviewed your application for PMO Lead position',
-        timestamp: '1 hour ago',
-        unread: true,
-        jobId: 'j1',
-        applicationId: 'app1',
-        linkType: 'application'
-      },
-      {
-        id: 5,
-        icon: '📞',
-        title: 'Interview Request',
-        description: 'Barclays wants to schedule an interview - 3 slots available',
-        timestamp: '3 hours ago',
-        unread: true,
-        jobId: 'j2',
-        applicationId: 'app2',
-        linkType: 'application'
-      },
-      {
-        id: 6,
-        icon: '📄',
-        title: 'Application Submitted',
-        description: 'Your application for Senior PMO Analyst has been received',
-        timestamp: '2 days ago',
-        unread: false,
-        jobId: 'j3',
-        applicationId: 'app3',
-        linkType: 'application'
-      }
-    ],
-    'news': [
-      {
-        id: 7,
-        icon: '🚀',
-        title: 'Platform Update: New Features',
-        description: 'Video interviews, skill assessments, and enhanced matching now live',
-        timestamp: '4 hours ago',
-        unread: true,
-        linkType: 'external',
-        externalUrl: '#'
-      },
-      {
-        id: 8,
-        icon: '📊',
-        title: 'PMO Market Insights: November 2025',
-        description: 'Day rates increase 8% year-on-year, highest demand in FinTech',
-        timestamp: '1 day ago',
-        unread: false,
+    'job-alerts': [],
+    'applications': [],
+    'news': []
+  };
         linkType: 'external',
         externalUrl: '#'
       },
