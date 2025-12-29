@@ -206,9 +206,9 @@ a:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--pmo-blue);
+  background: var(--pmo-purple);
   color: #fff;
-  border: 2px solid var(--pmo-blue);
+  border: 2px solid var(--pmo-purple);
   padding: 8px 12px;
   border-radius: 8px;
   font-size: 18px;
@@ -216,10 +216,10 @@ a:focus-visible {
   transition: all 0.2s;
 }
 .mobile-nav-toggle:hover {
-  background: var(--pmo-blue-dark);
-  border-color: var(--pmo-blue-dark);
+  background: var(--pmo-purple-dark);
+  border-color: var(--pmo-purple-dark);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(21, 94, 168, 0.3);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
 }
 .mobile-nav-toggle:focus-visible { outline: 2px solid var(--pmo-purple); outline-offset: 2px; }
 
