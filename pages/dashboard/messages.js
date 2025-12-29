@@ -36,32 +36,10 @@ export default function CandidateMessages({ profile, userEmail }) {
   const [reportedConversations, setReportedConversations] = useState(new Set());
 
   // Placeholder conversations data (stateful for unread updates)
-  const [conversations, setConversations] = useState([
-    { id: 'c1', name: 'Jane Smith', company: 'AlphaPMO', jobTitle: 'PMO Analyst', lastMessage: 'Thanks for sharing your CV, we will review and get back to you shortly.', timestamp: Date.now() - 1000 * 60 * 5, unread: 2, type: 'company', avatarUrl: '/images/avatar-placeholder.svg', applicationId: 'app1' },
-    { id: 'c2', name: 'PMO Support', company: 'Platform Support', jobTitle: null, lastMessage: 'Your application status changed to Shortlisted.', timestamp: Date.now() - 1000 * 60 * 60, unread: 0, type: 'support', avatarUrl: '/images/avatar-placeholder.svg' },
-    { id: 'c3', name: 'Michael Lee', company: 'DeltaCorp', jobTitle: 'Senior PMO Specialist', lastMessage: 'Can you confirm availability for next week?', timestamp: Date.now() - 1000 * 60 * 90, unread: 1, type: 'company', avatarUrl: '/images/avatar-placeholder.svg', applicationId: 'app2' },
-    { id: 'c4', name: 'Recruiter Bot', company: 'System', jobTitle: null, lastMessage: 'System message: Interview scheduled for 12 Dec 10:00 AM GMT.', timestamp: Date.now() - 1000 * 60 * 120, unread: 0, type: 'system', avatarUrl: '/images/avatar-placeholder.svg' }
-  ]);
+  const [conversations, setConversations] = useState([]);
 
-  // Placeholder messages per conversation
-  const messagesMap = {
-    c1: [
-      { id: 'm1', sender: 'Jane Smith', senderType: 'company', text: 'Hi, thanks for applying. Can you send your latest CV?', timestamp: Date.now() - 1000 * 60 * 60 * 5, readAt: Date.now() - 1000 * 60 * 60 * 4 },
-      { id: 'm2', sender: 'You', senderType: 'candidate', text: 'Sure, just uploaded it.', timestamp: Date.now() - 1000 * 60 * 60 * 4, readAt: Date.now() - 1000 * 60 * 60 * 3 },
-      { id: 'm3', sender: 'Jane Smith', senderType: 'company', text: 'Thanks for sharing your CV, we will review and get back to you shortly.', timestamp: Date.now() - 1000 * 60 * 5, readAt: null }
-    ],
-    c2: [
-      { id: 'm4', sender: 'System', senderType: 'system', text: 'Application status updated to Shortlisted.', timestamp: Date.now() - 1000 * 60 * 60, system: true },
-      { id: 'm5', sender: 'PMO Support', senderType: 'support', text: 'Let us know if you have any questions about next steps.', timestamp: Date.now() - 1000 * 60 * 55 }
-    ],
-    c3: [
-      { id: 'm6', sender: 'Michael Lee', senderType: 'company', text: 'We liked your background. Are you available next week for a quick call?', timestamp: Date.now() - 1000 * 60 * 100 },
-      { id: 'm7', sender: 'You', senderType: 'candidate', text: 'Yes, Wednesday or Thursday morning works.', timestamp: Date.now() - 1000 * 60 * 95 }
-    ],
-    c4: [
-      { id: 'm8', sender: 'System', senderType: 'system', text: 'Interview scheduled for 12 Dec 10:00 AM GMT.', timestamp: Date.now() - 1000 * 60 * 120, system: true }
-    ]
-  };
+  // Messages per conversation
+  const messagesMap = {};
 
   // Publish unread count to candidate header (localStorage + custom event)
   useEffect(() => {
