@@ -7,10 +7,13 @@ export default function CandidateProfilePage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [documents, setDocuments] = useState([]);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   
 
   useEffect(() => {
     fetchProfile();
+    fetchDocuments();
   }, []);
 
   async function fetchProfile() {
@@ -23,6 +26,18 @@ export default function CandidateProfilePage() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchDocuments() {
+    try {
+      const res = await fetch('/api/candidate/documents');
+      if (res.ok) {
+        const data = await res.json();
+        setDocuments(Array.isArray(data) ? data : (data.documents || []));
+      }
+    } catch (err) {
+      console.error('Failed to fetch documents:', err);
     }
   }
 
@@ -89,6 +104,80 @@ export default function CandidateProfilePage() {
       setLoading(false);
     }
   }
+
+  async function handleDocumentUpload(e, category) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File must be less than 10MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('category', category);
+      formData.append('documentName', file.name);
+
+      const res = await fetch('/api/candidate/documents/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (res.ok) {
+        await fetchDocuments();
+        alert('Document uploaded successfully');
+        setShowUploadModal(false);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Upload failed');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function deleteDocument(docId) {
+    if (!confirm('Are you sure you want to delete this document?')) return;
+    
+    try {
+      const res = await fetch('/api/candidate/documents', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: docId })
+      });
+
+      if (res.ok) {
+        setDocuments(docs => docs.filter(d => d.id !== docId));
+        alert('Document deleted');
+      } else {
+        alert('Delete failed');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Delete failed');
+    }
+  }
+
+  const getFileIcon = (filename) => {
+    const ext = filename?.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') return '📕';
+    if (['doc', 'docx'].includes(ext)) return '📘';
+    if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) return '🖼️';
+    return '📄';
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!bytes) return 'Unknown';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
 
   return (
     <div className="container">
@@ -208,6 +297,106 @@ export default function CandidateProfilePage() {
                 setProfile((p) => ({ ...(p || {}), projects: [ ...(p?.projects||[]), { title: '', description: '' } ] }));
               }}>Add Project</button>
             </div>
+          </section>
+
+          <section className="mb-6 bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">Documents</h2>
+            <p className="mb-4 text-sm text-gray-600">Upload CVs, certificates, and other professional documents</p>
+            
+            <div className="mb-4">
+              <button 
+                className="btn btn-primary"
+                onClick={() => setShowUploadModal(true)}
+              >
+                + Upload Document
+              </button>
+            </div>
+
+            {documents.length === 0 ? (
+              <p className="text-gray-500 text-sm">No documents uploaded yet</p>
+            ) : (
+              <div className="space-y-2">
+                {documents.map((doc) => (
+                  <div key={doc.id} className="flex items-center justify-between border rounded p-3 hover:bg-gray-50">
+                    <div className="flex items-center gap-3 flex-1">
+                      <span className="text-2xl">{getFileIcon(doc.filename)}</span>
+                      <div className="flex-1">
+                        <div className="font-medium">{doc.title || doc.filename}</div>
+                        <div className="text-sm text-gray-500">
+                          {doc.documentType} • {formatFileSize(doc.fileSize)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <a 
+                        href={doc.url} 
+                        download={doc.filename}
+                        className="text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        Download
+                      </a>
+                      <button 
+                        onClick={() => deleteDocument(doc.id)}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {showUploadModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                  <h3 className="text-lg font-semibold mb-4">Upload Document</h3>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Document Type
+                    </label>
+                    <select 
+                      id="upload-category" 
+                      className="w-full border rounded p-2"
+                      defaultValue="professional"
+                    >
+                      <option value="cv">CV/Resume</option>
+                      <option value="professional">Professional Certificate</option>
+                      <option value="identity">Identity Document</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Select File
+                    </label>
+                    <input 
+                      type="file" 
+                      onChange={(e) => {
+                        const category = document.getElementById('upload-category').value;
+                        handleDocumentUpload(e, category);
+                      }}
+                      disabled={uploading}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Max 10MB</p>
+                    {uploading && <p className="text-sm text-blue-600 mt-2">Uploading...</p>}
+                  </div>
+
+                  <div className="flex gap-2 justify-end">
+                    <button 
+                      onClick={() => setShowUploadModal(false)}
+                      className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                      disabled={uploading}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
 
         </div>
