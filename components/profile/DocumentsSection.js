@@ -212,10 +212,6 @@ export default function DocumentsSection({ profile, onUpdate }) {
               {uploading ? 'Uploading...' : profile?.cvUrl ? 'Upload New CV Version' : 'Upload CV'}
             </label>
             <p className="upload-hint">PDF, DOC, or DOCX • Max 10MB</p>
-          </div>el htmlFor="cv-upload-input" className={`btn-primary-lg ${uploading ? 'btn-disabled' : ''}`}>
-              {uploading ? 'Uploading...' : profile?.cvUrl ? 'Upload New CV Version' : 'Upload CV'}
-            </label>
-            <p className="upload-hint">PDF, DOC, or DOCX • Max 10MB</p>
           </div>
 
           {cvDocuments.length > 0 && (
