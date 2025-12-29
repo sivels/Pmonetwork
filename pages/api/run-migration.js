@@ -16,12 +16,34 @@ export default async function handler(req, res) {
     const migrationPath = join(process.cwd(), 'prisma', 'migrations', '0_init', 'migration.sql');
     const migrationSQL = readFileSync(migrationPath, 'utf-8');
     
-    // Execute the SQL
-    await prisma.$executeRawUnsafe(migrationSQL);
+    // Split SQL into individual statements
+    const statements = migrationSQL
+      .split(';')
+      .map(s => s.trim())
+      .filter(s => s.length > 0 && !s.startsWith('--'));
+    
+    const results = [];
+    
+    // Execute each statement
+    for (const statement of statements) {
+      try {
+        await prisma.$executeRawUnsafe(statement);
+        results.push({ success: true, statement: statement.substring(0, 50) + '...' });
+      } catch (err) {
+        // Ignore "already exists" errors
+        if (err.message.includes('already exists')) {
+          results.push({ success: true, statement: statement.substring(0, 50) + '...', note: 'Already exists' });
+        } else {
+          results.push({ success: false, statement: statement.substring(0, 50) + '...', error: err.message });
+        }
+      }
+    }
     
     return res.status(200).json({
       success: true,
-      message: 'Database tables created successfully!'
+      message: 'Migration executed!',
+      statementsExecuted: statements.length,
+      results
     });
   } catch (error) {
     return res.status(500).json({
