@@ -25,7 +25,15 @@ export async function getServerSideProps(ctx) {
       where: { employerId: profile.id },
       orderBy: { createdAt: 'desc' },
       take: 5,
-      include: { _count: { select: { applications: true } } }
+      select: {
+        id: true,
+        title: true,
+        employmentType: true,
+        isRemote: true,
+        createdAt: true,
+        paused: true,
+        _count: { select: { applications: true } }
+      }
     });
     latestJobs = jobs.map(j => ({ 
       id: j.id, 
