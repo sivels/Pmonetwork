@@ -61,3 +61,4 @@ If you see TypeScript errors after adding components:
 - Ensure `tsconfig.json` has `jsx: "react-jsx"` (already set).
 - Run `npm run dev` to regenerate type definitions.
 - Check that `@/components/ui/*` paths resolve correctly in your editor.
+npm run dev

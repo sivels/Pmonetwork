@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Job" ADD COLUMN "isDraft" BOOLEAN NOT NULL DEFAULT false;
