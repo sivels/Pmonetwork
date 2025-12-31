@@ -27,9 +27,10 @@ export default function EmployerJobs() {
   };
 
   const filteredJobs = jobs.filter(job => {
-    if (activeTab === 'published') return !job.isDraft && !job.paused;
-    if (activeTab === 'drafts') return job.isDraft;
-    if (activeTab === 'paused') return job.paused && !job.isDraft;
+    const isDraft = job.isDraft || false;
+    if (activeTab === 'published') return !isDraft && !job.paused;
+    if (activeTab === 'drafts') return isDraft;
+    if (activeTab === 'paused') return job.paused && !isDraft;
     return true; // all
   });
 
@@ -57,19 +58,19 @@ export default function EmployerJobs() {
             className={`tab ${activeTab === 'published' ? 'active' : ''}`}
             onClick={() => setActiveTab('published')}
           >
-            Published ({jobs.filter(j => !j.isDraft && !j.paused).length})
+            Published ({jobs.filter(j => !(j.isDraft || false) && !j.paused).length})
           </button>
           <button 
             className={`tab ${activeTab === 'drafts' ? 'active' : ''}`}
             onClick={() => setActiveTab('drafts')}
           >
-            Drafts ({jobs.filter(j => j.isDraft).length})
+            Drafts ({jobs.filter(j => j.isDraft || false).length})
           </button>
           <button 
             className={`tab ${activeTab === 'paused' ? 'active' : ''}`}
             onClick={() => setActiveTab('paused')}
           >
-            Paused ({jobs.filter(j => j.paused && !j.isDraft).length})
+            Paused ({jobs.filter(j => j.paused && !(j.isDraft || false)).length})
           </button>
           <button 
             className={`tab ${activeTab === 'all' ? 'active' : ''}`}
@@ -100,7 +101,7 @@ export default function EmployerJobs() {
                   <p className="sub">
                     Posted {formatDate(job.createdAt)} 
                     {job.location && ` • ${job.location}`}
-                    {job.isDraft && <span className="draft-badge">Draft</span>}
+                    {(job.isDraft || false) && <span className="draft-badge">Draft</span>}
                     {job.paused && <span className="paused-badge">Paused</span>}
                   </p>
                 </div>
@@ -109,9 +110,9 @@ export default function EmployerJobs() {
                 </div>
                 <div className="actions">
                   <Link href={`/employer/post-job?jobId=${job.id}`} className="btn ghost">
-                    {job.isDraft ? 'Continue Editing' : 'Edit'}
+                    {(job.isDraft || false) ? 'Continue Editing' : 'Edit'}
                   </Link>
-                  {!job.isDraft && !job.paused && (
+                  {!(job.isDraft || false) && !job.paused && (
                     <Link href="/employer/applicants" className="btn">
                       View Applicants
                     </Link>
