@@ -28,25 +28,28 @@ export default async function handler(req, res) {
     try {
       const jobData = req.body;
       
+      // Map form data to schema fields
+      const location = `${jobData.city || ''}${jobData.country ? ', ' + jobData.country : ''}`.trim() || jobData.location || null;
+      const isRemote = jobData.workArrangement === 'Remote' || jobData.workArrangement === 'Hybrid';
+      
       // Create job posting
       const job = await prisma.job.create({
         data: {
           employerId: employerId,
-          title: jobData.jobTitle,
-          department: jobData.department,
-          seniorityLevel: jobData.seniorityLevel,
+          title: jobData.jobTitle || jobData.title,
+          description: jobData.jobSummary || jobData.description,
+          shortDescription: jobData.responsibilities || null,
+          location: location,
           employmentType: jobData.employmentType,
-          workArrangement: jobData.workArrangement,
-          location: `${jobData.city}${jobData.country ? ', ' + jobData.country : ''}`,
-          description: jobData.jobSummary,
-          responsibilities: jobData.responsibilities,
-          requiredSkills: JSON.stringify(jobData.requiredSkills),
-          preferredSkills: JSON.stringify(jobData.preferredSkills),
+          isRemote: isRemote,
+          seniority: jobData.seniorityLevel || jobData.seniority || null,
+          specialism: jobData.department || jobData.specialism || null,
           salaryMin: parseFloat(jobData.salaryMin) || null,
           salaryMax: parseFloat(jobData.salaryMax) || null,
-          benefits: JSON.stringify(jobData.benefits),
-          status: jobData.status || 'draft',
-          postedAt: new Date()
+          currency: jobData.currency || 'GBP',
+          isFeatured: jobData.isFeatured || false,
+          isUrgent: jobData.isUrgent || false,
+          paused: jobData.status === 'paused' || false
         }
       });
 
