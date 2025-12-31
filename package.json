@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "CSS_TRANSFORMER_WASM=1 next dev",
     "build": "prisma generate && CSS_TRANSFORMER_WASM=1 next build",
-    "vercel-build": "prisma generate && CSS_TRANSFORMER_WASM=1 next build",
+    "vercel-build": "prisma migrate deploy && prisma generate && CSS_TRANSFORMER_WASM=1 next build",
     "start": "CSS_TRANSFORMER_WASM=1 next start",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
