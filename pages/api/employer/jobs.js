@@ -32,27 +32,34 @@ export default async function handler(req, res) {
       const location = `${jobData.city || ''}${jobData.country ? ', ' + jobData.country : ''}`.trim() || jobData.location || null;
       const isRemote = jobData.workArrangement === 'Remote' || jobData.workArrangement === 'Hybrid';
       
-      // Create job posting
-      const job = await prisma.job.create({
-        data: {
-          employerId: employerId,
-          title: jobData.jobTitle || jobData.title,
-          description: jobData.jobSummary || jobData.description,
-          shortDescription: jobData.responsibilities || null,
-          location: location,
-          employmentType: jobData.employmentType,
-          isRemote: isRemote,
-          seniority: jobData.seniorityLevel || jobData.seniority || null,
-          specialism: jobData.department || jobData.specialism || null,
-          salaryMin: parseFloat(jobData.salaryMin) || null,
-          salaryMax: parseFloat(jobData.salaryMax) || null,
-          currency: jobData.currency || 'GBP',
-          isFeatured: jobData.isFeatured || false,
-          isUrgent: jobData.isUrgent || false,
-          isDraft: false,
-          paused: jobData.status === 'paused' || false
-        }
-      });
+      // Create job posting data
+      const createData = {
+        employerId: employerId,
+        title: jobData.jobTitle || jobData.title,
+        description: jobData.jobSummary || jobData.description,
+        shortDescription: jobData.responsibilities || null,
+        location: location,
+        employmentType: jobData.employmentType,
+        isRemote: isRemote,
+        seniority: jobData.seniorityLevel || jobData.seniority || null,
+        specialism: jobData.department || jobData.specialism || null,
+        salaryMin: parseFloat(jobData.salaryMin) || null,
+        salaryMax: parseFloat(jobData.salaryMax) || null,
+        currency: jobData.currency || 'GBP',
+        isFeatured: jobData.isFeatured || false,
+        isUrgent: jobData.isUrgent || false,
+        paused: jobData.status === 'paused' || false
+      };
+      
+      // Add isDraft field only if it exists in the database schema
+      try {
+        await prisma.job.findFirst({ where: { id: 'test' }, select: { isDraft: true } });
+        createData.isDraft = false;
+      } catch (e) {
+        // Column doesn't exist yet, skip it
+      }
+      
+      const job = await prisma.job.create({ data: createData });
 
       return res.status(201).json({ success: true, job });
     } catch (error) {

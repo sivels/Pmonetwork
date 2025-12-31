@@ -37,10 +37,18 @@ export default async function handler(req, res) {
         currency: draftData.currency || 'GBP',
         specialism: draftData.department || null,
         seniority: draftData.seniorityLevel || null,
-        isDraft: true,
         paused: false,
         employerId: employerId
       };
+      
+      // Add isDraft field only if it exists in the database schema
+      try {
+        // Test if isDraft column exists by trying to query with it
+        await prisma.job.findFirst({ where: { id: 'test' }, select: { isDraft: true } });
+        jobData.isDraft = true;
+      } catch (e) {
+        // Column doesn't exist yet, skip it
+      }
 
       // Check if updating existing draft
       if (draftData.jobId) {
