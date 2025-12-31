@@ -10,12 +10,19 @@ export default async function handler(req, res) {
   }
 
   const user = await prisma.user.findUnique({
-    where: { email: session.user.email }
+    where: { email: session.user.email },
+    include: { employerEmployerProfile: true }
   });
 
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }
+
+  if (!user.employerEmployerProfile) {
+    return res.status(404).json({ error: 'Employer profile not found' });
+  }
+
+  const employerId = user.employerEmployerProfile.id;
 
   if (req.method === 'POST') {
     try {
@@ -24,7 +31,7 @@ export default async function handler(req, res) {
       // Create job posting
       const job = await prisma.job.create({
         data: {
-          userId: user.id,
+          employerId: employerId,
           title: jobData.jobTitle,
           department: jobData.department,
           seniorityLevel: jobData.seniorityLevel,
@@ -53,7 +60,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       const jobs = await prisma.job.findMany({
-        where: { userId: user.id },
+        where: { employerId: employerId },
         orderBy: { postedAt: 'desc' }
       });
 
