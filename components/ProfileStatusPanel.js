@@ -7,36 +7,36 @@ export default function ProfileStatusPanel({ isOpen, onClose, profile, user }) {
     {
       icon: '📋',
       title: 'Applications',
-      count: 12,
-      trend: 'up',
+      count: 0,
+      trend: 'neutral',
       link: '/dashboard/candidate?tab=applications'
     },
     {
       icon: '📞',
       title: 'Interviews',
-      count: 3,
-      trend: 'up',
+      count: 0,
+      trend: 'neutral',
       link: '/dashboard/candidate?tab=interviews'
     },
     {
       icon: '👁️',
       title: 'Profile Views',
-      count: 47,
+      count: 0,
       subtitle: 'Last 7 days',
-      trend: 'up',
+      trend: 'neutral',
       link: '/dashboard/analytics'
     },
     {
       icon: '💼',
       title: 'Companies Reached Out',
-      count: 8,
-      trend: 'up',
+      count: 0,
+      trend: 'neutral',
       link: '/dashboard/candidate?tab=messages'
     },
     {
       icon: '📄',
       title: 'Documents',
-      count: 5,
+      count: 0,
       trend: 'neutral',
       link: '/dashboard/documents'
     }

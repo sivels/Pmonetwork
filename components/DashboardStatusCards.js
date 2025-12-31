@@ -1,8 +1,8 @@
 export default function DashboardStatusCards() {
   const statusOverview = {
-    applications: { total: 12, inProgress: 8, interviews: 3, accepted: 1, rejected: 0 },
-    profileViews: 47,
-    messagesWaiting: 3
+    applications: { total: 0, inProgress: 0, interviews: 0, accepted: 0, rejected: 0 },
+    profileViews: 0,
+    messagesWaiting: 0
   };
 
   return (
