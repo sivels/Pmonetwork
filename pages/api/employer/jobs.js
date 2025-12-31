@@ -49,6 +49,7 @@ export default async function handler(req, res) {
           currency: jobData.currency || 'GBP',
           isFeatured: jobData.isFeatured || false,
           isUrgent: jobData.isUrgent || false,
+          isDraft: false,
           paused: jobData.status === 'paused' || false
         }
       });

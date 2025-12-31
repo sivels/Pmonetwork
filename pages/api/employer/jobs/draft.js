@@ -11,21 +11,51 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     try {
-      const user = await prisma.user.findUnique({
-        where: { email: session.user.email }
+      const user = await prisma.user.findUnique(
+        {
+        where: { email: session.user.email },
+        include: { employerEmployerProfile: true }
       });
 
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
+      if (!user || !user.employerEmployerProfile) {
+        return res.status(404).json({ error: 'Employer profile not found' });
       }
 
       const draftData = req.body;
+      const employerId = user.employerEmployerProfile.id;
 
-      // Store draft in database (you can create a separate Draft model or use Job with draft status)
-      // For now, we'll just acknowledge the save
-      console.log('Draft saved for user:', user.id);
+      // Map form fields to schema fields
+      const jobData = {
+        title: draftData.jobTitle || 'Untitled Draft',
+        description: draftData.jobSummary || '',
+        location: draftData.city || null,
+        employmentType: draftData.employmentType || null,
+        isRemote: draftData.workArrangement === 'Remote',
+        shortDescription: draftData.jobSummary?.substring(0, 200) || null,
+        salaryMin: draftData.salaryMin ? parseInt(draftData.salaryMin) : null,
+        salaryMax: draftData.salaryMax ? parseInt(draftData.salaryMax) : null,
+        currency: draftData.currency || 'GBP',
+        specialism: draftData.department || null,
+        seniority: draftData.seniorityLevel || null,
+        isDraft: true,
+        paused: false,
+        employerId: employerId
+      };
 
-      return res.status(200).json({ success: true, message: 'Draft saved successfully' });
+      // Check if updating existing draft
+      if (draftData.jobId) {
+        const updated = await prisma.job.update({
+          where: { id: draftData.jobId },
+          data: jobData
+        });
+        return res.status(200).json({ success: true, jobId: updated.id });
+      } else {
+        // Create new draft
+        const draft = await prisma.job.create({
+          data: jobData
+        });
+        return res.status(200).json({ success: true, jobId: draft.id });
+      }
     } catch (error) {
       console.error('Draft save error:', error);
       return res.status(500).json({ error: 'Failed to save draft' });

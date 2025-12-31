@@ -5,7 +5,7 @@ import Link from 'next/link';
 export default function EmployerJobs() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('active'); // active, paused, all
+  const [activeTab, setActiveTab] = useState('published'); // published, drafts, paused, all
   const router = useRouter();
 
   useEffect(() => {
@@ -27,8 +27,9 @@ export default function EmployerJobs() {
   };
 
   const filteredJobs = jobs.filter(job => {
-    if (activeTab === 'active') return !job.paused;
-    if (activeTab === 'paused') return job.paused;
+    if (activeTab === 'published') return !job.isDraft && !job.paused;
+    if (activeTab === 'drafts') return job.isDraft;
+    if (activeTab === 'paused') return job.paused && !job.isDraft;
     return true; // all
   });
 
@@ -53,16 +54,22 @@ export default function EmployerJobs() {
         {/* Tabs */}
         <div className="tabs">
           <button 
-            className={`tab ${activeTab === 'active' ? 'active' : ''}`}
-            onClick={() => setActiveTab('active')}
+            className={`tab ${activeTab === 'published' ? 'active' : ''}`}
+            onClick={() => setActiveTab('published')}
           >
-            Active ({jobs.filter(j => !j.paused).length})
+            Published ({jobs.filter(j => !j.isDraft && !j.paused).length})
+          </button>
+          <button 
+            className={`tab ${activeTab === 'drafts' ? 'active' : ''}`}
+            onClick={() => setActiveTab('drafts')}
+          >
+            Drafts ({jobs.filter(j => j.isDraft).length})
           </button>
           <button 
             className={`tab ${activeTab === 'paused' ? 'active' : ''}`}
             onClick={() => setActiveTab('paused')}
           >
-            Paused ({jobs.filter(j => j.paused).length})
+            Paused ({jobs.filter(j => j.paused && !j.isDraft).length})
           </button>
           <button 
             className={`tab ${activeTab === 'all' ? 'active' : ''}`}
@@ -77,8 +84,11 @@ export default function EmployerJobs() {
         ) : filteredJobs.length === 0 ? (
           <div className="empty-state">
             <p>No {activeTab === 'all' ? '' : activeTab} jobs found</p>
+            {activeTab === 'drafts' && (
+              <p className="hint">Drafts are not visible to candidates until published</p>
+            )}
             {activeTab === 'paused' && (
-              <p className="hint">Paused jobs are not visible to candidates</p>
+              <p className="hint">Paused jobs are temporarily hidden from candidates</p>
             )}
           </div>
         ) : (
@@ -90,6 +100,7 @@ export default function EmployerJobs() {
                   <p className="sub">
                     Posted {formatDate(job.createdAt)} 
                     {job.location && ` • ${job.location}`}
+                    {job.isDraft && <span className="draft-badge">Draft</span>}
                     {job.paused && <span className="paused-badge">Paused</span>}
                   </p>
                 </div>
@@ -98,9 +109,9 @@ export default function EmployerJobs() {
                 </div>
                 <div className="actions">
                   <Link href={`/employer/post-job?jobId=${job.id}`} className="btn ghost">
-                    Edit
+                    {job.isDraft ? 'Continue Editing' : 'Edit'}
                   </Link>
-                  {!job.paused && (
+                  {!job.isDraft && !job.paused && (
                     <Link href="/employer/applicants" className="btn">
                       View Applicants
                     </Link>
