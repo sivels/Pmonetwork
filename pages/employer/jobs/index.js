@@ -5,7 +5,7 @@ import Link from 'next/link';
 export default function EmployerJobs() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('published'); // published, draft, all
+  const [activeTab, setActiveTab] = useState('active'); // active, paused, all
   const router = useRouter();
 
   useEffect(() => {
@@ -27,8 +27,8 @@ export default function EmployerJobs() {
   };
 
   const filteredJobs = jobs.filter(job => {
-    if (activeTab === 'published') return job.status === 'published';
-    if (activeTab === 'draft') return job.status === 'draft';
+    if (activeTab === 'active') return !job.paused;
+    if (activeTab === 'paused') return job.paused;
     return true; // all
   });
 
@@ -53,16 +53,16 @@ export default function EmployerJobs() {
         {/* Tabs */}
         <div className="tabs">
           <button 
-            className={`tab ${activeTab === 'published' ? 'active' : ''}`}
-            onClick={() => setActiveTab('published')}
+            className={`tab ${activeTab === 'active' ? 'active' : ''}`}
+            onClick={() => setActiveTab('active')}
           >
-            Published ({jobs.filter(j => j.status === 'published').length})
+            Active ({jobs.filter(j => !j.paused).length})
           </button>
           <button 
-            className={`tab ${activeTab === 'draft' ? 'active' : ''}`}
-            onClick={() => setActiveTab('draft')}
+            className={`tab ${activeTab === 'paused' ? 'active' : ''}`}
+            onClick={() => setActiveTab('paused')}
           >
-            Drafts ({jobs.filter(j => j.status === 'draft').length})
+            Paused ({jobs.filter(j => j.paused).length})
           </button>
           <button 
             className={`tab ${activeTab === 'all' ? 'active' : ''}`}
@@ -77,8 +77,8 @@ export default function EmployerJobs() {
         ) : filteredJobs.length === 0 ? (
           <div className="empty-state">
             <p>No {activeTab === 'all' ? '' : activeTab} jobs found</p>
-            {activeTab === 'draft' && (
-              <p className="hint">Draft jobs are automatically saved when you create a job posting</p>
+            {activeTab === 'paused' && (
+              <p className="hint">Paused jobs are not visible to candidates</p>
             )}
           </div>
         ) : (
@@ -90,7 +90,7 @@ export default function EmployerJobs() {
                   <p className="sub">
                     Posted {formatDate(job.createdAt)} 
                     {job.location && ` • ${job.location}`}
-                    {job.status === 'draft' && <span className="draft-badge">Draft</span>}
+                    {job.paused && <span className="paused-badge">Paused</span>}
                   </p>
                 </div>
                 <div className="appl">
@@ -100,14 +100,9 @@ export default function EmployerJobs() {
                   <Link href={`/employer/post-job?jobId=${job.id}`} className="btn ghost">
                     Edit
                   </Link>
-                  {job.status === 'published' && (
+                  {!job.paused && (
                     <Link href="/employer/applicants" className="btn">
                       View Applicants
-                    </Link>
-                  )}
-                  {job.status === 'draft' && (
-                    <Link href={`/employer/post-job?jobId=${job.id}`} className="btn">
-                      Continue Editing
                     </Link>
                   )}
                 </div>
@@ -141,9 +136,9 @@ export default function EmployerJobs() {
         .appl{color:#374151}
         .actions{display:flex;gap:.5rem}
         .btn{display:inline-block;background:#4f46e5;color:#fff;padding:.45rem .7rem;border-radius:10px;text-decoration:none;font-size:0.9rem}
-        .btn:hover{background:#4338ca}
-        .btn.ghost{background:#eef2ff;color:#4f46e5}
-        .btn.ghost:hover{background:#dbeafe}
+        .sub{margin:.25rem 0 0;color:#6b7280;font-size:.85rem}
+        .paused-badge{display:inline-block;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;font-size:0.75rem;font-weight:600;margin-left:0.5rem}
+        .appl{color:#374151}kground:#dbeafe}
         
         @media (max-width: 768px) {
           .job-card{grid-template-columns:1fr;gap:0.75rem}
