@@ -2,36 +2,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 export default function MessagePreviewPanel({ isOpen, onClose }) {
-  // Mock recent conversations - will be replaced with real data
-  const recentConversations = [
-    {
-      id: 1,
-      companyName: 'HSBC',
-      jobTitle: 'PMO Lead',
-      lastMessage: 'Thank you for your application. We would like to schedule an interview...',
-      timestamp: '1h ago',
-      unread: true,
-      avatar: '🏦'
-    },
-    {
-      id: 2,
-      companyName: 'Barclays',
-      jobTitle: 'Senior PMO Analyst',
-      lastMessage: 'Your profile is impressive. Could you provide more details about...',
-      timestamp: '3h ago',
-      unread: true,
-      avatar: '🏛️'
-    },
-    {
-      id: 3,
-      companyName: 'PMO Network Support',
-      jobTitle: 'Profile Optimization',
-      lastMessage: 'Your profile score has increased to 85%! Keep going...',
-      timestamp: '2d ago',
-      unread: false,
-      avatar: '💼'
-    }
-  ];
+  // Real conversations - will be populated when messages are received
+  const recentConversations = [];
 
   const unreadCount = recentConversations.filter(c => c.unread).length;
 
