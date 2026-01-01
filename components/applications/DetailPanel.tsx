@@ -55,15 +55,36 @@ export function DetailPanel({ applicationId, onClose }: { applicationId: string 
 
   const sendMessage = useMutation({
     mutationFn: async () => {
+      console.log("Full application data:", JSON.stringify(data, null, 2));
+      console.log("Job data:", data?.job);
+      console.log("Employer data:", data?.job?.employer);
+      console.log("Candidate data:", data?.candidate);
+      
       if (!data || !data.job?.employer?.userId || !data.candidate?.userId) {
         console.error("Missing required data for sending message:", { 
-          hasData: !!data, 
-          hasEmployerUserId: !!data?.job?.employer?.userId,
-          hasCandidateUserId: !!data?.candidate?.userId 
+          hasData: !!data,
+          jobEmployerId: data?.job?.employerId,
+          employerUserId: data?.job?.employer?.userId,
+          candidateId: data?.candidate?.id,
+          candidateUserId: data?.candidate?.userId,
+          fullEmployer: data?.job?.employer,
+          fullCandidate: data?.candidate
         });
         return;
       }
-      if (!messageText.trim()) return;
+      if (!messageText.trim()) {
+        console.log("Message text is empty");
+        return;
+      }
+      
+      console.log("Sending message with:", {
+        employerId: data.job.employerId,
+        candidateId: data.candidate.id,
+        jobId: data.job.id,
+        senderUserId: data.job.employer.userId,
+        receiverUserId: data.candidate.userId,
+        text: messageText
+      });
       
       // Create or find conversation
       const convRes = await fetch(`/api/conversations`, {
