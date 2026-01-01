@@ -52,12 +52,14 @@ export async function getServerSideProps(ctx) {
 export default function CandidateMessages({ profile, userEmail, initialConversations }) {
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeConversationId, setActiveConversationId] = useState(null);
+  const [moreOptionsOpen, setMoreOptionsOpen] = useState(false);
 
   // Conversations data from database
   const [conversations, setConversations] = useState(initialConversations || []);
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
   const messagesEndRef = useRef(null);
+  const moreOptionsRef = useRef(null);
 
   const filters = [
     { id: 'all', label: 'All Messages' },
@@ -73,6 +75,19 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Close more options dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (moreOptionsRef.current && !moreOptionsRef.current.contains(event.target)) {
+        setMoreOptionsOpen(false);
+      }
+    }
+    if (moreOptionsOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [moreOptionsOpen]);
 
   // Publish unread count to candidate header (localStorage + custom event)
   useEffect(() => {
@@ -159,7 +174,7 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
       if (!res.ok) {
         const error = await res.json();
         console.error('Failed to send message:', error);
-        showToast('Failed to send message');
+        alert('Failed to send message');
         return;
       }
 
@@ -169,6 +184,36 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
     } catch (error) {
       console.error('Error sending message:', error);
       alert('Error sending message');
+    }
+  };
+
+  const handleViewCompany = () => {
+    if (activeConversation?.employer?.id) {
+      window.open(`/companies/${activeConversation.employer.id}`, '_blank');
+    }
+  };
+
+  const handleArchiveConversation = () => {
+    if (confirm('Archive this conversation?')) {
+      // TODO: Implement archive API
+      alert('Archive functionality coming soon');
+      setMoreOptionsOpen(false);
+    }
+  };
+
+  const handleBlockConversation = () => {
+    if (confirm('Block this company? You will no longer receive messages from them.')) {
+      // TODO: Implement block API
+      alert('Block functionality coming soon');
+      setMoreOptionsOpen(false);
+    }
+  };
+
+  const handleReportConversation = () => {
+    if (confirm('Report this conversation for inappropriate content?')) {
+      // TODO: Implement report API
+      alert('Report functionality coming soon');
+      setMoreOptionsOpen(false);
     }
   };
 
@@ -262,16 +307,44 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
                     </div>
                   </div>
                   <div className="chat-actions">
-                    <button className="action-btn" title="View Company">
+                    <button className="action-btn" title="View Company" onClick={handleViewCompany}>
                       <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>
                     </button>
-                    <button className="action-btn" title="More Options">
-                      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                      </svg>
-                    </button>
+                    <div className="more-options-container" ref={moreOptionsRef}>
+                      <button 
+                        className="action-btn" 
+                        title="More Options"
+                        onClick={() => setMoreOptionsOpen(!moreOptionsOpen)}
+                      >
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                        </svg>
+                      </button>
+                      {moreOptionsOpen && (
+                        <div className="more-options-dropdown">
+                          <button className="dropdown-option" onClick={handleArchiveConversation}>
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                            </svg>
+                            Archive Conversation
+                          </button>
+                          <button className="dropdown-option" onClick={handleBlockConversation}>
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                            </svg>
+                            Block Company
+                          </button>
+                          <button className="dropdown-option danger" onClick={handleReportConversation}>
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            Report Conversation
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -587,6 +660,10 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
           gap: 0.5rem;
         }
 
+        .more-options-container {
+          position: relative;
+        }
+
         .action-btn {
           padding: 0.5rem;
           background: white;
@@ -604,6 +681,57 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
           background: #f8fafc;
           color: #4f46e5;
           border-color: #4f46e5;
+        }
+
+        .more-options-dropdown {
+          position: absolute;
+          top: calc(100% + 0.5rem);
+          right: 0;
+          background: white;
+          border: 2px solid #e5e7eb;
+          border-radius: 12px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          min-width: 220px;
+          z-index: 50;
+          overflow: hidden;
+        }
+
+        .dropdown-option {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          width: 100%;
+          padding: 0.75rem 1rem;
+          background: white;
+          border: none;
+          text-align: left;
+          font-size: 0.875rem;
+          color: #374151;
+          cursor: pointer;
+          transition: all 0.2s;
+          border-bottom: 1px solid #f3f4f6;
+        }
+
+        .dropdown-option:last-child {
+          border-bottom: none;
+        }
+
+        .dropdown-option:hover {
+          background: #f8fafc;
+          color: #4f46e5;
+        }
+
+        .dropdown-option.danger {
+          color: #dc2626;
+        }
+
+        .dropdown-option.danger:hover {
+          background: #fef2f2;
+          color: #dc2626;
+        }
+
+        .dropdown-option svg {
+          flex-shrink: 0;
         }
 
         .messages-thread {
