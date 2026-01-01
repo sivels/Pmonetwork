@@ -27,11 +27,7 @@ export async function getServerSideProps(ctx) {
   const conversations = profile ? await prisma.conversation.findMany({
     where: { candidateId: profile.id },
     include: {
-      employer: {
-        include: {
-          user: { select: { email: true } }
-        }
-      },
+      employer: true,
       messages: {
         orderBy: { createdAt: 'desc' },
         take: 1
