@@ -8,6 +8,7 @@ import { prisma } from '../../../lib/prisma';
 export const config = {
   api: {
     bodyParser: false,
+    responseLimit: false,
   },
 };
 
@@ -35,7 +36,7 @@ export default async function handler(req, res) {
     const form = formidable({
       uploadDir,
       keepExtensions: true,
-      maxFileSize: 50 * 1024 * 1024, // 50MB
+      maxFileSize: 4.5 * 1024 * 1024, // 4.5MB - Vercel has 5MB limit for serverless functions
       filename: (name, ext, part) => {
         return `${candidateId}-${Date.now()}${ext}`;
       }
@@ -44,6 +45,9 @@ export default async function handler(req, res) {
     form.parse(req, async (err, fields, files) => {
       if (err) {
         console.error('Video upload error:', err);
+        if (err.code === 'LIMIT_FILE_SIZE' || err.httpCode === 413) {
+          return res.status(413).json({ error: 'Video file is too large. Maximum size is 4.5MB. Please compress your video or use a shorter clip.' });
+        }
         return res.status(500).json({ error: 'Upload failed' });
       }
 

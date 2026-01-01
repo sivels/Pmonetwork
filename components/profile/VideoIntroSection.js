@@ -21,9 +21,9 @@ export default function VideoIntroSection({ profile, onUpdate }) {
       return;
     }
 
-    // Validate file size (50MB max)
-    if (file.size > 50 * 1024 * 1024) {
-      setMessage({ type: 'error', text: 'Video must be smaller than 50MB' });
+    // Validate file size (4.5MB max for Vercel serverless)
+    if (file.size > 4.5 * 1024 * 1024) {
+      setMessage({ type: 'error', text: 'Video must be smaller than 4.5MB. Please compress your video or use a shorter clip.' });
       return;
     }
 
@@ -254,7 +254,8 @@ export default function VideoIntroSection({ profile, onUpdate }) {
               <li>✓ Good lighting and clear audio</li>
               <li>✓ Professional background</li>
               <li>✓ Dress professionally</li>
-              <li>✓ MP4, WebM, or MOV format, max 50MB</li>
+              <li>✓ MP4, WebM, or MOV format, max 4.5MB</li>
+              <li>⚠️ Compress videos before upload if needed</li>
             </ul>
           </div>
         </div>
