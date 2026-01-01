@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { ChevronLeft, Loader2, MapPin, Briefcase, Mail, Phone, Calendar, Award } from 'lucide-react';
+import { ChevronLeft, Loader2, MapPin, Briefcase, Calendar, Award } from 'lucide-react';
 import { prisma } from '../../../lib/prisma';
 
 export default function CandidateDetailPage({ candidate }) {
@@ -52,18 +52,6 @@ export default function CandidateDetailPage({ candidate }) {
                   <span className="flex items-center gap-1">
                     <MapPin className="h-4 w-4" />
                     {candidate.location}
-                  </span>
-                )}
-                {candidate.phone && (
-                  <span className="flex items-center gap-1">
-                    <Phone className="h-4 w-4" />
-                    {candidate.phone}
-                  </span>
-                )}
-                {candidate.email && (
-                  <span className="flex items-center gap-1">
-                    <Mail className="h-4 w-4" />
-                    {candidate.email}
                   </span>
                 )}
               </div>
