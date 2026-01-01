@@ -240,7 +240,7 @@ a:focus-visible {
 .mobile-nav-footer {
   display: flex;
   justify-content: flex-end;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 .mobile-nav-close {
   display: flex;
