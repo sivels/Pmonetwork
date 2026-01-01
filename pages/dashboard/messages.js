@@ -22,10 +22,34 @@ export async function getServerSideProps(ctx) {
     }
   });
   const profile = user?.candidateCandidateProfile || null;
-  return { props: { profile: profile ? JSON.parse(JSON.stringify(profile)) : null, userEmail: session.user.email } };
+  
+  // Fetch conversations for this candidate
+  const conversations = profile ? await prisma.conversation.findMany({
+    where: { candidateId: profile.id },
+    include: {
+      employer: {
+        include: {
+          user: { select: { email: true } }
+        }
+      },
+      messages: {
+        orderBy: { createdAt: 'desc' },
+        take: 1
+      }
+    },
+    orderBy: { updatedAt: 'desc' }
+  }) : [];
+  
+  return { 
+    props: { 
+      profile: profile ? JSON.parse(JSON.stringify(profile)) : null, 
+      userEmail: session.user.email,
+      initialConversations: JSON.parse(JSON.stringify(conversations))
+    } 
+  };
 }
 
-export default function CandidateMessages({ profile, userEmail }) {
+export default function CandidateMessages({ profile, userEmail, initialConversations }) {
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [activeConversationId, setActiveConversationId] = useState(null);
@@ -35,11 +59,9 @@ export default function CandidateMessages({ profile, userEmail }) {
   const [bookmarkedConversations, setBookmarkedConversations] = useState(new Set());
   const [reportedConversations, setReportedConversations] = useState(new Set());
 
-  // Placeholder conversations data (stateful for unread updates)
-  const [conversations, setConversations] = useState([]);
-
-  // Messages per conversation
-  const messagesMap = {};
+  // Conversations data from database
+  const [conversations, setConversations] = useState(initialConversations || []);
+  const [messages, setMessages] = useState([]);
 
   // Publish unread count to candidate header (localStorage + custom event)
   useEffect(() => {
@@ -64,17 +86,26 @@ export default function CandidateMessages({ profile, userEmail }) {
     setConversations(prev => prev.map(c => c.id === activeConversationId ? { ...c, unread: 0 } : c));
   }, [activeConversationId]);
 
-  const activeMessages = activeConversationId ? messagesMap[activeConversationId] || [] : [];
+  // Fetch messages for selected conversation
+  useEffect(() => {
+    if (!activeConversationId) return;
+    
+    fetch(`/api/conversations/${activeConversationId}/messages`)
+      .then(res => res.json())
+      .then(data => setMessages(data.items || []))
+      .catch(err => console.error('Failed to load messages:', err));
+  }, [activeConversationId]);
+
   const activeConversation = conversations.find(c => c.id === activeConversationId) || null;
 
   const filteredConversations = conversations.filter(c => {
     if (filter === 'unread' && c.unread === 0) return false;
-    if (filter === 'company' && c.type !== 'company') return false;
-    if (filter === 'support' && c.type !== 'support') return false;
+    if (filter === 'company' && !c.employerId) return false;
     if (filter === 'bookmarked' && !bookmarkedConversations.has(c.id)) return false;
     if (search) {
       const s = search.toLowerCase();
-      if (!c.name.toLowerCase().includes(s) && !(c.jobTitle || '').toLowerCase().includes(s) && !(c.company || '').toLowerCase().includes(s)) {
+      const companyName = c.employer?.companyName || '';
+      if (!companyName.toLowerCase().includes(s)) {
         return false;
       }
     }
@@ -119,14 +150,35 @@ export default function CandidateMessages({ profile, userEmail }) {
   const [draft, setDraft] = useState('');
   const fileInputRef = useRef(null);
 
-  const sendMessage = () => {
-    if (!draft.trim()) return;
-    // Placeholder send logic (would call API)
-    messagesMap[activeConversationId] = [
-      ...(messagesMap[activeConversationId] || []),
-      { id: 'local-' + Date.now(), sender: 'You', senderType: 'candidate', text: draft, timestamp: Date.now(), readAt: null }
-    ];
-    setDraft('');
+  const sendMessage = async () => {
+    if (!draft.trim() || !activeConversationId || !profile || !activeConversation) return;
+
+    try {
+      const res = await fetch(`/api/conversations/${activeConversationId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          senderUserId: profile.userId,
+          receiverUserId: activeConversation.employer.userId,
+          text: draft
+        })
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        console.error('Failed to send message:', error);
+        showToast('Failed to send message');
+        return;
+      }
+
+      const newMessage = await res.json();
+      setMessages([...messages, newMessage]);
+      setDraft('');
+      showToast('Message sent');
+    } catch (error) {
+      console.error('Error sending message:', error);
+      showToast('Error sending message');
+    }
   };
 
   const handleFileUpload = (e) => {
@@ -175,34 +227,40 @@ export default function CandidateMessages({ profile, userEmail }) {
             <button className={filter === 'support' ? 'active' : ''} onClick={() => setFilter('support')}>Support</button>
           </div>
           <div className="conversation-list">
-            {filteredConversations.map(conv => (
-              <div
-                key={conv.id}
-                className={`conversation-card ${conv.id === activeConversationId ? 'active' : ''}`}
-                onClick={() => setActiveConversationId(conv.id)}
-              >
-                <div className="avatar">
-                  <img src={conv.avatarUrl} alt={conv.name} />
-                  {conv.unread > 0 && <span className="unread-dot" />}
-                </div>
-                <div className="meta">
-                  <div className="top-row">
-                    <span className="name">
-                      {conv.name}
-                      {bookmarkedConversations.has(conv.id) && (
-                        <svg width="12" height="12" fill="#f59e0b" viewBox="0 0 20 20" style={{ marginLeft: '0.3rem', verticalAlign: 'middle' }}>
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      )}
-                    </span>
-                    <span className="time">{new Date(conv.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            {filteredConversations.map(conv => {
+              const lastMessage = conv.messages?.[0];
+              const messagePreview = lastMessage?.text || 'No messages yet';
+              const timestamp = lastMessage ? new Date(lastMessage.createdAt) : new Date(conv.createdAt);
+              
+              return (
+                <div
+                  key={conv.id}
+                  className={`conversation-card ${conv.id === activeConversationId ? 'active' : ''}`}
+                  onClick={() => setActiveConversationId(conv.id)}
+                >
+                  <div className="avatar">
+                    <img src={conv.employer?.companyLogoUrl || '/images/avatar-placeholder.svg'} alt={conv.employer?.companyName} />
+                    {conv.unread > 0 && <span className="unread-dot" />}
                   </div>
-                  {conv.jobTitle && <div className="job-title">{conv.jobTitle}</div>}
-                  <div className="preview">{conv.lastMessage.split(' ').slice(0, 15).join(' ')}{conv.lastMessage.split(' ').length > 15 ? '…' : ''}</div>
+                  <div className="meta">
+                    <div className="top-row">
+                      <span className="name">
+                        {conv.employer?.companyName || 'Company'}
+                        {bookmarkedConversations.has(conv.id) && (
+                          <svg width="12" height="12" fill="#f59e0b" viewBox="0 0 20 20" style={{ marginLeft: '0.3rem', verticalAlign: 'middle' }}>
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        )}
+                      </span>
+                      <span className="time">{timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    {conv.jobId && <div className="job-title">Job Application</div>}
+                    <div className="preview">{messagePreview.split(' ').slice(0, 15).join(' ')}{messagePreview.split(' ').length > 15 ? '…' : ''}</div>
+                  </div>
+                  {conv.unread > 0 && <span className="badge">{conv.unread}</span>}
                 </div>
-                {conv.unread > 0 && <span className="badge">{conv.unread}</span>}
-              </div>
-            ))}
+              );
+            })}
             {filteredConversations.length === 0 && (
               <div className="empty-conv">No conversations match your filters.</div>
             )}
@@ -218,34 +276,30 @@ export default function CandidateMessages({ profile, userEmail }) {
             <>
               <div className="chat-header">
                 <div className="chat-header-left">
-                  <img src={activeConversation.avatarUrl} alt={activeConversation.name} />
+                  <img src={activeConversation.employer?.companyLogoUrl || '/images/avatar-placeholder.svg'} alt={activeConversation.employer?.companyName} />
                   <div className="chat-header-meta">
-                    <h2>{activeConversation.name}</h2>
+                    <h2>{activeConversation.employer?.companyName || 'Company'}</h2>
                     <div className="sub">
-                      {activeConversation.jobTitle && <span className="job-ref">{activeConversation.jobTitle}</span>}
-                      {activeConversation.type === 'company' && <span className="online-indicator">Online</span>}
+                      {activeConversation.jobId && <span className="job-ref">Job Application</span>}
                     </div>
                   </div>
                 </div>
               </div>
               <div className="chat-thread" id="chatThread">
-                {activeMessages.map(msg => (
-                  <div key={msg.id} className={`msg-row ${msg.senderType} ${msg.system ? 'system' : ''}`}>
-                    <div className="bubble">
-                      {msg.system ? (
-                        <span className="system-text">{msg.text}</span>
-                      ) : (
-                        <>
-                          <p>{msg.text}</p>
-                          <div className="meta-line">
-                            <span className="timestamp">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                            {msg.senderType === 'candidate' && <span className="read-receipt">{msg.readAt ? 'Read' : 'Sent'}</span>}
-                          </div>
-                        </>
-                      )}
+                {messages.map(msg => {
+                  const isCandidate = msg.senderUserId === profile?.userId;
+                  return (
+                    <div key={msg.id} className={`msg-row ${isCandidate ? 'candidate' : 'company'}`}>
+                      <div className="bubble">
+                        <p>{msg.text}</p>
+                        <div className="meta-line">
+                          <span className="timestamp">{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          {isCandidate && <span className="read-receipt">{msg.readAt ? 'Read' : 'Sent'}</span>}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <div className="composer">
                 <div className="composer-inner">
