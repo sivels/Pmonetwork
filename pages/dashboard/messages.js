@@ -23,11 +23,10 @@ export async function getServerSideProps(ctx) {
   });
   const profile = user?.candidateCandidateProfile || null;
   
-  // Fetch conversations for this candidate
+  // Fetch conversations for this candidate (including archived for the archived tab)
   const conversations = profile ? await prisma.conversation.findMany({
     where: { 
-      candidateId: profile.id,
-      archivedByCandidate: false
+      candidateId: profile.id
     },
     include: {
       employer: true,
@@ -63,7 +62,8 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
   const filters = [
     { id: 'all', label: 'All Messages' },
     { id: 'unread', label: 'Unread' },
-    { id: 'companies', label: 'Companies' }
+    { id: 'companies', label: 'Companies' },
+    { id: 'archived', label: 'Archived' }
   ];
 
   // Auto-scroll to bottom when new messages arrive
@@ -151,6 +151,12 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
   const activeConversation = conversations.find(c => c.id === activeConversationId) || null;
 
   const filteredConversations = conversations.filter(c => {
+    if (activeFilter === 'archived') {
+      return c.archivedByCandidate === true;
+    }
+    // For all other filters, exclude archived
+    if (c.archivedByCandidate) return false;
+    
     if (activeFilter === 'unread' && (!c.unread || c.unread === 0)) return false;
     if (activeFilter === 'companies' && !c.employerId) return false;
     return true;
@@ -203,27 +209,42 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
   };
 
   const handleArchiveConversation = async () => {
-    if (!activeConversationId) return;
+    if (!activeConversationId || !activeConversation) return;
     
-    if (confirm('Archive this conversation? You can unarchive it later from your archived conversations.')) {
+    const isArchived = activeConversation.archivedByCandidate;
+    const action = isArchived ? 'unarchive' : 'archive';
+    const confirmMessage = isArchived 
+      ? 'Unarchive this conversation? It will return to your messages list.'
+      : 'Archive this conversation? You can unarchive it later from your archived conversations.';
+    
+    if (confirm(confirmMessage)) {
       try {
         const res = await fetch(`/api/conversations/${activeConversationId}/archive`, {
-          method: 'POST'
+          method: isArchived ? 'DELETE' : 'POST'
         });
 
         if (!res.ok) {
-          throw new Error('Failed to archive');
+          throw new Error(`Failed to ${action}`);
         }
 
-        // Remove from current list
-        setConversations(conversations.filter(c => c.id !== activeConversationId));
-        setActiveConversationId(null);
-        setMessages([]);
+        // Update the conversation in the list
+        setConversations(conversations.map(c => 
+          c.id === activeConversationId 
+            ? { ...c, archivedByCandidate: !isArchived }
+            : c
+        ));
+        
+        // If we archived it and we're not in archived view, clear selection
+        if (!isArchived && activeFilter !== 'archived') {
+          setActiveConversationId(null);
+          setMessages([]);
+        }
+        
         setMoreOptionsOpen(false);
-        alert('Conversation archived successfully');
+        alert(`Conversation ${isArchived ? 'unarchived' : 'archived'} successfully`);
       } catch (error) {
-        console.error('Error archiving conversation:', error);
-        alert('Failed to archive conversation');
+        console.error(`Error ${action}ing conversation:`, error);
+        alert(`Failed to ${action} conversation`);
       }
     }
   };
@@ -353,9 +374,13 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
                         <div className="more-options-dropdown">
                           <button className="dropdown-option" onClick={handleArchiveConversation}>
                             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                              {activeConversation.archivedByCandidate ? (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                              ) : (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                              )}
                             </svg>
-                            Archive Conversation
+                            {activeConversation.archivedByCandidate ? 'Unarchive Conversation' : 'Archive Conversation'}
                           </button>
                           <button className="dropdown-option" onClick={handleBlockConversation}>
                             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
