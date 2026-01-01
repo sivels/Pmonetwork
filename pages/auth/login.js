@@ -31,9 +31,9 @@ export default function Login() {
     e.preventDefault();
     setMessage(null);
     setLoading(true);
-    // Build callbackUrl toward onboarding carrying returnTo (onboarding will decide final redirect)
+    // Redirect directly to dashboard, skip onboarding
     const rt = returnTo || sessionStorage.getItem('pmo_returnTo') || '';
-    const callbackUrl = rt ? `${window.location.origin}/auth/onboarding?returnTo=${encodeURIComponent(rt)}` : `${window.location.origin}/auth/onboarding`;
+    const callbackUrl = rt || `${window.location.origin}/dashboard/candidate`;
     try {
       const res = await signIn('credentials', { redirect: true, email, password, callbackUrl });
       // next-auth handles redirect; if error returned as string in URL we surface message
@@ -53,7 +53,7 @@ export default function Login() {
 
   const oauthSignIn = (provider) => {
     const rt = returnTo || sessionStorage.getItem('pmo_returnTo') || '';
-    const callbackUrl = rt ? `${window.location.origin}/auth/onboarding?returnTo=${encodeURIComponent(rt)}` : `${window.location.origin}/auth/onboarding`;
+    const callbackUrl = rt || `${window.location.origin}/dashboard/candidate`;
     signIn(provider, { callbackUrl });
   };
 
