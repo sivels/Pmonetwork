@@ -261,19 +261,21 @@ export default function CandidateLayout({ children, user }) {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="candidate-mobile-menu">
-            <div className="mobile-menu-header">
-              <button 
-                className="mobile-menu-close" 
-                onClick={() => setMobileMenuOpen(false)}
-                aria-label="Close menu"
-              >
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="mobile-profile">
+          <>
+            <div className="mobile-menu-overlay" onClick={() => setMobileMenuOpen(false)}></div>
+            <div className="candidate-mobile-menu">
+              <div className="mobile-menu-header">
+                <button 
+                  className="mobile-menu-close" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  aria-label="Close menu"
+                >
+                  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="mobile-profile">
               <img 
                 src={user?.profilePhotoUrl || '/images/avatar-placeholder.svg'} 
                 alt={user?.fullName || 'Profile'} 
@@ -331,6 +333,7 @@ export default function CandidateLayout({ children, user }) {
               </button>
             </nav>
           </div>
+          </>
         )}
       </header>
 
@@ -387,6 +390,10 @@ export default function CandidateLayout({ children, user }) {
         /* Mobile Menu Toggle */
         .mobile-menu-toggle { display:flex; align-items:center; justify-content:center; width:40px; height:40px; border:none; background:transparent; color:#6b7280; cursor:pointer; border-radius:8px; transition:all 0.15s; }
         .mobile-menu-toggle:hover { background:#f3f4f6; }
+
+        /* Mobile Menu Overlay */
+        .mobile-menu-overlay { position:fixed; top:64px; left:0; right:0; bottom:0; background:rgba(0,0,0,0.3); z-index:998; animation:fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
 
         /* Mobile Menu */
         .candidate-mobile-menu { position:absolute; top:100%; left:0; right:0; background:#ffffff; border-bottom:1px solid #e5e7eb; box-shadow:0 4px 12px rgba(0,0,0,0.1); padding:1rem; animation:slideDown 0.2s ease-out; z-index:999; }
