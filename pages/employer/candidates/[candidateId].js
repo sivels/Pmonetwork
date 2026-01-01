@@ -1,13 +1,25 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { ChevronLeft, Loader2, MapPin, Briefcase, Calendar, Award } from 'lucide-react';
+import { ChevronLeft, Loader2, MapPin, Briefcase, Calendar, Award, X, Send } from 'lucide-react';
 import { prisma } from '../../../lib/prisma';
 
 export default function CandidateDetailPage({ candidate }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+
+  const defaultMessage = `Hi ${candidate?.fullName?.split(' ')[0] || 'there'},
+
+I've reviewed your profile on PMO Network and I'm impressed with your experience and skills. I would like to discuss a potential opportunity with you that I think would be a great fit.
+
+Would you be available for a brief conversation to explore this further?
+
+Best regards`;
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -15,6 +27,72 @@ export default function CandidateDetailPage({ candidate }) {
       router.push('/employer-login');
     }
   }, [session, status, router]);
+
+  useEffect(() => {
+    if (showMessageModal) {
+      setMessage(defaultMessage);
+    }
+  }, [showMessageModal]);
+
+  const handleSendMessage = async () => {
+    if (!message.trim()) {
+      setError('Please enter a message');
+      return;
+    }
+
+    setSending(true);
+    setError('');
+
+    try {
+      // Get employer profile ID
+      const profileRes = await fetch('/api/user/profile');
+      const profileData = await profileRes.json();
+      
+      if (!profileData.employerProfile?.id) {
+        throw new Error('Employer profile not found');
+      }
+
+      // First, create or get conversation
+      const convRes = await fetch('/api/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          candidateId: candidate.id,
+          employerId: profileData.employerProfile.id
+        })
+      });
+
+      if (!convRes.ok) {
+        throw new Error('Failed to create conversation');
+      }
+
+      const conversation = await convRes.json();
+
+      // Send the message
+      const msgRes = await fetch(`/api/conversations/${conversation.id}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          senderUserId: session.user.id,
+          receiverUserId: candidate.userId,
+          text: message
+        })
+      });
+
+      if (!msgRes.ok) {
+        throw new Error('Failed to send message');
+      }
+
+      // Close modal and redirect to messages
+      setShowMessageModal(false);
+      router.push('/employer/messages');
+    } catch (err) {
+      console.error('Error sending message:', err);
+      setError('Failed to send message. Please try again.');
+    } finally {
+      setSending(false);
+    }
+  };
 
   if (status === 'loading' || !candidate) {
     return (
@@ -56,7 +134,10 @@ export default function CandidateDetailPage({ candidate }) {
                 )}
               </div>
             </div>
-            <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+            <button 
+              onClick={() => setShowMessageModal(true)}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
               Contact Candidate
             </button>
           </div>
@@ -195,6 +276,75 @@ export default function CandidateDetailPage({ candidate }) {
           </div>
         </div>
       </div>
+
+      {/* Message Modal */}
+      {showMessageModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="relative w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
+            {/* Header */}
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Contact {candidate.fullName}
+              </h2>
+              <button
+                onClick={() => setShowMessageModal(false)}
+                className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Message Input */}
+            <div className="mb-4">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Your Message
+              </label>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={8}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder="Type your message here..."
+              />
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-800">
+                {error}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowMessageModal(false)}
+                disabled={sending}
+                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendMessage}
+                disabled={sending || !message.trim()}
+                className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {sending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    Send Message
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
