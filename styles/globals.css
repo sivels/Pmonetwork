@@ -237,6 +237,34 @@ a:focus-visible {
   border-radius: 8px;
 }
 .primary-nav.open { display: block; }
+.mobile-nav-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.mobile-nav-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #6b7280;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.mobile-nav-close:hover {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #d1d5db;
+}
+.mobile-nav-close:active {
+  transform: scale(0.95);
+}
 .primary-nav .nav-list { 
   flex-direction: column; 
   align-items: flex-start; 
@@ -273,6 +301,12 @@ a:focus-visible {
     left: 0;
     right: 0;
     border-radius: 0;
+  }
+}
+
+@media (min-width: 721px) {
+  .mobile-nav-header {
+    display: none;
   }
 }
 
