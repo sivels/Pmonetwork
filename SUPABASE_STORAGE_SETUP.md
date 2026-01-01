@@ -11,15 +11,23 @@
 5. Set as **Public** bucket (or Private if you want controlled access)
 6. Click **Create Bucket**
 
-### 2. Set Up Storage Policies (if using Private bucket)
+### 2. Set Up Storage Policies
 
-If you made the bucket private, add these policies in Storage > Policies:
+Add these policies in Storage > Policies for the `videos` bucket:
 
-**Allow authenticated users to upload:**
+**Allow authenticated users to upload (INSERT):**
 ```sql
 CREATE POLICY "Allow authenticated uploads"
 ON storage.objects FOR INSERT
 TO authenticated
+WITH CHECK (bucket_id = 'videos');
+```
+
+**Allow anyone to upload (if using anon key from client):**
+```sql
+CREATE POLICY "Allow public uploads"
+ON storage.objects FOR INSERT
+TO anon
 WITH CHECK (bucket_id = 'videos');
 ```
 
@@ -31,29 +39,32 @@ TO public
 USING (bucket_id = 'videos');
 ```
 
-**Allow users to delete their own videos:**
+**Allow users to update their own videos:**
 ```sql
-CREATE POLICY "Allow users to delete own videos"
-ON storage.objects FOR DELETE
-TO authenticated
-USING (bucket_id = 'videos' AND (storage.foldername(name))[1] = auth.uid()::text);
+CREATE POLICY "Allow users to update own videos"
+ON storage.objects FOR UPDATE
+TO public
+USING (bucket_id = 'videos');
 ```
 
-### 3. Get Supabase Service Role Key
+**Allow users to delete videos:**
+```sql
+CREATE POLICY "Allow users to delete videos"
+ON storage.objects FOR DELETE
+TO public
+USING (bucket_id = 'videos');
+```
 
-1. Go to **Project Settings** → **API**
-2. Copy the `service_role` key (⚠️ Keep this secret!)
-3. Add to Vercel environment variables as `SUPABASE_SERVICE_ROLE_KEY`
+### 3. Add Environment Variables to Vercel
 
-### 4. Add Environment Variables to Vercel
-
-In Vercel Dashboard → Settings → Environment Variables, add:
+In Vercel Dashboard → Settings → Environment Variables, verify these exist:
 
 - `NEXT_PUBLIC_SUPABASE_URL` = `https://bzlqtsrzfyghyqxklkwc.supabase.co`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = (from Supabase API settings)
-- `SUPABASE_SERVICE_ROLE_KEY` = (from Supabase API settings - service_role key)
 
-### 5. Redeploy
+Note: `SUPABASE_SERVICE_ROLE_KEY` is no longer needed for client-side uploads.
+
+### 4. Redeploy
 
 After adding environment variables, redeploy your application.
 

@@ -177,7 +177,9 @@ function mapProfileData(body) {
     'anonymousMode': 'anonymousMode',
     'anonymous_mode': 'anonymousMode',
     'completionStyle': 'completionStyle',
-    'completion_style': 'completionStyle'
+    'completion_style': 'completionStyle',
+    'videoIntroUrl': 'videoIntroUrl',
+    'video_intro_url': 'videoIntroUrl'
   };
 
   for (const [key, dbField] of Object.entries(fieldMap)) {

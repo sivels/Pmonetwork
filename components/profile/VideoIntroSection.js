@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { supabase } from '../../lib/supabaseClient';
 
 export default function VideoIntroSection({ profile, onUpdate }) {
   const [uploading, setUploading] = useState(false);
@@ -35,25 +36,48 @@ export default function VideoIntroSection({ profile, onUpdate }) {
     setMessage(null);
 
     try {
-      const formData = new FormData();
-      formData.append('video', file);
+      // Generate unique file name
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${profile.id}/${Date.now()}.${fileExt}`;
 
-      const res = await fetch('/api/candidate/upload-video', {
-        method: 'POST',
-        body: formData
+      // Upload directly to Supabase Storage from client
+      const { data, error: uploadError } = await supabase.storage
+        .from('videos')
+        .upload(fileName, file, {
+          contentType: file.type,
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        setMessage({ type: 'error', text: uploadError.message || 'Upload failed' });
+        setUploading(false);
+        return;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('videos')
+        .getPublicUrl(fileName);
+
+      // Update profile via API
+      const res = await fetch('/api/candidate/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ videoIntroUrl: publicUrl })
       });
 
       if (res.ok) {
-        const data = await res.json();
-        setVideoPreview(data.videoUrl);
-        onUpdate({ ...profile, videoIntroUrl: data.videoUrl });
+        setVideoPreview(publicUrl);
+        onUpdate({ ...profile, videoIntroUrl: publicUrl });
         setMessage({ type: 'success', text: 'Video introduction uploaded successfully!' });
         setRecordedBlob(null);
       } else {
         const error = await res.json();
-        setMessage({ type: 'error', text: error.error || 'Upload failed' });
+        setMessage({ type: 'error', text: error.error || 'Failed to update profile' });
       }
     } catch (err) {
+      console.error('Upload error:', err);
       setMessage({ type: 'error', text: 'Network error. Please try again.' });
     } finally {
       setUploading(false);
