@@ -17,7 +17,11 @@ export default async function handler(req, res) {
               documents: true,
             },
           },
-          job: true,
+          job: {
+            include: {
+              employer: true,
+            },
+          },
           statusHistory: { orderBy: { createdAt: 'desc' } },
         },
       });
