@@ -99,7 +99,7 @@ export default function EmployerLayout({ children }) {
                 aria-expanded={profileDropdownOpen}
               >
                 <img 
-                  src={session?.user?.companyLogoUrl || '/images/company-placeholder.svg'} 
+                  src={session?.user?.companyLogoUrl || '/images/avatar-placeholder.svg'} 
                   alt={session?.user?.companyName || 'Company'} 
                   className="profile-avatar"
                 />
@@ -114,7 +114,7 @@ export default function EmployerLayout({ children }) {
                   {/* Account Summary Section */}
                   <div className="dropdown-header">
                     <img 
-                      src={session?.user?.companyLogoUrl || '/images/company-placeholder.svg'} 
+                      src={session?.user?.companyLogoUrl || '/images/avatar-placeholder.svg'} 
                       alt={session?.user?.companyName || 'Company'} 
                       className="dropdown-avatar"
                     />
