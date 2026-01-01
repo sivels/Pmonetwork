@@ -265,7 +265,7 @@ export default function EmployerDashboard({ profile, jobCount, latestJobs }) {
                   </div>
                   <div className="stat-details">
                     <span className="stat-label">Unread Messages</span>
-                    <span className="stat-value">5</span>
+                    <span className="stat-value">{unreadMessages}</span>
                   </div>
                 </div>
               </div>
