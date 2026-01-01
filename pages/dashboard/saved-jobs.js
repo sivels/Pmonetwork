@@ -21,18 +21,27 @@ export async function getServerSideProps(ctx) {
     include: {
       candidateCandidateProfile: {
         include: {
-          skills: true
+          skills: true,
+          savedJobs: {
+            include: {
+              job: {
+                include: {
+                  employer: true
+                }
+              }
+            },
+            orderBy: {
+              createdAt: 'desc'
+            }
+          }
         }
       }
     }
   });
   const candidateProfile = user?.candidateCandidateProfile || null;
   
-  // TODO: Fetch saved jobs from database when feature is implemented
-  // const savedJobs = await prisma.savedJob.findMany({ where: { userId: session.user.id }, include: { job: true } });
-  
-  // Start with empty array - will be populated when users save jobs
-  const savedJobs = [];
+  // Extract saved jobs from the candidate profile
+  const savedJobs = candidateProfile?.savedJobs || [];
 
   return { 
     props: { 
@@ -52,24 +61,25 @@ export default function SavedJobs({ savedJobs, candidateProfile }) {
   const [applyModalOpen, setApplyModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
 
-  const handleUnsave = (jobId) => {
+  const handleUnsave = async (jobId) => {
     setUnsavedJobs(prev => new Set(prev).add(jobId));
-    // TODO: Call API: DELETE /api/jobs/{jobId}/save
+    
+    try {
+      await fetch(`/api/jobs/${jobId}/save`, { method: 'DELETE' });
+    } catch (error) {
+      console.error('Error unsaving job:', error);
+      // Revert the UI change on error
+      setUnsavedJobs(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(jobId);
+        return newSet;
+      });
+    }
   };
 
   const handleApplyClick = (job) => {
-    // Transform saved job data to match job details format
-    const jobData = {
-      id: job.id,
-      title: job.title,
-      location: job.location,
-      employmentType: job.employmentType,
-      isRemote: job.isRemote,
-      employer: {
-        companyName: job.company
-      }
-    };
-    setSelectedJob(jobData);
+    // job is already in the correct format from the database
+    setSelectedJob(job);
     setApplyModalOpen(true);
   };
 
@@ -95,23 +105,23 @@ export default function SavedJobs({ savedJobs, candidateProfile }) {
       if (search) {
         const s = search.toLowerCase();
         return sj.job.title.toLowerCase().includes(s) || 
-               sj.job.company.toLowerCase().includes(s) || 
-               sj.job.location.toLowerCase().includes(s);
+               (sj.job.employer?.companyName || '').toLowerCase().includes(s) || 
+               (sj.job.location || '').toLowerCase().includes(s);
       }
       return true;
     })
-    .filter(sj => !filterLocation || sj.job.location.includes(filterLocation))
+    .filter(sj => !filterLocation || (sj.job.location || '').includes(filterLocation))
     .filter(sj => !filterContract || sj.job.employmentType === filterContract)
     .filter(sj => {
       if (!filterJobType) return true;
       if (filterJobType === 'Remote') return sj.job.isRemote;
-      if (filterJobType === 'Hybrid') return sj.job.isHybrid;
-      if (filterJobType === 'Onsite') return !sj.job.isRemote && !sj.job.isHybrid;
+      if (filterJobType === 'Hybrid') return false; // Not in schema yet
+      if (filterJobType === 'Onsite') return !sj.job.isRemote;
       return true;
     })
     .sort((a, b) => {
-      if (sortBy === 'recent') return new Date(b.savedAt) - new Date(a.savedAt);
-      if (sortBy === 'oldest') return new Date(a.savedAt) - new Date(b.savedAt);
+      if (sortBy === 'recent') return new Date(b.createdAt) - new Date(a.createdAt);
+      if (sortBy === 'oldest') return new Date(a.createdAt) - new Date(b.createdAt);
       if (sortBy === 'salaryHigh') return (b.job.salaryMax || 0) - (a.job.salaryMax || 0);
       if (sortBy === 'salaryLow') return (a.job.salaryMin || 0) - (b.job.salaryMin || 0);
       return 0;
@@ -183,7 +193,11 @@ export default function SavedJobs({ savedJobs, candidateProfile }) {
             {filteredJobs.map(savedJob => (
               <div key={savedJob.id} className="job-card">
                 <div className="card-header">
-                  <img src={savedJob.job.companyLogo} alt={savedJob.job.company} className="company-logo" />
+                  {savedJob.job.employer?.logoUrl ? (
+                    <img src={savedJob.job.employer.logoUrl} alt={savedJob.job.employer?.companyName || 'Company'} className="company-logo" />
+                  ) : (
+                    <div className="company-logo-placeholder">{(savedJob.job.employer?.companyName || 'C')[0]}</div>
+                  )}
                   <button
                     className="unsave-btn"
                     onClick={() => handleUnsave(savedJob.jobId)}
@@ -196,8 +210,8 @@ export default function SavedJobs({ savedJobs, candidateProfile }) {
                 </div>
                 <div className="card-body">
                   <h3 className="job-title">{savedJob.job.title}</h3>
-                  <p className="company-name">{savedJob.job.company}</p>
-                  <p className="job-location">{savedJob.job.location}</p>
+                  <p className="company-name">{savedJob.job.employer?.companyName || 'Company'}</p>
+                  <p className="job-location">{savedJob.job.location || (savedJob.job.isRemote ? 'Remote' : 'Location TBC')}</p>
                   {savedJob.job.salaryMin && savedJob.job.salaryMax && (
                     <p className="job-salary">
                       {savedJob.job.employmentType === 'Contract' || savedJob.job.employmentType === 'Freelance' 
@@ -209,10 +223,9 @@ export default function SavedJobs({ savedJobs, candidateProfile }) {
                   <div className="job-tags">
                     <span className="tag">{savedJob.job.employmentType}</span>
                     {savedJob.job.isRemote && <span className="tag remote">Remote</span>}
-                    {savedJob.job.isHybrid && <span className="tag hybrid">Hybrid</span>}
-                    {!savedJob.job.isRemote && !savedJob.job.isHybrid && <span className="tag onsite">Onsite</span>}
+                    {!savedJob.job.isRemote && <span className="tag onsite">Onsite</span>}
                   </div>
-                  <p className="saved-date">Saved on {new Date(savedJob.savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                  <p className="saved-date">Saved on {new Date(savedJob.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                 </div>
                 <div className="card-footer">
                   <Link href={`/jobs/${savedJob.jobId}`} className="btn-view">View Job</Link>

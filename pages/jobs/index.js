@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../api/auth/[...nextauth]';
 
@@ -16,6 +17,7 @@ export async function getServerSideProps(ctx) {
 }
 
 export default function JobBoardPage({ initial, isCandidate, isEmployer }) {
+  const router = useRouter();
   const [jobs, setJobs] = useState(initial.jobs || []);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(initial.totalPages || 0);
@@ -50,15 +52,31 @@ export default function JobBoardPage({ initial, isCandidate, isEmployer }) {
     load(1, true);
   }
 
-  function toggleSave(jobId) {
-    const newSaved = new Set(savedJobs);
-    if (newSaved.has(jobId)) {
-      newSaved.delete(jobId);
-    } else {
-      newSaved.add(jobId);
+  async function toggleSave(jobId) {
+    const isSaved = savedJobs.has(jobId);
+    const method = isSaved ? 'DELETE' : 'POST';
+    
+    try {
+      const res = await fetch(`/api/jobs/${jobId}/save`, { method });
+      
+      if (res.ok) {
+        const newSaved = new Set(savedJobs);
+        if (isSaved) {
+          newSaved.delete(jobId);
+        } else {
+          newSaved.add(jobId);
+          // Navigate to saved jobs page after saving
+          router.push('/dashboard/saved-jobs');
+        }
+        setSavedJobs(newSaved);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to save job');
+      }
+    } catch (error) {
+      console.error('Error toggling save:', error);
+      alert('An error occurred');
     }
-    setSavedJobs(newSaved);
-    // TODO: Call API: POST/DELETE /api/jobs/{jobId}/save
   }
 
   useEffect(() => {
