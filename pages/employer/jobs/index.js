@@ -42,6 +42,25 @@ export default function EmployerJobs() {
     });
   };
 
+  const handleDeleteDraft = async (jobId) => {
+    if (!confirm('Are you sure you want to delete this draft?')) return;
+    
+    try {
+      const response = await fetch(`/api/employer/jobs/${jobId}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        setJobs(jobs.filter(j => j.id !== jobId));
+      } else {
+        alert('Failed to delete draft');
+      }
+    } catch (error) {
+      console.error('Error deleting draft:', error);
+      alert('Error deleting draft');
+    }
+  };
+
   return (
     <>
       <section className="container" aria-labelledby="jobs-title">
@@ -112,6 +131,11 @@ export default function EmployerJobs() {
                   <Link href={`/employer/post-job?jobId=${job.id}`} className="btn ghost">
                     {(job.isDraft || false) ? 'Continue Editing' : 'Edit'}
                   </Link>
+                  {(job.isDraft || false) && (
+                    <button onClick={() => handleDeleteDraft(job.id)} className="btn delete">
+                      Delete Draft
+                    </button>
+                  )}
                   {!(job.isDraft || false) && !job.paused && (
                     <Link href="/employer/applicants" className="btn">
                       View Applicants
@@ -147,7 +171,9 @@ export default function EmployerJobs() {
         .draft-badge{display:inline-block;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;font-size:0.75rem;font-weight:600;margin-left:0.5rem}
         .appl{color:#374151}
         .actions{display:flex;gap:.5rem}
-        .btn{display:inline-block;background:#4f46e5;color:#fff;padding:.45rem .7rem;border-radius:10px;text-decoration:none;font-size:0.9rem}
+        .btn{display:inline-block;background:#4f46e5;color:#fff;padding:.45rem .7rem;border-radius:10px;text-decoration:none;font-size:0.9rem;border:none;cursor:pointer}
+        .btn.delete{background:#dc2626}
+        .btn.delete:hover{background:#b91c1c}
         .sub{margin:.25rem 0 0;color:#6b7280;font-size:.85rem}
         .paused-badge{display:inline-block;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;font-size:0.75rem;font-weight:600;margin-left:0.5rem}
         .appl{color:#374151}kground:#dbeafe}
