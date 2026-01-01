@@ -389,11 +389,12 @@ export default function CandidateLayout({ children, user }) {
         .mobile-menu-toggle:hover { background:#f3f4f6; }
 
         /* Mobile Menu */
-        .candidate-mobile-menu { position:absolute; top:100%; left:0; right:0; background:#ffffff; border-bottom:1px solid #e5e7eb; box-shadow:0 4px 12px rgba(0,0,0,0.1); padding:1rem; animation:slideDown 0.2s ease-out; }
+        .candidate-mobile-menu { position:absolute; top:100%; left:0; right:0; background:#ffffff; border-bottom:1px solid #e5e7eb; box-shadow:0 4px 12px rgba(0,0,0,0.1); padding:1rem; animation:slideDown 0.2s ease-out; z-index:999; }
         @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
-        .mobile-menu-header { display:flex; justify-content:flex-end; margin-bottom:0.5rem; }
-        .mobile-menu-close { display:flex; align-items:center; justify-content:center; width:32px; height:32px; border:none; background:#f3f4f6; color:#6b7280; border-radius:8px; cursor:pointer; transition:all 0.15s; }
+        .mobile-menu-header { display:flex; justify-content:flex-end; margin-bottom:0.5rem; padding:0.25rem 0; }
+        .mobile-menu-close { display:flex; align-items:center; justify-content:center; width:36px; height:36px; border:none; background:#f3f4f6; color:#6b7280; border-radius:8px; cursor:pointer; transition:all 0.15s; }
         .mobile-menu-close:hover { background:#e5e7eb; color:#374151; }
+        .mobile-menu-close:active { background:#d1d5db; }
         .mobile-profile { display:flex; align-items:center; gap:1rem; padding:1rem; background:#f9fafb; border-radius:12px; margin-bottom:1rem; }
         .mobile-avatar { width:48px; height:48px; border-radius:50%; object-fit:cover; }
         .mobile-profile-info { display:flex; flex-direction:column; }
