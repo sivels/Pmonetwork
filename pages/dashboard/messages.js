@@ -106,7 +106,10 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
 
   // Publish unread count to candidate header (localStorage + custom event)
   useEffect(() => {
-    const unread = conversations.reduce((sum, c) => sum + (c.unread || 0), 0);
+    // Only count unread from non-archived conversations
+    const unread = conversations
+      .filter(c => !c.archivedByCandidate)
+      .reduce((sum, c) => sum + (c.unread || 0), 0);
     try {
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('unreadMessagesCount', String(unread));
@@ -124,7 +127,14 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
   // Mark conversation as read when opened
   useEffect(() => {
     if (!activeConversationId) return;
-    setConversations(prev => prev.map(c => c.id === activeConversationId ? { ...c, unread: 0 } : c));
+    
+    // Optimistically update unread count locally after messages are loaded
+    // The API will mark them as read when fetched
+    const timer = setTimeout(() => {
+      setConversations(prev => prev.map(c => c.id === activeConversationId ? { ...c, unread: 0 } : c));
+    }, 500);
+    
+    return () => clearTimeout(timer);
   }, [activeConversationId]);
 
   // Fetch messages for selected conversation with polling
@@ -134,7 +144,11 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
     const loadMessages = () => {
       fetch(`/api/conversations/${activeConversationId}/messages`)
         .then(res => res.json())
-        .then(data => setMessages(data.items || []))
+        .then(data => {
+          setMessages(data.items || []);
+          // Update unread count after fetching (API marks as read)
+          setConversations(prev => prev.map(c => c.id === activeConversationId ? { ...c, unread: 0 } : c));
+        })
         .catch(err => console.error('Failed to load messages:', err));
     };
 

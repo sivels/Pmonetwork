@@ -58,7 +58,8 @@ export default function CandidateLayout({ children, user }) {
       try {
         const raw = typeof window !== 'undefined' ? window.localStorage.getItem('unreadMessagesCount') : '0';
         const val = parseInt(raw || '0', 10);
-        setUnreadMessages(Number.isFinite(val) ? val : 0);
+        const finalVal = Number.isFinite(val) ? val : 0;
+        setUnreadMessages(finalVal);
       } catch {
         setUnreadMessages(0);
       }
