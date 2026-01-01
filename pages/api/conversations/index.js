@@ -1,4 +1,6 @@
 import { prisma } from '../../../lib/prisma';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
@@ -35,6 +37,7 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
+      const session = await getServerSession(req, res, authOptions);
       const { employerId, candidateId } = req.query;
 
       const where = {};
@@ -57,12 +60,28 @@ export default async function handler(req, res) {
           messages: {
             orderBy: { createdAt: 'desc' },
             take: 1
-          }
+          },
+          _count: session?.user?.id ? {
+            select: {
+              messages: {
+                where: {
+                  receiverUserId: session.user.id,
+                  readAt: null
+                }
+              }
+            }
+          } : undefined
         },
         orderBy: { updatedAt: 'desc' } 
       });
       
-      return res.status(200).json({ items });
+      // Add unread count to each conversation
+      const itemsWithUnread = items.map(conv => ({
+        ...conv,
+        unread: conv._count?.messages ?? 0
+      }));
+      
+      return res.status(200).json({ items: itemsWithUnread });
     } catch (error) {
       console.error('Error fetching conversations:', error);
       return res.status(500).json({ error: 'Failed to fetch conversations' });

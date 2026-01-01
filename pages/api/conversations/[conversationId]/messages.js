@@ -1,14 +1,32 @@
 import { prisma } from '../../../../lib/prisma';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../auth/[...nextauth]';
 
 export default async function handler(req, res) {
   const { conversationId } = req.query;
 
   if (req.method === 'GET') {
     try {
+      const session = await getServerSession(req, res, authOptions);
+      
       const messages = await prisma.message.findMany({
         where: { conversationId },
         orderBy: { createdAt: 'asc' },
       });
+      
+      // Mark messages as read for the current user
+      if (session?.user?.id) {
+        await prisma.message.updateMany({
+          where: {
+            conversationId,
+            receiverUserId: session.user.id,
+            readAt: null
+          },
+          data: {
+            readAt: new Date()
+          }
+        });
+      }
       
       return res.status(200).json({ items: messages });
     } catch (error) {

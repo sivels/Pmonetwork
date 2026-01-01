@@ -33,16 +33,32 @@ export async function getServerSideProps(ctx) {
       messages: {
         orderBy: { createdAt: 'desc' },
         take: 1
+      },
+      _count: {
+        select: {
+          messages: {
+            where: {
+              receiverUserId: session.user.id,
+              readAt: null
+            }
+          }
+        }
       }
     },
     orderBy: { updatedAt: 'desc' }
   }) : [];
   
+  // Add unread count to each conversation
+  const conversationsWithUnread = conversations.map(conv => ({
+    ...conv,
+    unread: conv._count.messages
+  }));
+  
   return { 
     props: { 
       profile: profile ? JSON.parse(JSON.stringify(profile)) : null, 
       userEmail: session.user.email,
-      initialConversations: JSON.parse(JSON.stringify(conversations))
+      initialConversations: JSON.parse(JSON.stringify(conversationsWithUnread))
     } 
   };
 }
