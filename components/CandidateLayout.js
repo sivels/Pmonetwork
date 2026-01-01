@@ -262,6 +262,17 @@ export default function CandidateLayout({ children, user }) {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="candidate-mobile-menu">
+            <div className="mobile-menu-header">
+              <button 
+                className="mobile-menu-close" 
+                onClick={() => setMobileMenuOpen(false)}
+                aria-label="Close menu"
+              >
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
             <div className="mobile-profile">
               <img 
                 src={user?.profilePhotoUrl || '/images/avatar-placeholder.svg'} 
@@ -380,6 +391,9 @@ export default function CandidateLayout({ children, user }) {
         /* Mobile Menu */
         .candidate-mobile-menu { position:absolute; top:100%; left:0; right:0; background:#ffffff; border-bottom:1px solid #e5e7eb; box-shadow:0 4px 12px rgba(0,0,0,0.1); padding:1rem; animation:slideDown 0.2s ease-out; }
         @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+        .mobile-menu-header { display:flex; justify-content:flex-end; margin-bottom:0.5rem; }
+        .mobile-menu-close { display:flex; align-items:center; justify-content:center; width:32px; height:32px; border:none; background:#f3f4f6; color:#6b7280; border-radius:8px; cursor:pointer; transition:all 0.15s; }
+        .mobile-menu-close:hover { background:#e5e7eb; color:#374151; }
         .mobile-profile { display:flex; align-items:center; gap:1rem; padding:1rem; background:#f9fafb; border-radius:12px; margin-bottom:1rem; }
         .mobile-avatar { width:48px; height:48px; border-radius:50%; object-fit:cover; }
         .mobile-profile-info { display:flex; flex-direction:column; }
