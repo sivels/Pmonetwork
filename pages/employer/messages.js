@@ -1,10 +1,71 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../api/auth/[...nextauth]';
+import { prisma } from '../../lib/prisma';
 
-export default function EmployerMessages() {
+export async function getServerSideProps(ctx) {
+  const session = await getServerSession(ctx.req, ctx.res, authOptions);
+  if (!session) {
+    return { redirect: { destination: '/auth/login', permanent: false } };
+  }
+  if ((session.user.role || '').toLowerCase() !== 'employer') {
+    return { redirect: { destination: '/dashboard/candidate', permanent: false } };
+  }
+
+  // Get employer profile
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    include: { employerEmployerProfile: true }
+  });
+
+  const employerProfile = user?.employerEmployerProfile;
+
+  if (!employerProfile) {
+    return { props: { conversations: [], employerProfile: null } };
+  }
+
+  // Fetch conversations for this employer
+  const conversations = await prisma.conversation.findMany({
+    where: { employerId: employerProfile.id },
+    include: {
+      candidate: {
+        include: {
+          user: { select: { email: true } }
+        }
+      },
+      messages: {
+        orderBy: { createdAt: 'desc' },
+        take: 1
+      }
+    },
+    orderBy: { updatedAt: 'desc' }
+  });
+
+  return {
+    props: {
+      conversations: JSON.parse(JSON.stringify(conversations)),
+      employerProfile: JSON.parse(JSON.stringify(employerProfile))
+    }
+  };
+}
+
+export default function EmployerMessages({ conversations: initialConversations, employerProfile }) {
   const [activeFilter, setActiveFilter] = useState('all');
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messageText, setMessageText] = useState('');
+  const [conversations, setConversations] = useState(initialConversations);
+  const [messages, setMessages] = useState([]);
+
+  // Fetch messages for selected conversation
+  useEffect(() => {
+    if (!selectedConversation) return;
+    
+    fetch(`/api/conversations/${selectedConversation.id}/messages`)
+      .then(res => res.json())
+      .then(data => setMessages(data.items || []))
+      .catch(err => console.error('Failed to load messages:', err));
+  }, [selectedConversation]);
 
   const filters = [
     { id: 'all', label: 'All Messages' },
@@ -13,25 +74,45 @@ export default function EmployerMessages() {
     { id: 'unread', label: 'Unread' }
   ];
 
-  // Empty conversations array - will be populated from database
-  const mockConversations = [];
-
-  const filteredConversations = mockConversations.filter(conv => {
+  const filteredConversations = conversations.filter(conv => {
     if (activeFilter === 'all') return true;
-    if (activeFilter === 'applicants') return conv.type === 'applicant';
-    if (activeFilter === 'candidates') return conv.type === 'candidate';
+    if (activeFilter === 'applicants') return conv.jobId; // Has a job = applicant
+    if (activeFilter === 'candidates') return !conv.jobId; // No job = general candidate
     if (activeFilter === 'unread') return conv.unread;
     return true;
   });
 
-  const unreadCount = mockConversations.filter(c => c.unread).length;
+  const unreadCount = conversations.filter(c => c.unread).length;
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!messageText.trim()) return;
-    // Here you would send the message to your backend
-    console.log('Sending message:', messageText);
-    setMessageText('');
+    if (!messageText.trim() || !selectedConversation || !employerProfile) return;
+
+    try {
+      const res = await fetch(`/api/conversations/${selectedConversation.id}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          senderUserId: employerProfile.userId,
+          receiverUserId: selectedConversation.candidate.userId,
+          text: messageText
+        })
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        console.error('Failed to send message:', error);
+        alert('Failed to send message');
+        return;
+      }
+
+      const newMessage = await res.json();
+      setMessages([...messages, newMessage]);
+      setMessageText('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert('Error sending message');
+    }
   };
 
   return (
@@ -70,25 +151,32 @@ export default function EmployerMessages() {
                   <p>No messages in this category</p>
                 </div>
               ) : (
-                filteredConversations.map(conv => (
-                  <div
-                    key={conv.id}
-                    className={`conversation-item ${selectedConversation?.id === conv.id ? 'active' : ''} ${conv.unread ? 'unread' : ''}`}
-                    onClick={() => setSelectedConversation(conv)}
-                  >
-                    {conv.unread && <span className="unread-dot" />}
-                    <div className="conv-avatar">{conv.avatar}</div>
-                    <div className="conv-content">
-                      <div className="conv-header">
-                        <span className="conv-name">{conv.candidateName}</span>
-                        <span className="conv-time">{conv.timestamp}</span>
+                filteredConversations.map(conv => {
+                  const lastMessage = conv.messages?.[0];
+                  const messagePreview = lastMessage?.text || 'No messages yet';
+                  const timestamp = lastMessage ? new Date(lastMessage.createdAt).toLocaleDateString() : '';
+                  
+                  return (
+                    <div
+                      key={conv.id}
+                      className={`conversation-item ${selectedConversation?.id === conv.id ? 'active' : ''}`}
+                      onClick={() => setSelectedConversation(conv)}
+                    >
+                      <div className="conv-avatar">
+                        <img src={conv.candidate?.profilePhotoUrl || '/images/avatar-placeholder.svg'} alt={conv.candidate?.fullName} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
                       </div>
-                      <p className="conv-role">{conv.role}</p>
-                      {conv.jobTitle && <p className="conv-job">Re: {conv.jobTitle}</p>}
-                      <p className="conv-preview">{conv.preview}</p>
+                      <div className="conv-content">
+                        <div className="conv-header">
+                          <span className="conv-name">{conv.candidate?.fullName || 'Candidate'}</span>
+                          <span className="conv-time">{timestamp}</span>
+                        </div>
+                        <p className="conv-role">{conv.candidate?.jobTitle || ''}</p>
+                        {conv.jobId && <p className="conv-job">Re: Job Application</p>}
+                        <p className="conv-preview">{messagePreview.substring(0, 60)}{messagePreview.length > 60 ? '...' : ''}</p>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </aside>
@@ -105,12 +193,14 @@ export default function EmployerMessages() {
               <>
                 <div className="chat-header">
                   <div className="chat-header-info">
-                    <div className="chat-avatar">{selectedConversation.avatar}</div>
+                    <div className="chat-avatar">
+                      <img src={selectedConversation.candidate?.profilePhotoUrl || '/images/avatar-placeholder.svg'} alt={selectedConversation.candidate?.fullName} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }} />
+                    </div>
                     <div>
-                      <h3>{selectedConversation.candidateName}</h3>
-                      <p className="chat-role">{selectedConversation.role}</p>
-                      {selectedConversation.jobTitle && (
-                        <p className="chat-job-ref">Applied for: {selectedConversation.jobTitle}</p>
+                      <h3>{selectedConversation.candidate?.fullName || 'Candidate'}</h3>
+                      <p className="chat-role">{selectedConversation.candidate?.jobTitle || ''}</p>
+                      {selectedConversation.jobId && (
+                        <p className="chat-job-ref">Re: Job Application</p>
                       )}
                     </div>
                   </div>
@@ -129,15 +219,18 @@ export default function EmployerMessages() {
                 </div>
 
                 <div className="messages-thread">
-                  {selectedConversation.messages.map(msg => (
-                    <div key={msg.id} className={`message-bubble ${msg.isYou ? 'outbound' : 'inbound'}`}>
-                      <div className="message-content">
-                        <div className="message-sender">{msg.isYou ? 'You' : msg.sender}</div>
-                        <p className="message-text">{msg.message}</p>
-                        <span className="message-timestamp">{msg.timestamp}</span>
+                  {messages.map(msg => {
+                    const isEmployer = msg.senderUserId === employerProfile?.userId;
+                    return (
+                      <div key={msg.id} className={`message-bubble ${isEmployer ? 'outbound' : 'inbound'}`}>
+                        <div className="message-content">
+                          <div className="message-sender">{isEmployer ? 'You' : selectedConversation.candidate?.fullName}</div>
+                          <p className="message-text">{msg.text}</p>
+                          <span className="message-timestamp">{new Date(msg.createdAt).toLocaleString()}</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <form className="message-composer" onSubmit={handleSendMessage}>
