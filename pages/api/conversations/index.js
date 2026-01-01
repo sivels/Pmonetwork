@@ -5,7 +5,10 @@ export default async function handler(req, res) {
     try {
       const { employerId, candidateId, jobId } = req.body;
       
+      console.log('Creating conversation with:', { employerId, candidateId, jobId });
+      
       if (!employerId || !candidateId) {
+        console.log('Missing required IDs');
         return res.status(400).json({ error: 'Missing ids' });
       }
 
@@ -14,6 +17,7 @@ export default async function handler(req, res) {
       });
       
       if (existing) {
+        console.log('Found existing conversation:', existing.id);
         return res.status(200).json(existing);
       }
 
@@ -21,10 +25,11 @@ export default async function handler(req, res) {
         data: { employerId, candidateId, jobId: jobId ?? undefined } 
       });
       
+      console.log('Created new conversation:', created.id);
       return res.status(200).json(created);
     } catch (error) {
       console.error('Error creating conversation:', error);
-      return res.status(500).json({ error: 'Failed to create conversation' });
+      return res.status(500).json({ error: 'Failed to create conversation', details: error.message });
     }
   }
 

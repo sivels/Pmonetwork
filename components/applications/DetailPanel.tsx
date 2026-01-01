@@ -55,16 +55,34 @@ export function DetailPanel({ applicationId, onClose }: { applicationId: string 
 
   const sendMessage = useMutation({
     mutationFn: async () => {
-      if (!data || !data.job?.employer?.userId || !data.candidate?.userId) return;
+      if (!data || !data.job?.employer?.userId || !data.candidate?.userId) {
+        console.error("Missing required data for sending message:", { 
+          hasData: !!data, 
+          hasEmployerUserId: !!data?.job?.employer?.userId,
+          hasCandidateUserId: !!data?.candidate?.userId 
+        });
+        return;
+      }
+      if (!messageText.trim()) return;
+      
       // Create or find conversation
       const convRes = await fetch(`/api/conversations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ employerId: data.job.employerId, candidateId: data.candidate.id, jobId: data.job.id }),
       });
+      
+      if (!convRes.ok) {
+        const errorData = await convRes.json();
+        console.error("Failed to create conversation:", errorData);
+        throw new Error(errorData.error || "Failed to create conversation");
+      }
+      
       const conv = await convRes.json();
+      console.log("Conversation created/found:", conv);
       setConversationId(conv.id);
-      await fetch(`/api/conversations/${conv.id}/messages`, {
+      
+      const msgRes = await fetch(`/api/conversations/${conv.id}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -73,7 +91,23 @@ export function DetailPanel({ applicationId, onClose }: { applicationId: string 
           text: messageText 
         }),
       });
+      
+      if (!msgRes.ok) {
+        const errorData = await msgRes.json();
+        console.error("Failed to send message:", errorData);
+        throw new Error(errorData.error || "Failed to send message");
+      }
+      
+      console.log("Message sent successfully");
       setMessageText("");
+    },
+    onSuccess: () => {
+      // Show success feedback
+      alert("Message sent successfully!");
+    },
+    onError: (error: any) => {
+      console.error("Error sending message:", error);
+      alert("Failed to send message: " + error.message);
     },
   });
 

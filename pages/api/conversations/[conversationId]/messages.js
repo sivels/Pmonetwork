@@ -21,6 +21,13 @@ export default async function handler(req, res) {
     try {
       const { senderUserId, receiverUserId, text, attachments } = req.body;
       
+      console.log('Creating message:', { conversationId, senderUserId, receiverUserId, textLength: text?.length });
+      
+      if (!senderUserId || !receiverUserId || !text) {
+        console.log('Missing required fields');
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+      
       const msg = await prisma.message.create({
         data: {
           conversationId,
@@ -30,6 +37,8 @@ export default async function handler(req, res) {
           attachments: attachments ? JSON.stringify(attachments) : undefined,
         },
       });
+      
+      console.log('Message created:', msg.id);
       
       await prisma.activityLog.create({
         data: {
@@ -42,7 +51,7 @@ export default async function handler(req, res) {
       return res.status(200).json(msg);
     } catch (error) {
       console.error('Error creating message:', error);
-      return res.status(500).json({ error: 'Failed to create message' });
+      return res.status(500).json({ error: 'Failed to create message', details: error.message });
     }
   }
 
