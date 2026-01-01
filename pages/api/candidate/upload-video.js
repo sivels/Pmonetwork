@@ -2,8 +2,8 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import formidable from 'formidable';
 import fs from 'fs';
-import path from 'path';
 import { prisma } from '../../../lib/prisma';
+import { supabaseAdmin } from '../../../lib/supabaseAdmin';
 
 export const config = {
   api: {
@@ -28,25 +28,15 @@ export default async function handler(req, res) {
   const candidateId = user.id;
 
   try {
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'videos');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
     const form = formidable({
-      uploadDir,
-      keepExtensions: true,
-      maxFileSize: 4.5 * 1024 * 1024, // 4.5MB - Vercel has 5MB limit for serverless functions
-      filename: (name, ext, part) => {
-        return `${candidateId}-${Date.now()}${ext}`;
-      }
+      maxFileSize: 100 * 1024 * 1024, // 100MB - Supabase Storage can handle this
     });
 
     form.parse(req, async (err, fields, files) => {
       if (err) {
         console.error('Video upload error:', err);
         if (err.code === 'LIMIT_FILE_SIZE' || err.httpCode === 413) {
-          return res.status(413).json({ error: 'Video file is too large. Maximum size is 4.5MB. Please compress your video or use a shorter clip.' });
+          return res.status(413).json({ error: 'Video file is too large. Maximum size is 100MB.' });
         }
         return res.status(500).json({ error: 'Upload failed' });
       }
@@ -56,15 +46,39 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'No video file provided' });
       }
 
-      const videoUrl = `/uploads/videos/${path.basename(videoFile.filepath)}`;
+      // Read file buffer
+      const fileBuffer = fs.readFileSync(videoFile.filepath);
+      const fileExt = videoFile.originalFilename?.split('.').pop() || 'mp4';
+      const fileName = `${candidateId}/${Date.now()}.${fileExt}`;
+
+      // Upload to Supabase Storage
+      const { data, error: uploadError } = await supabaseAdmin.storage
+        .from('videos')
+        .upload(fileName, fileBuffer, {
+          contentType: videoFile.mimetype,
+          upsert: false
+        });
+
+      // Clean up temp file
+      fs.unlinkSync(videoFile.filepath);
+
+      if (uploadError) {
+        console.error('Supabase upload error:', uploadError);
+        return res.status(500).json({ error: 'Failed to upload to storage' });
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabaseAdmin.storage
+        .from('videos')
+        .getPublicUrl(fileName);
 
       // Update profile with video URL
       await prisma.candidateProfile.update({
         where: { userId: candidateId },
-        data: { videoIntroUrl: videoUrl }
+        data: { videoIntroUrl: publicUrl }
       });
 
-      return res.status(200).json({ videoUrl });
+      return res.status(200).json({ videoUrl: publicUrl });
     });
   } catch (error) {
     console.error('Video upload error:', error);
