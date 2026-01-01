@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../api/auth/[...nextauth]';
@@ -56,16 +56,53 @@ export default function EmployerMessages({ conversations: initialConversations, 
   const [messageText, setMessageText] = useState('');
   const [conversations, setConversations] = useState(initialConversations);
   const [messages, setMessages] = useState([]);
+  const messagesEndRef = useRef(null);
+
+  // Auto-scroll to bottom when new messages arrive
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Fetch messages for selected conversation
   useEffect(() => {
     if (!selectedConversation) return;
     
-    fetch(`/api/conversations/${selectedConversation.id}/messages`)
-      .then(res => res.json())
-      .then(data => setMessages(data.items || []))
-      .catch(err => console.error('Failed to load messages:', err));
+    const loadMessages = () => {
+      fetch(`/api/conversations/${selectedConversation.id}/messages`)
+        .then(res => res.json())
+        .then(data => setMessages(data.items || []))
+        .catch(err => console.error('Failed to load messages:', err));
+    };
+
+    loadMessages();
+    
+    // Poll for new messages every 3 seconds
+    const interval = setInterval(loadMessages, 3000);
+    
+    return () => clearInterval(interval);
   }, [selectedConversation]);
+
+  // Refresh conversations list every 10 seconds
+  useEffect(() => {
+    if (!employerProfile) return;
+
+    const refreshConversations = async () => {
+      try {
+        const res = await fetch(`/api/conversations?employerId=${employerProfile.id}`);
+        const data = await res.json();
+        setConversations(data.items || []);
+      } catch (err) {
+        console.error('Failed to refresh conversations:', err);
+      }
+    };
+
+    const interval = setInterval(refreshConversations, 10000);
+    return () => clearInterval(interval);
+  }, [employerProfile]);
 
   const filters = [
     { id: 'all', label: 'All Messages' },
@@ -231,6 +268,7 @@ export default function EmployerMessages({ conversations: initialConversations, 
                       </div>
                     );
                   })}
+                  <div ref={messagesEndRef} />
                 </div>
 
                 <form className="message-composer" onSubmit={handleSendMessage}>

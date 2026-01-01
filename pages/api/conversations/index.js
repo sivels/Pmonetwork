@@ -42,7 +42,23 @@ export default async function handler(req, res) {
       if (candidateId) where.candidateId = candidateId;
 
       const items = await prisma.conversation.findMany({ 
-        where, 
+        where,
+        include: {
+          candidate: {
+            include: {
+              user: { select: { email: true } }
+            }
+          },
+          employer: {
+            include: {
+              user: { select: { email: true } }
+            }
+          },
+          messages: {
+            orderBy: { createdAt: 'desc' },
+            take: 1
+          }
+        },
         orderBy: { updatedAt: 'desc' } 
       });
       

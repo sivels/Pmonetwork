@@ -62,6 +62,16 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
   // Conversations data from database
   const [conversations, setConversations] = useState(initialConversations || []);
   const [messages, setMessages] = useState([]);
+  const messagesEndRef = useRef(null);
+
+  // Auto-scroll to bottom when new messages arrive
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Publish unread count to candidate header (localStorage + custom event)
   useEffect(() => {
@@ -86,15 +96,42 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
     setConversations(prev => prev.map(c => c.id === activeConversationId ? { ...c, unread: 0 } : c));
   }, [activeConversationId]);
 
-  // Fetch messages for selected conversation
+  // Fetch messages for selected conversation with polling
   useEffect(() => {
     if (!activeConversationId) return;
     
-    fetch(`/api/conversations/${activeConversationId}/messages`)
-      .then(res => res.json())
-      .then(data => setMessages(data.items || []))
-      .catch(err => console.error('Failed to load messages:', err));
+    const loadMessages = () => {
+      fetch(`/api/conversations/${activeConversationId}/messages`)
+        .then(res => res.json())
+        .then(data => setMessages(data.items || []))
+        .catch(err => console.error('Failed to load messages:', err));
+    };
+
+    loadMessages();
+    
+    // Poll for new messages every 3 seconds
+    const interval = setInterval(loadMessages, 3000);
+    
+    return () => clearInterval(interval);
   }, [activeConversationId]);
+
+  // Refresh conversations list every 10 seconds
+  useEffect(() => {
+    if (!profile) return;
+
+    const refreshConversations = async () => {
+      try {
+        const res = await fetch(`/api/conversations?candidateId=${profile.id}`);
+        const data = await res.json();
+        setConversations(data.items || []);
+      } catch (err) {
+        console.error('Failed to refresh conversations:', err);
+      }
+    };
+
+    const interval = setInterval(refreshConversations, 10000);
+    return () => clearInterval(interval);
+  }, [profile]);
 
   const activeConversation = conversations.find(c => c.id === activeConversationId) || null;
 
@@ -300,6 +337,7 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
                     </div>
                   );
                 })}
+                <div ref={messagesEndRef} />
               </div>
               <div className="composer">
                 <div className="composer-inner">
