@@ -121,6 +121,16 @@ export default function EmployerMessages({ conversations: initialConversations, 
 
   const unreadCount = conversations.filter(c => c.unread).length;
 
+  // Publish unread count to employer header (localStorage + custom event)
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('employerUnreadMessagesCount', String(unreadCount));
+        window.dispatchEvent(new CustomEvent('employerUnreadMessages', { detail: unreadCount }));
+      }
+    } catch {}
+  }, [unreadCount]);
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!messageText.trim() || !selectedConversation || !employerProfile) return;

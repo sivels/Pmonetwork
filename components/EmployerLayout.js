@@ -10,6 +10,7 @@ export default function EmployerLayout({ children }) {
   const isActive = (p) => path.startsWith(p);
   
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const dropdownRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -24,6 +25,32 @@ export default function EmployerLayout({ children }) {
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [profileDropdownOpen]);
+
+  // Sync unread message count from messages page via localStorage/custom event
+  useEffect(() => {
+    function readUnreadFromStorage() {
+      try {
+        const raw = typeof window !== 'undefined' ? window.localStorage.getItem('employerUnreadMessagesCount') : '0';
+        const val = parseInt(raw || '0', 10);
+        setUnreadMessages(Number.isFinite(val) ? val : 0);
+      } catch {
+        setUnreadMessages(0);
+      }
+    }
+    const onCustom = (e) => {
+      if (typeof e?.detail === 'number') setUnreadMessages(e.detail);
+    };
+    const onStorage = (e) => {
+      if (e.key === 'employerUnreadMessagesCount') readUnreadFromStorage();
+    };
+    readUnreadFromStorage();
+    window.addEventListener('employerUnreadMessages', onCustom);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('employerUnreadMessages', onCustom);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
 
   // Handle sign out
   const handleSignOut = async () => {
@@ -76,7 +103,7 @@ export default function EmployerLayout({ children }) {
                 <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
-                <span className="icon-dot" aria-hidden="true"></span>
+                {unreadMessages > 0 && <span className="icon-dot" aria-hidden="true"></span>}
               </span>
             </Link>
           </nav>

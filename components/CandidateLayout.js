@@ -10,7 +10,7 @@ export default function CandidateLayout({ children, user }) {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [messagesOpen, setMessagesOpen] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState(5);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const dropdownRef = useRef(null);
   const router = useRouter();
