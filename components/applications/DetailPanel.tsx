@@ -3,10 +3,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { X, Mail, MessageSquare, FileText, Users, CheckCircle, ChevronLeft } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
 
 export function DetailPanel({ applicationId, onClose }: { applicationId: string | null; onClose: () => void }) {
-  const { data: session } = useSession();
   const qc = useQueryClient();
   const [messageText, setMessageText] = useState("");
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -57,7 +55,7 @@ export function DetailPanel({ applicationId, onClose }: { applicationId: string 
 
   const sendMessage = useMutation({
     mutationFn: async () => {
-      if (!data || !session?.user?.id) return;
+      if (!data || !data.job?.employer?.userId || !data.candidate?.userId) return;
       // Create or find conversation
       const convRes = await fetch(`/api/conversations`, {
         method: "POST",
