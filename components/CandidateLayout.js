@@ -264,17 +264,6 @@ export default function CandidateLayout({ children, user }) {
           <>
             <div className="mobile-menu-overlay" onClick={() => setMobileMenuOpen(false)}></div>
             <div className="candidate-mobile-menu">
-              <div className="mobile-menu-header">
-                <button 
-                  className="mobile-menu-close" 
-                  onClick={() => setMobileMenuOpen(false)}
-                  aria-label="Close menu"
-                >
-                  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
               <div className="mobile-profile">
               <img 
                 src={user?.profilePhotoUrl || '/images/avatar-placeholder.svg'} 
@@ -332,6 +321,15 @@ export default function CandidateLayout({ children, user }) {
                 Sign Out
               </button>
             </nav>
+            <div className="mobile-menu-footer">
+              <button 
+                className="mobile-menu-close" 
+                onClick={() => setMobileMenuOpen(false)}
+                aria-label="Close menu"
+              >
+                ✕
+              </button>
+            </div>
           </div>
           </>
         )}
@@ -398,10 +396,10 @@ export default function CandidateLayout({ children, user }) {
         /* Mobile Menu */
         .candidate-mobile-menu { position:absolute; top:100%; left:0; right:0; background:#ffffff; border-bottom:1px solid #e5e7eb; box-shadow:0 4px 12px rgba(0,0,0,0.1); padding:1rem; animation:slideDown 0.2s ease-out; z-index:999; }
         @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
-        .mobile-menu-header { display:flex; justify-content:flex-end; margin-bottom:0.75rem; padding:0.5rem; background:#f9fafb; border-radius:8px; }
-        .mobile-menu-close { display:flex; align-items:center; justify-content:center; width:44px; height:44px; border:2px solid #ef4444; background:#ffffff; color:#ef4444; border-radius:50%; cursor:pointer; transition:all 0.15s; box-shadow:0 2px 8px rgba(239,68,68,0.3); font-weight:bold; }
-        .mobile-menu-close:hover { background:#ef4444; color:#ffffff; transform:rotate(90deg); }
-        .mobile-menu-close:active { transform:scale(0.9) rotate(90deg); }
+        .mobile-menu-footer { display:flex; justify-content:center; margin-top:1rem; padding-top:1rem; border-top:1px solid #e5e7eb; }
+        .mobile-menu-close { display:flex; align-items:center; justify-content:center; width:48px; height:48px; border:none; background:transparent; color:#6b7280; font-size:28px; cursor:pointer; transition:all 0.15s; }
+        .mobile-menu-close:hover { color:#374151; transform:scale(1.1); }
+        .mobile-menu-close:active { transform:scale(0.95); }
         .mobile-profile { display:flex; align-items:center; gap:1rem; padding:1rem; background:#f9fafb; border-radius:12px; margin-bottom:1rem; }
         .mobile-avatar { width:48px; height:48px; border-radius:50%; object-fit:cover; }
         .mobile-profile-info { display:flex; flex-direction:column; }

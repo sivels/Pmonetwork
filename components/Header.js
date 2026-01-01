@@ -69,17 +69,6 @@ export default function Header() {
         )}
       </div>
       <nav id="primary-nav" ref={navRef} aria-label="Primary" className={`primary-nav ${menuOpen ? 'open' : ''}`}>
-        <div className="mobile-nav-header">
-          <button 
-            className="mobile-nav-close" 
-            onClick={() => setMenuOpen(false)}
-            aria-label="Close menu"
-          >
-            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
         <ul className="nav-list">
           {!isHome && <li><Link href="/" aria-current={isHome ? 'page' : undefined}>Home</Link></li>}
           <li><Link href="/jobs" aria-current={path === '/jobs' ? 'page' : undefined}>Jobs</Link></li>
@@ -98,6 +87,15 @@ export default function Header() {
             </li>
           </ul>
         )}
+        <div className="mobile-nav-footer">
+          <button 
+            className="mobile-nav-close" 
+            onClick={() => setMenuOpen(false)}
+            aria-label="Close menu"
+          >
+            ✕
+          </button>
+        </div>
       </nav>
     </header>
   );

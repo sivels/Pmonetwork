@@ -237,30 +237,29 @@ a:focus-visible {
   border-radius: 8px;
 }
 .primary-nav.open { display: block; }
-.mobile-nav-header {
+.mobile-nav-footer {
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e5e7eb;
+  justify-content: center;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
 }
 .mobile-nav-close {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: transparent;
   color: #6b7280;
-  border-radius: 8px;
+  font-size: 28px;
   cursor: pointer;
   transition: all 0.15s;
 }
 .mobile-nav-close:hover {
-  background: #f3f4f6;
   color: #374151;
-  border-color: #d1d5db;
+  transform: scale(1.1);
 }
 .mobile-nav-close:active {
   transform: scale(0.95);
@@ -305,7 +304,7 @@ a:focus-visible {
 }
 
 @media (min-width: 721px) {
-  .mobile-nav-header {
+  .mobile-nav-footer {
     display: none;
   }
 }
