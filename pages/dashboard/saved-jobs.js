@@ -28,24 +28,11 @@ export async function getServerSideProps(ctx) {
   });
   const candidateProfile = user?.candidateCandidateProfile || null;
   
-  // TODO: Fetch saved jobs from database
+  // TODO: Fetch saved jobs from database when feature is implemented
   // const savedJobs = await prisma.savedJob.findMany({ where: { userId: session.user.id }, include: { job: true } });
   
-  // Placeholder data
-  const savedJobs = [
-    { id: 'sj1', jobId: 'j1', savedAt: new Date('2025-11-25'), job: { id: 'j1', title: 'Senior PMO Manager', company: 'HSBC', companyLogo: '/images/avatar-placeholder.svg', location: 'London, UK', salaryMin: 75000, salaryMax: 95000, employmentType: 'Permanent', isRemote: false, isHybrid: true, postedAt: new Date('2025-11-20') } },
-    { id: 'sj2', jobId: 'j2', savedAt: new Date('2025-11-24'), job: { id: 'j2', title: 'PMO Analyst', company: 'Deloitte', companyLogo: '/images/avatar-placeholder.svg', location: 'Manchester, UK', salaryMin: 45000, salaryMax: 55000, employmentType: 'Contract', isRemote: true, isHybrid: false, postedAt: new Date('2025-11-18') } },
-    { id: 'sj3', jobId: 'j3', savedAt: new Date('2025-11-23'), job: { id: 'j3', title: 'Portfolio Manager', company: 'Barclays', companyLogo: '/images/avatar-placeholder.svg', location: 'Birmingham, UK', salaryMin: 80000, salaryMax: 105000, employmentType: 'Permanent', isRemote: false, isHybrid: false, postedAt: new Date('2025-11-15') } },
-    { id: 'sj4', jobId: 'j4', savedAt: new Date('2025-11-22'), job: { id: 'j4', title: 'Project Controls Lead', company: 'BP', companyLogo: '/images/avatar-placeholder.svg', location: 'Aberdeen, UK', salaryMin: 65000, salaryMax: 80000, employmentType: 'Permanent', isRemote: false, isHybrid: true, postedAt: new Date('2025-11-14') } },
-    { id: 'sj5', jobId: 'j5', savedAt: new Date('2025-11-21'), job: { id: 'j5', title: 'Agile PMO Consultant', company: 'Accenture', companyLogo: '/images/avatar-placeholder.svg', location: 'Leeds, UK', salaryMin: 550, salaryMax: 650, employmentType: 'Contract', isRemote: true, isHybrid: false, postedAt: new Date('2025-11-12') } },
-    { id: 'sj6', jobId: 'j6', savedAt: new Date('2025-11-20'), job: { id: 'j6', title: 'Programme Manager', company: 'Lloyds Banking Group', companyLogo: '/images/avatar-placeholder.svg', location: 'Edinburgh, UK', salaryMin: 85000, salaryMax: 110000, employmentType: 'Permanent', isRemote: false, isHybrid: true, postedAt: new Date('2025-11-10') } },
-    { id: 'sj7', jobId: 'j7', savedAt: new Date('2025-11-19'), job: { id: 'j7', title: 'Junior PMO Officer', company: 'PwC', companyLogo: '/images/avatar-placeholder.svg', location: 'Bristol, UK', salaryMin: 32000, salaryMax: 40000, employmentType: 'Permanent', isRemote: false, isHybrid: true, postedAt: new Date('2025-11-08') } },
-    { id: 'sj8', jobId: 'j8', savedAt: new Date('2025-11-18'), job: { id: 'j8', title: 'Transformation PMO Director', company: 'EY', companyLogo: '/images/avatar-placeholder.svg', location: 'London, UK', salaryMin: 120000, salaryMax: 150000, employmentType: 'Permanent', isRemote: false, isHybrid: true, postedAt: new Date('2025-11-05') } },
-    { id: 'sj9', jobId: 'j9', savedAt: new Date('2025-11-17'), job: { id: 'j9', title: 'PMO Business Analyst', company: 'Capita', companyLogo: '/images/avatar-placeholder.svg', location: 'Remote, UK', salaryMin: 40000, salaryMax: 50000, employmentType: 'Permanent', isRemote: true, isHybrid: false, postedAt: new Date('2025-11-03') } },
-    { id: 'sj10', jobId: 'j10', savedAt: new Date('2025-11-16'), job: { id: 'j10', title: 'Change Manager (PMO)', company: 'NatWest Group', companyLogo: '/images/avatar-placeholder.svg', location: 'Glasgow, UK', salaryMin: 55000, salaryMax: 70000, employmentType: 'Contract', isRemote: false, isHybrid: true, postedAt: new Date('2025-11-01') } },
-    { id: 'sj11', jobId: 'j11', savedAt: new Date('2025-11-15'), job: { id: 'j11', title: 'IT PMO Lead', company: 'Vodafone', companyLogo: '/images/avatar-placeholder.svg', location: 'Newbury, UK', salaryMin: 70000, salaryMax: 85000, employmentType: 'Permanent', isRemote: false, isHybrid: true, postedAt: new Date('2025-10-30') } },
-    { id: 'sj12', jobId: 'j12', savedAt: new Date('2025-11-14'), job: { id: 'j12', title: 'Freelance PMO Coordinator', company: 'Freelance Network', companyLogo: '/images/avatar-placeholder.svg', location: 'Remote, UK', salaryMin: 350, salaryMax: 450, employmentType: 'Freelance', isRemote: true, isHybrid: false, postedAt: new Date('2025-10-28') } },
-  ];
+  // Start with empty array - will be populated when users save jobs
+  const savedJobs = [];
 
   return { 
     props: { 
