@@ -39,6 +39,12 @@ export default function VideoIntroSection({ profile, onUpdate }) {
       // Debug: Check if Supabase is configured
       console.log('Supabase client:', supabase);
       console.log('Supabase URL:', supabase.supabaseUrl);
+      console.log('Storage client:', supabase.storage);
+      
+      // Test: List all buckets first
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      console.log('Available buckets:', buckets);
+      if (bucketsError) console.error('Buckets error:', bucketsError);
       
       // Generate unique file name
       const fileExt = file.name.split('.').pop();
