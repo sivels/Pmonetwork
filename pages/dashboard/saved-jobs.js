@@ -282,7 +282,8 @@ export default function SavedJobs({ savedJobs, candidateProfile }) {
         .job-card { background:#ffffff; border:1px solid #e5e7eb; border-radius:16px; padding:1.25rem; transition:all 0.2s; cursor:pointer; display:flex; flex-direction:column; }
         .job-card:hover { box-shadow:0 8px 24px rgba(0,0,0,0.08); transform:translateY(-2px); }
         .card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem; }
-        .company-logo { width:56px; height:56px; border-radius:12px; object-fit:cover; border:1px solid #e5e7eb; }
+        .company-logo { width:56px; height:56px; border-radius:12px; object-fit:contain; border:1px solid #e5e7eb; background:#ffffff; padding:0.25rem; }
+        .company-logo-placeholder { width:56px; height:56px; border-radius:12px; border:1px solid #e5e7eb; background:#f3f4f6; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:700; color:#6b7280; }
         .unsave-btn { background:transparent; border:none; color:#ef4444; cursor:pointer; padding:0.4rem; transition:all 0.15s; }
         .unsave-btn:hover { color:#dc2626; transform:scale(1.1); }
         .card-body { flex:1; }
