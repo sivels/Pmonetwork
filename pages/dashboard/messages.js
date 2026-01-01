@@ -174,8 +174,6 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
 
   const unreadCount = conversations.filter(c => c.unread).length;
 
-  const unreadCount = conversations.filter(c => c.unread).length;
-
   return (
     <>
       <Head>
