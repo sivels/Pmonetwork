@@ -11,6 +11,7 @@ export default function EmployerLayout({ children }) {
   
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [employerProfileId, setEmployerProfileId] = useState(null);
   const dropdownRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -25,6 +26,22 @@ export default function EmployerLayout({ children }) {
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [profileDropdownOpen]);
+
+  // Fetch employer profile ID
+  useEffect(() => {
+    const fetchProfileId = async () => {
+      try {
+        const res = await fetch('/api/user/profile');
+        const data = await res.json();
+        if (data.employerProfile?.id) {
+          setEmployerProfileId(data.employerProfile.id);
+        }
+      } catch (err) {
+        console.error('Failed to fetch profile ID:', err);
+      }
+    };
+    fetchProfileId();
+  }, []);
 
   // Sync unread message count from messages page via localStorage/custom event
   useEffect(() => {
@@ -51,6 +68,42 @@ export default function EmployerLayout({ children }) {
       window.removeEventListener('storage', onStorage);
     };
   }, []);
+
+  // Poll for unread messages (for all pages except messages page itself)
+  useEffect(() => {
+    if (router.pathname === '/employer/messages') return; // Messages page handles its own polling
+    
+    if (!employerProfileId) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const res = await fetch(`/api/conversations?employerId=${employerProfileId}`);
+        const data = await res.json();
+        const conversations = data.items || [];
+        
+        // Count unread from non-archived conversations
+        const unread = conversations
+          .filter(c => !c.archivedByEmployer)
+          .reduce((sum, c) => sum + (c.unread || 0), 0);
+        
+        // Update localStorage and dispatch event
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem('employerUnreadMessagesCount', String(unread));
+          window.dispatchEvent(new CustomEvent('employerUnreadMessages', { detail: unread }));
+        }
+      } catch (err) {
+        console.error('Failed to fetch unread count:', err);
+      }
+    };
+
+    // Initial fetch
+    fetchUnreadCount();
+    
+    // Poll every 15 seconds
+    const interval = setInterval(fetchUnreadCount, 15000);
+    
+    return () => clearInterval(interval);
+  }, [router.pathname, employerProfileId]);
 
   // Handle sign out
   const handleSignOut = async () => {

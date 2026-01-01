@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../api/auth/[...nextauth]';
 import { prisma } from '../../lib/prisma';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export async function getServerSideProps(ctx) {
   const session = await getServerSession(ctx.req, ctx.res, authOptions);
@@ -64,6 +64,33 @@ export default function EmployerDashboard({ profile, jobCount, latestJobs }) {
   const [editSuccess, setEditSuccess] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
+  // Sync unread message count from localStorage
+  useEffect(() => {
+    function readUnreadFromStorage() {
+      try {
+        const raw = typeof window !== 'undefined' ? window.localStorage.getItem('employerUnreadMessagesCount') : '0';
+        const val = parseInt(raw || '0', 10);
+        setUnreadMessages(Number.isFinite(val) ? val : 0);
+      } catch {
+        setUnreadMessages(0);
+      }
+    }
+    const onCustom = (e) => {
+      if (typeof e?.detail === 'number') setUnreadMessages(e.detail);
+    };
+    const onStorage = (e) => {
+      if (e.key === 'employerUnreadMessagesCount') readUnreadFromStorage();
+    };
+    readUnreadFromStorage();
+    window.addEventListener('employerUnreadMessages', onCustom);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('employerUnreadMessages', onCustom);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
 
   function handleEdit(job) {
     setEditingJob(job);
@@ -176,6 +203,7 @@ export default function EmployerDashboard({ profile, jobCount, latestJobs }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
               <span>Messages</span>
+              {unreadMessages > 0 && <span className="sidebar-badge">{unreadMessages}</span>}
             </Link>
             <div className="sidebar-divider"></div>
             <Link href="/employer/profile" className="sidebar-item">
@@ -342,7 +370,7 @@ export default function EmployerDashboard({ profile, jobCount, latestJobs }) {
         .sidebar-item:hover{background:#f3f4f6;color:#374151}
         .sidebar-item.active{background:#eef2ff;color:#4f46e5;font-weight:600}
         .sidebar-item svg{flex-shrink:0}
-        .sidebar-badge{margin-left:auto;background:#ef4444;color:#fff;font-size:0.7rem;font-weight:600;padding:0.125rem 0.5rem;border-radius:9999px;min-width:20px;text-align:center}
+        .sidebar-badge{margin-left:auto;background:#7c3aed;color:#fff;font-size:0.7rem;font-weight:600;padding:0.125rem 0.5rem;border-radius:9999px;min-width:20px;text-align:center}
         .sidebar-divider{height:1px;background:#e5e7eb;margin:0.5rem 1.5rem}
         
         .dashboard-main{flex:1;overflow-y:auto;padding:2.5rem 3rem;max-width:1400px;margin:0 auto;width:100%}

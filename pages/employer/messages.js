@@ -119,17 +119,19 @@ export default function EmployerMessages({ conversations: initialConversations, 
     return true;
   });
 
-  const unreadCount = conversations.filter(c => c.unread).length;
-
   // Publish unread count to employer header (localStorage + custom event)
   useEffect(() => {
+    // Only count unread from non-archived conversations
+    const unread = conversations
+      .filter(c => !c.archivedByEmployer)
+      .reduce((sum, c) => sum + (c.unread || 0), 0);
     try {
       if (typeof window !== 'undefined') {
-        window.localStorage.setItem('employerUnreadMessagesCount', String(unreadCount));
-        window.dispatchEvent(new CustomEvent('employerUnreadMessages', { detail: unreadCount }));
+        window.localStorage.setItem('employerUnreadMessagesCount', String(unread));
+        window.dispatchEvent(new CustomEvent('employerUnreadMessages', { detail: unread }));
       }
     } catch {}
-  }, [unreadCount]);
+  }, [conversations]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
