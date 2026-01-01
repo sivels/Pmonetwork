@@ -169,27 +169,8 @@ export default function CandidateLayout({ children, user }) {
             </Link>
           </nav>
 
-          {/* Right-side quick actions: Messages + Notifications (left of profile), Help (right of profile) */}
+          {/* Right-side quick actions: Notifications (left of profile), Help (right of profile) */}
           <div className="candidate-quick-actions">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setMessagesOpen(v => !v);
-                setNotificationsOpen(false);
-              }}
-              className={`icon-btn messages-btn ${messagesOpen ? 'active' : ''}`}
-              aria-label="Messages"
-              title="Messages"
-            >
-              <span className="icon-wrap">
-                <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                </svg>
-                {unreadMessages > 0 && <span className="icon-dot" aria-hidden="true"></span>}
-              </span>
-            </button>
             <button
               type="button"
               onClick={() => setNotificationsOpen(v => !v)}
