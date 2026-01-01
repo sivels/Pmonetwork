@@ -188,8 +188,18 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
   };
 
   const handleViewCompany = () => {
-    if (activeConversation?.employer?.id) {
-      window.open(`/companies/${activeConversation.employer.id}`, '_blank');
+    const employer = activeConversation?.employer;
+    if (!employer) return;
+    
+    // If employer has a website, open it
+    if (employer.website) {
+      const website = employer.website.startsWith('http') 
+        ? employer.website 
+        : `https://${employer.website}`;
+      window.open(website, '_blank');
+    } else {
+      // Show company info in an alert if no website
+      alert(`${employer.companyName || 'Company'}\n${employer.contactName ? `Contact: ${employer.contactName}` : ''}${employer.phone ? `\nPhone: ${employer.phone}` : ''}\n\nNo website available.`);
     }
   };
 
