@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../api/auth/[...nextauth]';
 import { prisma } from '../../lib/prisma';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import NotificationPanel from '../../components/NotificationPanel';
 import ProfileStatusPanel from '../../components/ProfileStatusPanel';
@@ -97,6 +97,33 @@ export default function CandidateDashboard({ profile, profileScore, userEmail })
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileStatusOpen, setProfileStatusOpen] = useState(false);
   const [messagesOpen, setMessagesOpen] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
+  // Sync unread message count from localStorage
+  useEffect(() => {
+    function readUnreadFromStorage() {
+      try {
+        const raw = typeof window !== 'undefined' ? window.localStorage.getItem('unreadMessagesCount') : '0';
+        const val = parseInt(raw || '0', 10);
+        setUnreadMessages(Number.isFinite(val) ? val : 0);
+      } catch {
+        setUnreadMessages(0);
+      }
+    }
+    const onCustom = (e) => {
+      if (typeof e?.detail === 'number') setUnreadMessages(e.detail);
+    };
+    const onStorage = (e) => {
+      if (e.key === 'unreadMessagesCount') readUnreadFromStorage();
+    };
+    readUnreadFromStorage();
+    window.addEventListener('unreadMessages', onCustom);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('unreadMessages', onCustom);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
 
   // Calculate missing profile items (original simple list for banner buttons)
   const getMissingItems = () => {
@@ -218,6 +245,7 @@ export default function CandidateDashboard({ profile, profileScore, userEmail })
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
                 <span>Messages</span>
+                {unreadMessages > 0 && <span className="sidebar-badge">{unreadMessages}</span>}
               </Link>
               <Link href="/dashboard/documents" className={`sidebar-item ${activeTab === 'documents' ? 'active' : ''}`}>
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
