@@ -22,7 +22,7 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Profile not found' });
     }
 
-    const { companyName, contactName, website, phone } = req.body;
+    const { companyName, contactName, website, phone, logoUrl } = req.body;
 
     const updated = await prisma.employerProfile.update({
       where: { id: user.employerEmployerProfile.id },
@@ -30,7 +30,8 @@ export default async function handler(req, res) {
         ...(companyName !== undefined && { companyName }),
         ...(contactName !== undefined && { contactName }),
         ...(website !== undefined && { website }),
-        ...(phone !== undefined && { phone })
+        ...(phone !== undefined && { phone }),
+        ...(logoUrl !== undefined && { logoUrl })
       }
     });
 
@@ -38,7 +39,8 @@ export default async function handler(req, res) {
       companyName: updated.companyName,
       contactName: updated.contactName,
       website: updated.website,
-      phone: updated.phone
+      phone: updated.phone,
+      logoUrl: updated.logoUrl
     });
   } catch (error) {
     console.error('Employer profile update error:', error);

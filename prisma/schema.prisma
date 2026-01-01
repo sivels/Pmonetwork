@@ -111,6 +111,7 @@ model EmployerProfile {
   contactName String?
   website     String?
   phone       String?
+  logoUrl     String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

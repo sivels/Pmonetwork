@@ -33,6 +33,7 @@ export default function EmployerProfile({ profile, userEmail }) {
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState(null);
   const [toast, setToast] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   async function saveProfile(updates) {
     try {
@@ -56,6 +57,52 @@ export default function EmployerProfile({ profile, userEmail }) {
     }
   }
 
+  async function handleLogoUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setToast('Please select an image file');
+      setTimeout(() => setToast(''), 2000);
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      setToast('Logo must be smaller than 5MB');
+      setTimeout(() => setToast(''), 2000);
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('logo', file);
+
+      const res = await fetch('/api/employer/upload-logo', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setProfileData(prev => ({ ...prev, logoUrl: data.logoUrl }));
+        setToast('Logo uploaded successfully');
+        setTimeout(() => setToast(''), 2000);
+      } else {
+        setToast(data.error || 'Upload failed');
+        setTimeout(() => setToast(''), 2000);
+      }
+    } catch (err) {
+      console.error(err);
+      setToast('Upload failed');
+      setTimeout(() => setToast(''), 2000);
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <>
       <Head>
@@ -72,7 +119,14 @@ export default function EmployerProfile({ profile, userEmail }) {
               Back to Dashboard
             </Link>
             <div className="banner-identity">
-              <div className="banner-avatar employer-logo" style={{ backgroundImage: `url(/logo.svg)` }} />
+              <div 
+                className="banner-avatar employer-logo" 
+                style={{ 
+                  backgroundImage: profileData?.logoUrl 
+                    ? `url(${profileData.logoUrl})` 
+                    : 'url(/logo.svg)' 
+                }} 
+              />
               <div className="banner-name-role">
                 <h1 className="banner-name">{profileData?.companyName || 'Company Profile'}</h1>
                 <p className="banner-role">Employer Account</p>
@@ -88,6 +142,45 @@ export default function EmployerProfile({ profile, userEmail }) {
           <div className="profile-main">
             <section className="profile-section">
               <div className="section-header">
+                <h2 className="section-title">Company Logo</h2>
+                <p className="section-desc">Upload your company logo to personalize your profile</p>
+              </div>
+              <div className="section-body">
+                <div className="logo-upload-container">
+                  <div className="logo-preview">
+                    <div 
+                      className="logo-preview-image"
+                      style={{
+                        backgroundImage: profileData?.logoUrl 
+                          ? `url(${profileData.logoUrl})` 
+                          : 'url(/logo.svg)'
+                      }}
+                    />
+                  </div>
+                  <div className="logo-upload-actions">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="file-input-hidden"
+                      id="logo-upload-input"
+                      disabled={uploading}
+                    />
+                    <label 
+                      htmlFor="logo-upload-input" 
+                      className={`btn-upload ${uploading ? 'btn-disabled' : ''}`}
+                    >
+                      {uploading ? 'Uploading...' : profileData?.logoUrl ? 'Change Logo' : 'Upload Logo'}
+                    </label>
+                    <p className="upload-hint">
+                      Recommended: Square image, at least 200x200px. Max 5MB. PNG or JPG format.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="profile-section">\n              <div className="section-header">
                 <h2 className="section-title">Company Information</h2>
                 <p className="section-desc">Basic details about your organization</p>
               </div>
@@ -193,6 +286,17 @@ export default function EmployerProfile({ profile, userEmail }) {
         .form-label { font-size:0.9rem; font-weight:500; color:#374151; display:flex; flex-direction:column; gap:0.5rem; }
         .form-input { border:1px solid #e5e7eb; border-radius:10px; padding:0.65rem 0.85rem; font-size:0.95rem; transition:all 0.15s; }
         .form-input:focus { outline:none; border-color:#4f46e5; box-shadow:0 0 0 3px rgba(79,70,229,0.1); }
+
+        .logo-upload-container { display:flex; gap:2rem; align-items:center; }
+        .logo-preview { flex-shrink:0; }
+        .logo-preview-image { width:120px; height:120px; border-radius:12px; background:#f3f4f6; background-size:contain; background-position:center; background-repeat:no-repeat; border:2px solid #e5e7eb; }
+        .logo-upload-actions { display:flex; flex-direction:column; gap:0.75rem; flex:1; }
+        .file-input-hidden { display:none; }
+        .btn-upload { display:inline-block; background:#7c3aed; color:#fff; padding:0.65rem 1.5rem; border-radius:10px; font-size:0.95rem; font-weight:500; cursor:pointer; transition:all 0.15s; text-align:center; }
+        .btn-upload:hover { background:#6d28d9; transform:translateY(-1px); box-shadow:0 4px 12px rgba(124,58,237,0.3); }
+        .btn-upload.btn-disabled { opacity:0.6; cursor:not-allowed; }
+        .btn-upload.btn-disabled:hover { transform:none; box-shadow:none; }
+        .upload-hint { font-size:0.85rem; color:#6b7280; margin:0; }
 
         .toast-notification { position:fixed; bottom:2rem; right:2rem; background:#10b981; color:#fff; padding:0.75rem 1.25rem; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.15); font-size:0.9rem; font-weight:500; animation:slideIn 0.2s ease-out; z-index:9999; }
         @keyframes slideIn { from { opacity:0; transform:translateY(1rem); } to { opacity:1; transform:translateY(0); } }
