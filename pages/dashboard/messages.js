@@ -25,7 +25,10 @@ export async function getServerSideProps(ctx) {
   
   // Fetch conversations for this candidate
   const conversations = profile ? await prisma.conversation.findMany({
-    where: { candidateId: profile.id },
+    where: { 
+      candidateId: profile.id,
+      archivedByCandidate: false
+    },
     include: {
       employer: true,
       messages: {
@@ -199,11 +202,29 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
     }
   };
 
-  const handleArchiveConversation = () => {
-    if (confirm('Archive this conversation?')) {
-      // TODO: Implement archive API
-      alert('Archive functionality coming soon');
-      setMoreOptionsOpen(false);
+  const handleArchiveConversation = async () => {
+    if (!activeConversationId) return;
+    
+    if (confirm('Archive this conversation? You can unarchive it later from your archived conversations.')) {
+      try {
+        const res = await fetch(`/api/conversations/${activeConversationId}/archive`, {
+          method: 'POST'
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to archive');
+        }
+
+        // Remove from current list
+        setConversations(conversations.filter(c => c.id !== activeConversationId));
+        setActiveConversationId(null);
+        setMessages([]);
+        setMoreOptionsOpen(false);
+        alert('Conversation archived successfully');
+      } catch (error) {
+        console.error('Error archiving conversation:', error);
+        alert('Failed to archive conversation');
+      }
     }
   };
 

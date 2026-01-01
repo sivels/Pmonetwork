@@ -308,12 +308,14 @@ model ApplicationStatusHistory {
 }
 
 model Conversation {
-  id            String   @id @default(cuid())
-  jobId         String?
-  employerId    String
-  candidateId   String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  jobId                 String?
+  employerId            String
+  candidateId           String
+  archivedByCandidate   Boolean  @default(false)
+  archivedByEmployer    Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   employer  EmployerProfile  @relation(fields: [employerId], references: [id])
   candidate CandidateProfile @relation(fields: [candidateId], references: [id])

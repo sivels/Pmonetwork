@@ -38,8 +38,14 @@ export default async function handler(req, res) {
       const { employerId, candidateId } = req.query;
 
       const where = {};
-      if (employerId) where.employerId = employerId;
-      if (candidateId) where.candidateId = candidateId;
+      if (employerId) {
+        where.employerId = employerId;
+        where.archivedByEmployer = false;
+      }
+      if (candidateId) {
+        where.candidateId = candidateId;
+        where.archivedByCandidate = false;
+      }
 
       const items = await prisma.conversation.findMany({ 
         where,
