@@ -12,6 +12,7 @@ export default function CandidateLayout({ children, user }) {
   const [messagesOpen, setMessagesOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [candidateProfileId, setCandidateProfileId] = useState(null);
   const dropdownRef = useRef(null);
   const router = useRouter();
   const currentPath = router.pathname;
@@ -21,6 +22,22 @@ export default function CandidateLayout({ children, user }) {
   const handleSignOut = async () => {
     await signOut({ callbackUrl: '/' });
   };
+
+  // Fetch candidate profile ID
+  useEffect(() => {
+    const fetchProfileId = async () => {
+      try {
+        const res = await fetch('/api/user/profile');
+        const data = await res.json();
+        if (data.candidateProfile?.id) {
+          setCandidateProfileId(data.candidateProfile.id);
+        }
+      } catch (err) {
+        console.error('Failed to fetch profile ID:', err);
+      }
+    };
+    fetchProfileId();
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -78,6 +95,42 @@ export default function CandidateLayout({ children, user }) {
       window.removeEventListener('storage', onStorage);
     };
   }, []);
+
+  // Poll for unread messages (for all pages except messages page itself)
+  useEffect(() => {
+    if (router.pathname === '/dashboard/messages') return; // Messages page handles its own polling
+    
+    if (!candidateProfileId) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const res = await fetch(`/api/conversations?candidateId=${candidateProfileId}`);
+        const data = await res.json();
+        const conversations = data.items || [];
+        
+        // Count unread from non-archived conversations
+        const unread = conversations
+          .filter(c => !c.archivedByCandidate)
+          .reduce((sum, c) => sum + (c.unread || 0), 0);
+        
+        // Update localStorage and dispatch event
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem('unreadMessagesCount', String(unread));
+          window.dispatchEvent(new CustomEvent('unreadMessages', { detail: unread }));
+        }
+      } catch (err) {
+        console.error('Failed to fetch unread count:', err);
+      }
+    };
+
+    // Initial fetch
+    fetchUnreadCount();
+    
+    // Poll every 15 seconds
+    const interval = setInterval(fetchUnreadCount, 15000);
+    
+    return () => clearInterval(interval);
+  }, [router.pathname, candidateProfileId]);
 
   return (
     <div className="candidate-layout">
