@@ -36,9 +36,15 @@ export default function VideoIntroSection({ profile, onUpdate }) {
     setMessage(null);
 
     try {
+      // Debug: Check if Supabase is configured
+      console.log('Supabase client:', supabase);
+      console.log('Supabase URL:', supabase.supabaseUrl);
+      
       // Generate unique file name
       const fileExt = file.name.split('.').pop();
       const fileName = `${profile.id}/${Date.now()}.${fileExt}`;
+
+      console.log('Uploading to bucket: videos, file:', fileName);
 
       // Upload directly to Supabase Storage from client
       const { data, error: uploadError } = await supabase.storage
