@@ -9,7 +9,7 @@ export default async function handler(req, res) {
 
   const session = await getServerSession(req, res, authOptions);
   
-  if (!session || session.user.role !== 'candidate') {
+  if (!session || (session.user.role || '').toLowerCase() !== 'candidate') {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
