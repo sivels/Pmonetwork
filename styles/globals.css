@@ -239,19 +239,19 @@ a:focus-visible {
 .primary-nav.open { display: block; }
 .mobile-nav-footer {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   margin-top: 8px;
 }
 .mobile-nav-close {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
   border: none;
   background: transparent;
   color: #6b7280;
-  font-size: 28px;
+  font-size: 18px;
   cursor: pointer;
   transition: all 0.15s;
 }
