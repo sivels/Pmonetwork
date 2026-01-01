@@ -50,11 +50,11 @@ export default function VideoIntroSection({ profile, onUpdate }) {
       const fileExt = file.name.split('.').pop();
       const fileName = `${profile.id}/${Date.now()}.${fileExt}`;
 
-      console.log('Uploading to bucket: videos, file:', fileName);
+      console.log('Uploading to bucket: Videos, file:', fileName);
 
       // Upload directly to Supabase Storage from client
       const { data, error: uploadError } = await supabase.storage
-        .from('videos')
+        .from('Videos')
         .upload(fileName, file, {
           contentType: file.type,
           upsert: false
@@ -69,7 +69,7 @@ export default function VideoIntroSection({ profile, onUpdate }) {
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('videos')
+        .from('Videos')
         .getPublicUrl(fileName);
 
       // Update profile via API
