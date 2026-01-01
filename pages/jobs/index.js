@@ -65,8 +65,6 @@ export default function JobBoardPage({ initial, isCandidate, isEmployer }) {
           newSaved.delete(jobId);
         } else {
           newSaved.add(jobId);
-          // Navigate to saved jobs page after saving
-          router.push('/dashboard/saved-jobs');
         }
         setSavedJobs(newSaved);
       } else {
