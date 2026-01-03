@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -11,10 +11,17 @@ const queryClient = new QueryClient();
 
 export default function ApplicationsPage() {
   const router = useRouter();
-  const { jobId } = router.query;
-  const [openId, setOpenId] = useState(null);
+  const { jobId, applicationId } = router.query;
+  const [openId, setOpenId] = useState(applicationId || null);
   const [interviewApplicationId, setInterviewApplicationId] = useState(null);
   const [selectedApplication, setSelectedApplication] = useState(null);
+
+  // Auto-open detail panel when applicationId is in URL
+  useEffect(() => {
+    if (applicationId) {
+      setOpenId(applicationId);
+    }
+  }, [applicationId]);
 
   function handleOpenDetails(id) {
     setOpenId(id);

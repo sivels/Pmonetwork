@@ -248,7 +248,7 @@ export default function EmployerInterviews() {
                         </a>
                       )}
                       <a
-                        href={`/employer/jobs/${interview.application?.jobId}/applications`}
+                        href={`/employer/jobs/${interview.application?.jobId}/applications?applicationId=${interview.applicationId}`}
                         className="view-app-btn"
                       >
                         View Application
