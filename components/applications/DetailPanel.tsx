@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { X, Mail, MessageSquare, FileText, Users, CheckCircle, ChevronLeft } from "lucide-react";
+import { X, Mail, MessageSquare, FileText, Users, CheckCircle, ChevronLeft, Calendar } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function DetailPanel({ applicationId, onClose }: { applicationId: string | null; onClose: () => void }) {
@@ -17,6 +17,19 @@ export function DetailPanel({ applicationId, onClose }: { applicationId: string 
     },
     enabled: !!applicationId,
   });
+
+  // Check if interview has been scheduled for this application
+  const { data: interviewData } = useQuery({
+    queryKey: ["interview", applicationId],
+    queryFn: async () => {
+      const res = await fetch(`/api/interviews/by-application/${applicationId}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!applicationId,
+  });
+
+  const hasInterview = !!interviewData;
 
   // Mark viewed when opened
   useEffect(() => {
@@ -226,7 +239,13 @@ export function DetailPanel({ applicationId, onClose }: { applicationId: string 
           <div className="sticky bottom-0 z-10 -mx-6 border-t bg-white p-4">
             <div className="flex flex-wrap items-center gap-2">
               <button onClick={() => changeStatus.mutate("SHORTLISTED")} className="inline-flex items-center gap-1 rounded-md bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700"><CheckCircle className="h-4 w-4"/> Shortlist</button>
-              <button onClick={() => changeStatus.mutate("INTERVIEW")} className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"><Users className="h-4 w-4"/> Move to Interview</button>
+              <button 
+                onClick={() => changeStatus.mutate("INTERVIEW")} 
+                className={`inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm text-white ${hasInterview ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                disabled={hasInterview}
+              >
+                <Calendar className="h-4 w-4"/> {hasInterview ? 'Interview Scheduled' : 'Schedule Interview'}
+              </button>
               <button onClick={() => changeStatus.mutate("REJECTED")} className="inline-flex items-center gap-1 rounded-md bg-red-600 px-3 py-2 text-sm text-white hover:bg-red-700">Reject</button>
               <button className="ml-auto inline-flex items-center gap-1 rounded-md border px-3 py-2 text-sm"><MessageSquare className="h-4 w-4"/> Message</button>
               <button className="inline-flex items-center gap-1 rounded-md border px-3 py-2 text-sm"><Mail className="h-4 w-4"/> Email</button>
