@@ -20,21 +20,21 @@ function CandidateCell({ row }: { row: ApplicationRow }) {
 
 function ActionsCell({ row, onOpenDetails, onAction }: { row: ApplicationRow; onOpenDetails: (id: string) => void; onAction: (id: string, action: string) => void }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-1">
       <button className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-gray-50" onClick={() => onAction(row.id, "INTERVIEW")}>
-        <Calendar className="h-4 w-4" /> Interview
+        <Calendar className="h-3 w-3" /> Interview
       </button>
       <button className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-gray-50" onClick={() => onAction(row.id, "SHORTLISTED")}>
-        <Star className="h-4 w-4" /> Shortlist
+        <Star className="h-3 w-3" /> Shortlist
       </button>
       <button className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-gray-50" onClick={() => onAction(row.id, "REJECTED")}>
-        <ThumbsDown className="h-4 w-4" /> Reject
+        <ThumbsDown className="h-3 w-3" /> Reject
       </button>
       <button className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-gray-50" onClick={() => onOpenDetails(row.id)}>
-        <User className="h-4 w-4" /> View
+        <User className="h-3 w-3" /> View
       </button>
       <button className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-gray-50" onClick={() => onAction(row.id, "MESSAGE") }>
-        <MessageSquare className="h-4 w-4" /> Message
+        <MessageSquare className="h-3 w-3" /> Message
       </button>
     </div>
   );
@@ -108,18 +108,19 @@ export function DataTable({ jobId, onOpenDetails, onAction }: { jobId: string; o
       </div>
 
       <div className="grid grid-cols-12 gap-4 p-4 text-xs font-semibold text-gray-500">
-        <div className="col-span-4">Candidate</div>
+        <div className="col-span-3">Candidate</div>
         <div className="col-span-2">Job</div>
-        <div className="col-span-2">Applied</div>
+        <div className="col-span-1">Applied</div>
         <div className="col-span-1">Exp</div>
         <div className="col-span-1">Location</div>
-        <div className="col-span-2">Status</div>
+        <div className="col-span-1">Status</div>
+        <div className="col-span-3">Actions</div>
       </div>
 
       <div>
         {rows.map((row) => (
           <div key={row.id} className="grid grid-cols-12 items-center gap-4 border-t p-4 hover:bg-gray-50">
-            <div className="col-span-4">
+            <div className="col-span-3">
               <CandidateCell row={row} />
               <div className="mt-2 flex flex-wrap gap-1">
                 {(row.candidate.skills || []).map((s, i) => (
@@ -128,11 +129,13 @@ export function DataTable({ jobId, onOpenDetails, onAction }: { jobId: string; o
               </div>
             </div>
             <div className="col-span-2 text-sm">{row.job.title}</div>
-            <div className="col-span-2 text-xs text-gray-500">{new Date(row.createdAt).toLocaleDateString()}</div>
+            <div className="col-span-1 text-xs text-gray-500">{new Date(row.createdAt).toLocaleDateString()}</div>
             <div className="col-span-1 text-xs">{row.yearsExp ?? "-"}</div>
             <div className="col-span-1 text-xs">{row.location ?? "-"}</div>
-            <div className="col-span-2 flex items-center justify-between gap-2">
+            <div className="col-span-1">
               <StatusBadge status={row.status} />
+            </div>
+            <div className="col-span-3">
               <ActionsCell row={row} onOpenDetails={onOpenDetails} onAction={onAction} />
             </div>
           </div>
