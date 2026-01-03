@@ -92,6 +92,7 @@ export default function CandidateInterviews() {
   }
 
   return (
+    <>
       <Head>
         <title>My Interviews | PMO Network</title>
       </Head>
