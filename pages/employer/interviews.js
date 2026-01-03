@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import EditInterviewModal from '../../components/EditInterviewModal';
+import CancelInterviewModal from '../../components/CancelInterviewModal';
 
 export default function EmployerInterviews() {
   const { data: session, status } = useSession();
@@ -9,6 +11,8 @@ export default function EmployerInterviews() {
   const [interviews, setInterviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, upcoming, past
+  const [editingInterview, setEditingInterview] = useState(null);
+  const [cancellingInterview, setCancellingInterview] = useState(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -254,6 +258,38 @@ export default function EmployerInterviews() {
                       >
                         View Application
                       </a>
+                      {isUpcoming && (
+                        <>
+                          <button
+                            onClick={() => setEditingInterview(interview)}
+                            className="edit-btn"
+                          >
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => setCancellingInterview(interview)}
+                            className="cancel-btn"
+                          >
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                            Cancel
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 );
@@ -514,6 +550,44 @@ export default function EmployerInterviews() {
           background: #eef2ff;
         }
 
+        .edit-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.75rem 1.5rem;
+          background: white;
+          color: #2563eb;
+          border: 1px solid #2563eb;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 0.95rem;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .edit-btn:hover {
+          background: #dbeafe;
+        }
+
+        .cancel-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.75rem 1.5rem;
+          background: white;
+          color: #dc2626;
+          border: 1px solid #dc2626;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 0.95rem;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .cancel-btn:hover {
+          background: #fee2e2;
+        }
+
         .empty-state {
           text-align: center;
           padding: 4rem 2rem;
@@ -594,12 +668,36 @@ export default function EmployerInterviews() {
           }
 
           .join-btn,
-          .view-app-btn {
+          .view-app-btn,
+          .edit-btn,
+          .cancel-btn {
             width: 100%;
             justify-content: center;
           }
         }
       `}</style>
+
+      {editingInterview && (
+        <EditInterviewModal
+          interview={editingInterview}
+          onClose={() => setEditingInterview(null)}
+          onSuccess={() => {
+            fetchInterviews();
+            setEditingInterview(null);
+          }}
+        />
+      )}
+
+      {cancellingInterview && (
+        <CancelInterviewModal
+          interview={cancellingInterview}
+          onClose={() => setCancellingInterview(null)}
+          onSuccess={() => {
+            fetchInterviews();
+            setCancellingInterview(null);
+          }}
+        />
+      )}
     </>
   );
 }
