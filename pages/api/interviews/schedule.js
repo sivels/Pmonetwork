@@ -69,37 +69,6 @@ export default async function handler(req, res) {
     // Calculate end time
     const start = new Date(startTime);
     const end = new Date(start.getTime() + duration * 60000);
-        refresh_token: account.refresh_token,
-      });
-
-      const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
-
-      // Create calendar event
-      const event = {
-        summary: `PMO Network Interview – ${application.job.title}`,
-        description: `Interview for ${application.job.title} position\n\nCandidate: ${application.candidate.fullName}\nCompany: ${application.job.employer.companyName}\n\n${message || ''}\n\nScheduled via PMO Network`,
-        start: {
-          dateTime: start.toISOString(),
-          timeZone: 'UTC',
-        },
-        end: {
-          dateTime: end.toISOString(),
-          timeZone: 'UTC',
-        },
-        attendees: [
-          { email: application.candidate.user.email },
-          { email: application.job.employer.user.email },
-        ],
-        conferenceData: {
-          createRequest: {
-            requestId: `pmo-${applicationId}-${Date.now()}`,
-            conferenceSolutionKey: { type: 'hangoutsMeet' },
-          },
-        },
-        reminders: {
-    // Calculate end time
-    const start = new Date(startTime);
-    const end = new Date(start.getTime() + duration * 60000);
 
     // Save interview to database
     const interview = await prisma.interview.create({
