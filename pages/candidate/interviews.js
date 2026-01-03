@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import CandidateLayout from '../../components/CandidateLayout';
 import Head from 'next/head';
 
 export default function CandidateInterviews() {
@@ -85,17 +84,14 @@ export default function CandidateInterviews() {
 
   if (status === 'loading' || loading) {
     return (
-      <CandidateLayout>
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p>Loading interviews...</p>
-        </div>
-      </CandidateLayout>
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Loading interviews...</p>
+      </div>
     );
   }
 
   return (
-    <CandidateLayout>
       <Head>
         <title>My Interviews | PMO Network</title>
       </Head>
@@ -554,6 +550,6 @@ export default function CandidateInterviews() {
           }
         }
       `}</style>
-    </CandidateLayout>
+    </>
   );
 }
