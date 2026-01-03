@@ -41,20 +41,30 @@ export default async function handler(req, res) {
       });
 
       // Send notification to candidate about the change
-      await prisma.message.create({
-        data: {
-          conversationId: interview.application.conversationId || 'system',
-          senderId: session.user.id,
-          receiverId: interview.candidate.userId,
-          text: `Your interview for ${interview.application.job.title} has been rescheduled to ${new Date(startTime).toLocaleString()}.${message ? `\n\nMessage from employer: ${message}` : ''}`,
-          type: 'SYSTEM',
-        },
-      });
+      if (interview.application.conversationId) {
+        await prisma.message.create({
+          data: {
+            conversationId: interview.application.conversationId,
+            senderUserId: session.user.id,
+            receiverUserId: interview.candidate.userId,
+            text: `🔔 Interview Rescheduled\n\n📅 Your interview for ${interview.application.job.title} has been rescheduled to ${new Date(startTime).toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.${message ? `\n\nMessage from employer:\n${message}` : ''}`,
+          },
+        });
+      }
 
       return res.status(200).json(interview);
     } catch (error) {
       console.error('Error updating interview:', error);
-      return res.status(500).json({ error: 'Failed to update interview' });
+      
+      // Check if it's a database table not found error
+      if (error.message?.includes('Interview') || error.code === 'P2021') {
+        return res.status(500).json({ 
+          error: 'Database migration required. Please run the Interview table migration in your Supabase SQL Editor.',
+          details: 'The Interview table does not exist. See RUN_INTERVIEW_MIGRATION.md'
+        });
+      }
+      
+      return res.status(500).json({ error: 'Failed to update interview', details: error.message });
     }
   }
 
@@ -84,15 +94,16 @@ export default async function handler(req, res) {
       }
 
       // Send cancellation message to candidate
-      await prisma.message.create({
-        data: {
-          conversationId: interview.application.conversationId || 'system',
-          senderId: session.user.id,
-          receiverId: interview.candidate.userId,
-          text: `Interview Cancelled: ${interview.application.job.title}\n\n${message}`,
-          type: 'SYSTEM',
-        },
-      });
+      if (interview.application.conversationId) {
+        await prisma.message.create({
+          data: {
+            conversationId: interview.application.conversationId,
+            senderUserId: session.user.id,
+            receiverUserId: interview.candidate.userId,
+            text: `🚫 Interview Cancelled\n\n${interview.application.job.title}\n\n${message}`,
+          },
+        });
+      }
 
       // Delete the interview
       await prisma.interview.delete({
@@ -102,7 +113,16 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     } catch (error) {
       console.error('Error cancelling interview:', error);
-      return res.status(500).json({ error: 'Failed to cancel interview' });
+      
+      // Check if it's a database table not found error
+      if (error.message?.includes('Interview') || error.code === 'P2021') {
+        return res.status(500).json({ 
+          error: 'Database migration required. Please run the Interview table migration in your Supabase SQL Editor.',
+          details: 'The Interview table does not exist. See RUN_INTERVIEW_MIGRATION.md'
+        });
+      }
+      
+      return res.status(500).json({ error: 'Failed to cancel interview', details: error.message });
     }
   }
 
