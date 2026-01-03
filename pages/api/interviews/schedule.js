@@ -1,7 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { prisma } from '../../../lib/prisma';
-import { google } from 'googleapis';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -24,12 +23,12 @@ export default async function handler(req, res) {
       applicationId,
       startTime,
       duration, // in minutes
-      provider,
+      meetingUrl,
       message,
     } = req.body;
 
     // Validate required fields
-    if (!applicationId || !startTime || !duration) {
+    if (!applicationId || !startTime || !duration || !meetingUrl) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -70,34 +69,6 @@ export default async function handler(req, res) {
     // Calculate end time
     const start = new Date(startTime);
     const end = new Date(start.getTime() + duration * 60000);
-
-    let meetingUrl = null;
-
-    // Create Google Calendar event if provider is google_meet
-    if (provider === 'google_meet') {
-      // Get the employer's Google OAuth tokens
-      const account = await prisma.account.findFirst({
-        where: {
-          userId: session.user.id,
-          provider: 'google',
-        },
-      });
-
-      if (!account?.access_token) {
-        return res.status(400).json({ 
-          error: 'Google account not connected. Please connect your Google account to schedule Google Meet interviews.',
-          needsGoogleAuth: true,
-        });
-      }
-
-      // Initialize Google Calendar API
-      const oauth2Client = new google.auth.OAuth2(
-        process.env.GOOGLE_CLIENT_ID,
-        process.env.GOOGLE_CLIENT_SECRET
-      );
-
-      oauth2Client.setCredentials({
-        access_token: account.access_token,
         refresh_token: account.refresh_token,
       });
 
@@ -126,37 +97,9 @@ export default async function handler(req, res) {
           },
         },
         reminders: {
-          useDefault: false,
-          overrides: [
-            { method: 'email', minutes: 24 * 60 }, // 1 day before
-            { method: 'popup', minutes: 30 }, // 30 minutes before
-          ],
-        },
-      };
-
-      try {
-        const calendarEvent = await calendar.events.insert({
-          calendarId: 'primary',
-          resource: event,
-          conferenceDataVersion: 1,
-          sendUpdates: 'all', // Send email invites to attendees
-        });
-
-        meetingUrl = calendarEvent.data.hangoutLink || calendarEvent.data.conferenceData?.entryPoints?.[0]?.uri;
-      } catch (calendarError) {
-        console.error('Google Calendar API error:', calendarError);
-        
-        // Check if token is expired
-        if (calendarError.code === 401) {
-          return res.status(401).json({ 
-            error: 'Google authorization expired. Please reconnect your Google account.',
-            needsGoogleAuth: true,
-          });
-        }
-        
-        return res.status(500).json({ error: 'Failed to create calendar event: ' + calendarError.message });
-      }
-    }
+    // Calculate end time
+    const start = new Date(startTime);
+    const end = new Date(start.getTime() + duration * 60000);
 
     // Save interview to database
     const interview = await prisma.interview.create({
@@ -168,7 +111,7 @@ export default async function handler(req, res) {
         startTime: start,
         endTime: end,
         duration,
-        provider: provider || 'google_meet',
+        provider: 'video',
         meetingUrl,
         message,
         status: 'scheduled',
@@ -219,7 +162,7 @@ export default async function handler(req, res) {
       hour: 'numeric',
       minute: '2-digit',
       timeZoneName: 'short'
-    })}\n⏱️ Duration: ${duration} minutes\n💼 Position: ${application.job.title}\n\n${message ? `Message from employer:\n${message}\n\n` : ''}${meetingUrl ? `Join Google Meet: ${meetingUrl}` : 'Interview details will be shared separately.'}`;
+    })}\n⏱️ Duration: ${duration} minutes\n💼 Position: ${application.job.title}\n\n${message ? `Message from employer:\n${message}\n\n` : ''}Join meeting: ${meetingUrl}`;
 
     await prisma.message.create({
       data: {

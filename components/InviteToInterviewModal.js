@@ -4,13 +4,12 @@ import styles from './InviteToInterviewModal.module.css';
 export default function InviteToInterviewModal({ application, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [needsGoogleAuth, setNeedsGoogleAuth] = useState(false);
   
   const [formData, setFormData] = useState({
     date: '',
     time: '',
     duration: 60,
-    provider: 'google_meet',
+    meetingUrl: '',
     message: '',
   });
 
@@ -23,7 +22,6 @@ export default function InviteToInterviewModal({ application, onClose, onSuccess
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setNeedsGoogleAuth(false);
 
     try {
       // Combine date and time into ISO string
@@ -36,7 +34,7 @@ export default function InviteToInterviewModal({ application, onClose, onSuccess
           applicationId: application.id,
           startTime,
           duration: parseInt(formData.duration),
-          provider: formData.provider,
+          meetingUrl: formData.meetingUrl,
           message: formData.message,
         }),
       });
@@ -44,9 +42,6 @@ export default function InviteToInterviewModal({ application, onClose, onSuccess
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.needsGoogleAuth) {
-          setNeedsGoogleAuth(true);
-        }
         throw new Error(data.error || 'Failed to schedule interview');
       }
 
@@ -57,11 +52,6 @@ export default function InviteToInterviewModal({ application, onClose, onSuccess
     } finally {
       setLoading(false);
     }
-  };
-
-  const connectGoogleAccount = () => {
-    // Redirect to NextAuth Google signin
-    window.location.href = '/api/auth/signin/google';
   };
 
   // Get minimum date (today)
@@ -134,23 +124,20 @@ export default function InviteToInterviewModal({ application, onClose, onSuccess
           </div>
 
           <div className={styles.formGroup}>
-            <label htmlFor="provider">Interview Type *</label>
-            <select
-              id="provider"
-              name="provider"
-              value={formData.provider}
+            <label htmlFor="meetingUrl">Video Meeting URL *</label>
+            <input
+              type="url"
+              id="meetingUrl"
+              name="meetingUrl"
+              value={formData.meetingUrl}
               onChange={handleChange}
+              placeholder="https://zoom.us/j/123456789 or Teams/Meet link"
               required
-              className={styles.select}
-            >
-              <option value="google_meet">Video – Google Meet</option>
-              <option value="phone">Phone Call</option>
-            </select>
-            {formData.provider === 'google_meet' && (
-              <small className={styles.hint}>
-                A Google Meet link will be automatically generated and sent to the candidate
-              </small>
-            )}
+              className={styles.input}
+            />
+            <small className={styles.hint}>
+              Paste your Zoom, Teams, Google Meet, or other video meeting link
+            </small>
           </div>
 
           <div className={styles.formGroup}>
@@ -169,15 +156,6 @@ export default function InviteToInterviewModal({ application, onClose, onSuccess
           {error && (
             <div className={styles.error}>
               {error}
-              {needsGoogleAuth && (
-                <button
-                  type="button"
-                  onClick={connectGoogleAccount}
-                  className={styles.connectButton}
-                >
-                  Connect Google Account
-                </button>
-              )}
             </div>
           )}
 
