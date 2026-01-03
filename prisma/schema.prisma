@@ -87,6 +87,7 @@ model CandidateProfile {
   applications     Application[]
   conversations    Conversation[]
   activityLogs     ActivityLog[]
+  interviews       Interview[]
 
   user User @relation("UserCandidate", fields: [userId], references: [id])
 }
@@ -122,6 +123,7 @@ model EmployerProfile {
   jobs            Job[]
   conversations   Conversation[]
   activityLogs    ActivityLog[]
+  interviews      Interview[]
 }
 
 model Skill {
@@ -308,6 +310,7 @@ model Application {
   candidate CandidateProfile @relation(fields: [candidateId], references: [id])
   statusHistory ApplicationStatusHistory[]
   activities    ActivityLog[]
+  interviews    Interview[]
 }
 
 model ApplicationStatusHistory {
@@ -365,6 +368,27 @@ model ActivityLog {
   candidate  CandidateProfile? @relation(fields: [candidateId], references: [id])
   job        Job?              @relation(fields: [jobId], references: [id])
   application Application?     @relation(fields: [applicationId], references: [id])
+}
+
+model Interview {
+  id            String   @id @default(cuid())
+  applicationId String
+  employerId    String
+  candidateId   String
+  jobId         String
+  meetingUrl    String?
+  startTime     DateTime
+  endTime       DateTime
+  duration      Int      // minutes
+  provider      String   @default("google_meet") // google_meet, phone
+  status        String   @default("scheduled") // scheduled, completed, cancelled, rescheduled
+  message       String?  // Optional message from employer to candidate
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  application Application      @relation(fields: [applicationId], references: [id])
+  employer    EmployerProfile  @relation(fields: [employerId], references: [id])
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id])
 }
 
 // Role and Availability enums removed for SQLite compatibility; use string fields instead

@@ -2,7 +2,7 @@ import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ApplicationRow } from "./types";
 import { StatusBadge } from "./StatusBadge";
-import { User, Mail, FileText, Star, ThumbsDown, MessageSquare, Search } from "lucide-react";
+import { User, Mail, FileText, Star, ThumbsDown, MessageSquare, Search, Calendar } from "lucide-react";
 import { supabaseBrowser } from "../../lib/supabaseBrowser";
 
 function CandidateCell({ row }: { row: ApplicationRow }) {
@@ -21,6 +21,9 @@ function CandidateCell({ row }: { row: ApplicationRow }) {
 function ActionsCell({ row, onOpenDetails, onAction }: { row: ApplicationRow; onOpenDetails: (id: string) => void; onAction: (id: string, action: string) => void }) {
   return (
     <div className="flex items-center gap-2">
+      <button className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-gray-50" onClick={() => onAction(row.id, "INTERVIEW")}>
+        <Calendar className="h-4 w-4" /> Interview
+      </button>
       <button className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-gray-50" onClick={() => onAction(row.id, "SHORTLISTED")}>
         <Star className="h-4 w-4" /> Shortlist
       </button>

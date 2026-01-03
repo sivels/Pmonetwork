@@ -48,6 +48,7 @@ const AzureADProvider = {
 };
 
 export const authOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       name: 'Email & Password',
@@ -77,7 +78,14 @@ export const authOptions = {
     }),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || 'dummy-client-id',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'dummy-client-secret'
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'dummy-client-secret',
+      authorization: {
+        params: {
+          scope: 'openid email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
     }),
     // Commented out until properly configured
     // LinkedInProvider,
