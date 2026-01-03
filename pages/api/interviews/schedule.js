@@ -150,6 +150,18 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Error scheduling interview:', error);
-    return res.status(500).json({ error: 'Failed to schedule interview' });
+    
+    // Check if it's a database table not found error
+    if (error.message?.includes('Interview') || error.code === 'P2021') {
+      return res.status(500).json({ 
+        error: 'Database migration required. Please run the Interview table migration in your Supabase SQL Editor.',
+        details: 'The Interview table does not exist. Run: prisma/migrations/add_interviews.sql'
+      });
+    }
+    
+    return res.status(500).json({ 
+      error: 'Failed to schedule interview',
+      details: error.message 
+    });
   }
 }
