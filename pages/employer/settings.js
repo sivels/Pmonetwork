@@ -4,6 +4,7 @@ import { authOptions } from '../api/auth/[...nextauth]';
 import { prisma } from '../../lib/prisma';
 import Link from 'next/link';
 import { useState } from 'react';
+import GoogleAccountStatus from '../../components/GoogleAccountStatus';
 
 export async function getServerSideProps(ctx) {
   const session = await getServerSession(ctx.req, ctx.res, authOptions);
@@ -93,6 +94,7 @@ export default function EmployerSettings({ user, profile }) {
   const tabs = [
     { id: 'company', label: 'Company Information', icon: '🏢' },
     { id: 'contact', label: 'Contact Details', icon: '📧' },
+    { id: 'integrations', label: 'Integrations', icon: '🔗' },
     { id: 'subscription', label: 'Subscription & Billing', icon: '💳' },
     { id: 'security', label: 'Security & Login', icon: '🔒' },
     { id: 'notifications', label: 'Notifications', icon: '🔔' },
@@ -407,6 +409,72 @@ export default function EmployerSettings({ user, profile }) {
                     </button>
                   </div>
                 </form>
+              </div>
+            )}
+
+            {/* Integrations */}
+            {activeTab === 'integrations' && (
+              <div className="settings-section">
+                <div className="section-header">
+                  <h2>Integrations</h2>
+                  <p>Connect third-party services to enhance your recruiting workflow</p>
+                </div>
+
+                {/* Google Calendar Integration */}
+                <div className="integration-card">
+                  <div className="integration-icon">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                      <path d="M41.5 24c0-9.7-7.8-17.5-17.5-17.5S6.5 14.3 6.5 24 14.3 41.5 24 41.5 41.5 33.7 41.5 24z" fill="#fff"/>
+                      <path d="M35 24c0 6.1-4.9 11-11 11s-11-4.9-11-11 4.9-11 11-11 11 4.9 11 11z" fill="#1a73e8"/>
+                      <path d="M24 13v11l7 4" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <div className="integration-content">
+                    <h3>Google Calendar</h3>
+                    <p className="integration-description">
+                      Connect your Google account to schedule interviews and automatically generate Google Meet links for candidates.
+                    </p>
+                    <div className="integration-features">
+                      <span className="feature-tag">✓ Auto-generate Meet links</span>
+                      <span className="feature-tag">✓ Send calendar invites</span>
+                      <span className="feature-tag">✓ Sync interview schedules</span>
+                    </div>
+                  </div>
+                  <div className="integration-action">
+                    <GoogleAccountStatus onConnect={() => window.location.href = '/api/auth/signin/google'} />
+                  </div>
+                </div>
+
+                {/* Coming Soon Integrations */}
+                <div className="integration-card disabled">
+                  <div className="integration-icon">📧</div>
+                  <div className="integration-content">
+                    <h3>Email Provider <span className="coming-soon-badge">Coming Soon</span></h3>
+                    <p className="integration-description">
+                      Connect your email provider to send automated candidate communications.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="integration-card disabled">
+                  <div className="integration-icon">💼</div>
+                  <div className="integration-content">
+                    <h3>LinkedIn <span className="coming-soon-badge">Coming Soon</span></h3>
+                    <p className="integration-description">
+                      Import candidate profiles and post jobs directly to LinkedIn.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="integration-card disabled">
+                  <div className="integration-icon">📊</div>
+                  <div className="integration-content">
+                    <h3>Analytics Tools <span className="coming-soon-badge">Coming Soon</span></h3>
+                    <p className="integration-description">
+                      Connect Google Analytics or other tools to track recruitment metrics.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1184,6 +1252,97 @@ export default function EmployerSettings({ user, profile }) {
           color: #6b7280;
         }
 
+        .integration-card {
+          display: grid;
+          grid-template-columns: auto 1fr auto;
+          gap: 1.5rem;
+          align-items: start;
+          padding: 1.5rem;
+          border: 1px solid #e5e7eb;
+          background: white;
+          border-radius: 0.75rem;
+          margin-bottom: 1rem;
+          transition: all 0.2s;
+        }
+
+        .integration-card:hover:not(.disabled) {
+          border-color: #d1d5db;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .integration-card.disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .integration-icon {
+          width: 48px;
+          height: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+          background: #f9fafb;
+          border-radius: 0.75rem;
+          border: 1px solid #e5e7eb;
+        }
+
+        .integration-content {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .integration-content h3 {
+          margin: 0;
+          font-size: 1.125rem;
+          font-weight: 600;
+          color: #111827;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .coming-soon-badge {
+          display: inline-flex;
+          padding: 0.25rem 0.5rem;
+          background: #fef3c7;
+          color: #92400e;
+          border-radius: 0.375rem;
+          font-size: 0.75rem;
+          font-weight: 500;
+        }
+
+        .integration-description {
+          margin: 0;
+          font-size: 0.875rem;
+          color: #6b7280;
+          line-height: 1.5;
+        }
+
+        .integration-features {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          margin-top: 0.5rem;
+        }
+
+        .feature-tag {
+          display: inline-flex;
+          align-items: center;
+          padding: 0.25rem 0.75rem;
+          background: #eff6ff;
+          color: #1e40af;
+          border-radius: 9999px;
+          font-size: 0.75rem;
+          font-weight: 500;
+        }
+
+        .integration-action {
+          display: flex;
+          align-items: center;
+        }
+
         @media (max-width: 1024px) {
           .settings-container {
             grid-template-columns: 1fr;
@@ -1199,6 +1358,15 @@ export default function EmployerSettings({ user, profile }) {
         @media (max-width: 640px) {
           .form-row {
             grid-template-columns: 1fr;
+          }
+
+          .integration-card {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+          }
+
+          .integration-action {
+            justify-content: flex-start;
           }
 
           .billing-row {
