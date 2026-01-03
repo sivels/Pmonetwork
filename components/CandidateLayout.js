@@ -167,6 +167,16 @@ export default function CandidateLayout({ children, user }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </Link>
+            <Link 
+              href="/candidate/interviews" 
+              className={`nav-item icon-only ${isActive('/candidate/interviews') ? 'active' : ''}`}
+              aria-label="Interviews"
+              title="Interviews"
+            >
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </Link>
           </nav>
 
           {/* Right-side quick actions: Notifications (left of profile), Help (right of profile) */}
@@ -287,6 +297,12 @@ export default function CandidateLayout({ children, user }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
                 Jobs
+              </Link>
+              <Link href="/candidate/interviews" className={`mobile-nav-item ${isActive('/candidate/interviews') ? 'active' : ''}`}>
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Interviews
               </Link>
               <Link href="/dashboard/messages" className={`mobile-nav-item ${isActive('/dashboard/messages') ? 'active' : ''}`}>
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
