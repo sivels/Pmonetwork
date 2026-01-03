@@ -41,16 +41,33 @@ export default async function handler(req, res) {
       });
 
       // Send notification to candidate about the change
-      if (interview.application.conversationId) {
-        await prisma.message.create({
+      // Find or create conversation
+      let conversation = await prisma.conversation.findFirst({
+        where: {
+          employerId: interview.employerId,
+          candidateId: interview.candidateId,
+          jobId: interview.jobId,
+        },
+      });
+
+      if (!conversation) {
+        conversation = await prisma.conversation.create({
           data: {
-            conversationId: interview.application.conversationId,
-            senderUserId: session.user.id,
-            receiverUserId: interview.candidate.userId,
-            text: `🔔 Interview Rescheduled\n\n📅 Your interview for ${interview.application.job.title} has been rescheduled to ${new Date(startTime).toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.${message ? `\n\nMessage from employer:\n${message}` : ''}`,
+            employerId: interview.employerId,
+            candidateId: interview.candidateId,
+            jobId: interview.jobId,
           },
         });
       }
+
+      await prisma.message.create({
+        data: {
+          conversationId: conversation.id,
+          senderUserId: session.user.id,
+          receiverUserId: interview.candidate.userId,
+          text: `🔔 Interview Rescheduled\n\n📅 Your interview for ${interview.application.job.title} has been rescheduled to ${new Date(startTime).toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.${message ? `\n\nMessage from employer:\n${message}` : ''}`,
+        },
+      });
 
       return res.status(200).json(interview);
     } catch (error) {
@@ -94,16 +111,33 @@ export default async function handler(req, res) {
       }
 
       // Send cancellation message to candidate
-      if (interview.application.conversationId) {
-        await prisma.message.create({
+      // Find or create conversation
+      let conversation = await prisma.conversation.findFirst({
+        where: {
+          employerId: interview.employerId,
+          candidateId: interview.candidateId,
+          jobId: interview.jobId,
+        },
+      });
+
+      if (!conversation) {
+        conversation = await prisma.conversation.create({
           data: {
-            conversationId: interview.application.conversationId,
-            senderUserId: session.user.id,
-            receiverUserId: interview.candidate.userId,
-            text: `🚫 Interview Cancelled\n\n${interview.application.job.title}\n\n${message}`,
+            employerId: interview.employerId,
+            candidateId: interview.candidateId,
+            jobId: interview.jobId,
           },
         });
       }
+
+      await prisma.message.create({
+        data: {
+          conversationId: conversation.id,
+          senderUserId: session.user.id,
+          receiverUserId: interview.candidate.userId,
+          text: `🚫 Interview Cancelled\n\n${interview.application.job.title}\n\n${message}`,
+        },
+      });
 
       // Delete the interview
       await prisma.interview.delete({
