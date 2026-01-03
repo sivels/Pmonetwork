@@ -3,8 +3,9 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../api/auth/[...nextauth]';
 import { prisma } from '../../lib/prisma';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import GoogleAccountStatus from '../../components/GoogleAccountStatus';
+import { useRouter } from 'next/router';
 
 export async function getServerSideProps(ctx) {
   const session = await getServerSession(ctx.req, ctx.res, authOptions);
@@ -43,9 +44,24 @@ export async function getServerSideProps(ctx) {
 }
 
 export default function EmployerSettings({ user, profile }) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('company');
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState('');
+
+  // Check for tab query parameter on mount
+  useEffect(() => {
+    if (router.query.tab) {
+      setActiveTab(router.query.tab);
+    }
+    
+    // Show success message if coming back from Google OAuth
+    if (router.query.linked === 'true') {
+      showToast('✓ Google account connected successfully!');
+      // Clean up URL
+      router.replace('/employer/settings?tab=integrations', undefined, { shallow: true });
+    }
+  }, [router.query.tab, router.query.linked]);
 
   // Form states
   const [companyData, setCompanyData] = useState({

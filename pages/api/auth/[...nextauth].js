@@ -48,7 +48,6 @@ const AzureADProvider = {
 };
 
 export const authOptions = {
-  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       name: 'Email & Password',
@@ -98,7 +97,75 @@ export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   useSecureCookies: process.env.NEXTAUTH_URL?.startsWith('https://'),
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account, profile }) {
+      // Allow credentials login
+      if (account?.provider === 'credentials') {
+        return true;
+      }
+
+      // For OAuth providers (Google, etc.)
+      if (account?.provider === 'google') {
+        try {
+          // Check if user exists with this email
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email },
+          });
+
+          if (existingUser) {
+            // Check if account link already exists
+            const existingAccount = await prisma.account.findFirst({
+              where: {
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+              },
+            });
+
+            // Create account link if it doesn't exist
+            if (!existingAccount) {
+              await prisma.account.create({
+                data: {
+                  userId: existingUser.id,
+                  type: account.type,
+                  provider: account.provider,
+                  providerAccountId: account.providerAccountId,
+                  refresh_token: account.refresh_token,
+                  access_token: account.access_token,
+                  expires_at: account.expires_at,
+                  token_type: account.token_type,
+                  scope: account.scope,
+                  id_token: account.id_token,
+                  session_state: account.session_state,
+                },
+              });
+            } else {
+              // Update existing account tokens
+              await prisma.account.update({
+                where: { id: existingAccount.id },
+                data: {
+                  refresh_token: account.refresh_token,
+                  access_token: account.access_token,
+                  expires_at: account.expires_at,
+                  token_type: account.token_type,
+                  scope: account.scope,
+                  id_token: account.id_token,
+                  session_state: account.session_state,
+                },
+              });
+            }
+            
+            // Update user object with existing user's data
+            user.id = existingUser.id;
+            user.role = existingUser.role;
+          }
+        } catch (error) {
+          console.error('Error linking Google account:', error);
+          return false;
+        }
+      }
+
+      return true;
+    },
+    async jwt({ token, user, account }) {
       if (user) {
         token.role = user.role || token.role;
         token.id = user.id;
@@ -123,6 +190,11 @@ export const authOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
+      // If coming from Google OAuth, redirect back to settings integrations tab
+      if (url.includes('google')) {
+        return `${baseUrl}/employer/settings?tab=integrations`;
+      }
+      
       // If URL is relative, prepend baseUrl
       if (url.startsWith('/')) {
         return baseUrl + url;
