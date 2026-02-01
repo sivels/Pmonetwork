@@ -137,28 +137,6 @@ export default function CandidateLayout({ children, user }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
             </Link>
-            <Link 
-              href="/dashboard/applications" 
-              className={`nav-item icon-only ${isActive('/dashboard/applications') ? 'active' : ''}`}
-              aria-label="Applications"
-              title="Applications"
-            >
-              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <rect x="3" y="4" width="18" height="18" rx="2" fill="#E0E7FF" stroke="#6366F1" strokeWidth="1.5" />
-                <path d="M8 10h8M8 14h5" stroke="#6366F1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </Link>
-            <Link 
-              href="/dashboard/interviews" 
-              className={`nav-item icon-only ${isActive('/dashboard/interviews') ? 'active' : ''}`}
-              aria-label="Interviews"
-              title="Interviews"
-            >
-              <svg width="20" height="20" fill="none" stroke="#6366F1" viewBox="0 0 24 24">
-                <rect x="3" y="4" width="18" height="18" rx="2" fill="#E0E7FF" stroke="#6366F1" strokeWidth="1.5" />
-                <path d="M8 10h8M8 14h5" stroke="#6366F1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </Link>
           </nav>
 
           {/* Right-side quick actions: Notifications (left of profile), Help (right of profile) */}
