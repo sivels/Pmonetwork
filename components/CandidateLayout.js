@@ -37,27 +37,38 @@ export default function CandidateLayout({ children, user }) {
       }
     };
     fetchProfileId();
-  }, []);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setProfileDropdownOpen(false);
-      }
-    }
-    if (profileDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [profileDropdownOpen]);
-
-  // Close mobile menu when route changes
-  useEffect(() => {
-    setMobileMenuOpen(false);
-    setNotificationsOpen(false);
-  }, [currentPath]);
-
+          <ul>
+            <li>
+              <Link href="/candidates/dashboard" passHref legacyBehavior>
+                <a className={router.pathname === "/candidates/dashboard" ? "active" : ""}>
+                  <span className="icon">
+                    <HomeIcon />
+                  </span>
+                  Overview
+                </a>
+              </Link>
+            </li>
+            <li>
+              <Link href="/candidates/applications" passHref legacyBehavior>
+                <a className={router.pathname === "/candidates/applications" ? "active" : ""}>
+                  <span className="icon">
+                    <DescriptionIcon />
+                  </span>
+                  Applications
+                </a>
+              </Link>
+            </li>
+            <li>
+              <Link href="/candidates/interviews" passHref legacyBehavior>
+                <a className={router.pathname === "/candidates/interviews" ? "active" : ""}>
+                  <span className="icon">
+                    {/* You may want to use a calendar or interview icon here */}
+                    <svg width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="20" rx="4" fill="#E0E7FF"/><path d="M6 8h8M6 12h5" stroke="#6366F1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </span>
+                  Interviews
+                </a>
+              </Link>
+            </li>
   // Close notifications on Escape
   useEffect(() => {
     function onKey(e) {
