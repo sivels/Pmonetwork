@@ -205,6 +205,7 @@ export default function CandidateLayout({ children, user }) {
                     </Link>
                   </nav>
                 </aside>
+                <style jsx>{`
                   /* Sidebar Navigation */
                   .candidate-sidebar {
                     position: fixed;
@@ -241,6 +242,7 @@ export default function CandidateLayout({ children, user }) {
                     background: #eef2ff;
                     color: #4f46e5;
                   }
+                `}</style>
           </nav>
 
           {/* Right-side quick actions: Notifications (left of profile), Help (right of profile) */}
