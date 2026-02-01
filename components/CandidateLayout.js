@@ -147,26 +147,6 @@ export default function CandidateLayout({ children, user }) {
 
           {/* Desktop Navigation (icons only) */}
           <nav className="candidate-nav-desktop">
-            <Link 
-              href="/dashboard/applications" 
-              className={`nav-item icon-only ${isActive('/dashboard/applications') ? 'active' : ''}`}
-              aria-label="Applications"
-              title="Applications"
-            >
-              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V2H7v7M17 9a2 2 0 012 2v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7a2 2 0 012-2m10 0H7" />
-              </svg>
-            </Link>
-            <Link 
-              href="/candidate/interviews" 
-              className={`nav-item icon-only ${isActive('/candidate/interviews') ? 'active' : ''}`}
-              aria-label="Interviews"
-              title="Interviews"
-            >
-              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </Link>
                 {/* Sidebar Navigation */}
                 <aside className="candidate-sidebar">
                   <nav className="sidebar-nav">
