@@ -38,7 +38,6 @@ export default function CandidateLayout({ children, user }) {
     };
     fetchProfileId();
   }, []);
-  // ...existing code...
     function onKey(e) {
       if (e.key === 'Escape') setNotificationsOpen(false);
     }
@@ -47,6 +46,14 @@ export default function CandidateLayout({ children, user }) {
       return () => document.removeEventListener('keydown', onKey);
     }
   }, [notificationsOpen]);
+  function onKey(e) {
+    if (e.key === 'Escape') setNotificationsOpen(false);
+  }
+  if (notificationsOpen) {
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }
+}, [notificationsOpen]);
 
   // Sync unread message count from messages page via localStorage/custom event
   useEffect(() => {
