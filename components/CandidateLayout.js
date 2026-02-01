@@ -38,14 +38,16 @@ export default function CandidateLayout({ children, user }) {
     };
     fetchProfileId();
   }, []);
-  function onKey(e) {
-    if (e.key === 'Escape') setNotificationsOpen(false);
-  }
-  if (notificationsOpen) {
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }
-}, [notificationsOpen]);
+
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === 'Escape') setNotificationsOpen(false);
+    }
+    if (notificationsOpen) {
+      document.addEventListener('keydown', onKey);
+      return () => document.removeEventListener('keydown', onKey);
+    }
+  }, [notificationsOpen]);
 
   // Sync unread message count from messages page via localStorage/custom event
   useEffect(() => {
