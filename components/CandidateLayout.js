@@ -416,6 +416,19 @@ export default function CandidateLayout({ children, user }) {
         {children}
       </main>
 
+      {/* Notifications Panel */}
+      <NotificationPanel 
+        isOpen={notificationsOpen} 
+        onClose={() => setNotificationsOpen(false)}
+        onUnreadChange={(total) => setUnreadNotifications(total)}
+      />
+
+      {/* Messages Preview Panel */}
+      <MessagePreviewPanel 
+        isOpen={messagesOpen} 
+        onClose={() => setMessagesOpen(false)}
+      />
+
       <style jsx>{`
         .candidate-layout { min-height:100vh; background:#f8f9fc; }
 
@@ -506,19 +519,6 @@ export default function CandidateLayout({ children, user }) {
           .candidate-mobile-menu { display:none; }
         }
       `}</style>
-
-      {/* Notifications Panel */}
-      <NotificationPanel 
-        isOpen={notificationsOpen} 
-        onClose={() => setNotificationsOpen(false)}
-        onUnreadChange={(total) => setUnreadNotifications(total)}
-      />
-
-      {/* Messages Preview Panel */}
-      <MessagePreviewPanel 
-        isOpen={messagesOpen} 
-        onClose={() => setMessagesOpen(false)}
-      />
     </div>
   );
 }
