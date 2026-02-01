@@ -205,44 +205,6 @@ export default function CandidateLayout({ children, user }) {
                     </Link>
                   </nav>
                 </aside>
-                <style jsx>{`
-                  /* Sidebar Navigation */
-                  .candidate-sidebar {
-                    position: fixed;
-                    top: 64px;
-                    left: 0;
-                    width: 200px;
-                    height: calc(100vh - 64px);
-                    background: #fff;
-                    border-right: 1px solid #e5e7eb;
-                    box-shadow: 1px 0 3px rgba(0,0,0,0.03);
-                    display: flex;
-                    flex-direction: column;
-                    padding-top: 2rem;
-                    z-index: 900;
-                  }
-                  .sidebar-nav {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 1rem;
-                    padding-left: 1.5rem;
-                  }
-                  .sidebar-nav-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.75rem;
-                    font-size: 1rem;
-                    color: #374151;
-                    text-decoration: none;
-                    padding: 0.75rem 1rem;
-                    border-radius: 8px;
-                    transition: background 0.15s, color 0.15s;
-                  }
-                  .sidebar-nav-item.active, .sidebar-nav-item:hover {
-                    background: #eef2ff;
-                    color: #4f46e5;
-                  }
-                `}</style>
           </nav>
 
           {/* Right-side quick actions: Notifications (left of profile), Help (right of profile) */}
