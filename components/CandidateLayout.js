@@ -210,7 +210,7 @@ export default function CandidateLayout({ children, session }) {
         .candidate-profile-section{position:relative}
         .profile-dropdown-trigger{display:flex;align-items:center;gap:.75rem;padding:.5rem .75rem;border:1px solid #e5e7eb;border-radius:12px;background:#fff;cursor:pointer;transition:all .2s;color:#374151}
         .profile-dropdown-trigger:hover{background:#f8fafc;border-color:#cbd5e1}
-        .profile-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid #e5e7eb}
+        .profile-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;object-position:center;border:2px solid #e5e7eb;flex-shrink:0}
         .profile-name{font-size:.875rem;font-weight:600;color:#111827;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .dropdown-arrow{transition:transform .2s}
         .dropdown-arrow.open{transform:rotate(180deg)}
@@ -219,7 +219,7 @@ export default function CandidateLayout({ children, session }) {
         @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 
         .dropdown-header{padding:1rem 1.25rem;display:flex;align-items:center;gap:.75rem;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:16px 16px 0 0}
-        .dropdown-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.3)}
+        .dropdown-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:center;border:3px solid rgba(255,255,255,.3);flex-shrink:0}
         .dropdown-user-info{flex:1;min-width:0}
         .dropdown-company-name{font-size:.9375rem;font-weight:700;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .dropdown-role{font-size:.75rem;color:rgba(255,255,255,.8);margin-top:.125rem}
