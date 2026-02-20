@@ -108,25 +108,6 @@ export default function Home() {
               </ul>
             </div>
             <div>
-            </main>
-          );
-
-          return (
-            <>
-              <Head>
-                <title>The PMO Network – The Leading Platform for PMO Jobs, Contractors & Project Delivery Talent</title>
-                {/* ...existing meta and script tags... */}
-              </Head>
-              {isCandidate && user ? (
-                <CandidateLayout user={user}>{MainContent}</CandidateLayout>
-              ) : (
-                <>
-                  <Header />
-                  {MainContent}
-                </>
-              )}
-            </>
-          );
               <h3 className="text-xl font-semibold">For Employers</h3>
               <ul className="mt-4 space-y-3 text-slate-600">
                 <li>Access top PMO specialists and shortlists curated by skill</li>
