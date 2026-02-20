@@ -5,6 +5,7 @@ import { signOut } from 'next-auth/react';
 import NotificationPanel from './NotificationPanel';
 import MessagePreviewPanel from './MessagePreviewPanel';
 
+export default function CandidateLayout({ children, session }) {
   // --- EMPLOYER HEADER CLONE FOR CANDIDATE ---
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
