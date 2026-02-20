@@ -1,10 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import LandingGraphics from '../components/LandingGraphics';
-import { useSession } from 'next-auth/react';
-import { useState, useEffect } from 'react';
-import CandidateLayout from '../components/CandidateLayout';
-import Header from '../components/Header';
 
 // Helper to build a complete user object for CandidateLayout
 function getCandidateUser(session) {
@@ -18,16 +14,6 @@ function getCandidateUser(session) {
 }
 
 export default function Home() {
-  const { data: session, status } = useSession();
-  const userRole = session?.user?.role?.toLowerCase();
-  const isCandidate = userRole === 'candidate';
-  const user = isCandidate ? getCandidateUser(session) : null;
-  
-  // Prevent rendering mismatch on hydration
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const MainContent = (
     <main className="min-h-screen bg-white text-slate-800">
@@ -330,14 +316,7 @@ export default function Home() {
           ]
         }) }} />
       </Head>
-      {!mounted ? null : isCandidate && user ? (
-        <CandidateLayout session={{ user }}>{MainContent}</CandidateLayout>
-      ) : (
-        <>
-          <Header />
-          {MainContent}
-        </>
-      )}
+      {MainContent}
     </>
   );
 }

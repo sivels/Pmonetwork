@@ -2,24 +2,28 @@ import Header from './Header';
 import { useSession } from 'next-auth/react';
 import CandidateLayout from './CandidateLayout';
 import EmployerLayout from './EmployerLayout';
+import { useState, useEffect } from 'react';
 
 export default function Layout({ children }) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
   const userRole = session?.user?.role?.toLowerCase();
   const isCandidate = userRole === 'candidate';
   const isEmployer = userRole === 'employer';
-  
-  // Build user object with profile data if available
-  const user = isCandidate ? {
-    fullName: session?.user?.name || session?.user?.email?.split('@')[0],
-    email: session?.user?.email,
-    profilePhotoUrl: session?.user?.image || null,
-    ...session?.user
-  } : session?.user;
+
+  // Prevent hydration mismatch by not rendering until client is ready
+  if (!mounted) {
+    return null;
+  }
 
   // Use candidate layout for authenticated candidates
   if (isCandidate) {
-    return <CandidateLayout user={user}>{children}</CandidateLayout>;
+    return <CandidateLayout session={{ user: session?.user }}>{children}</CandidateLayout>;
   }
 
   // Use employer layout for authenticated employers
