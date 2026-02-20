@@ -1,7 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../api/auth/[...nextauth]';
 import { prisma } from '../../lib/prisma';
-import CandidateLayout from '../../components/CandidateLayout';
 import DashboardStatusCards from '../../components/DashboardStatusCards';
 
 export async function getServerSideProps(ctx) {
@@ -72,9 +71,9 @@ export async function getServerSideProps(ctx) {
 
 export default function CandidateDashboard({ profile, profileScore, userEmail }) {
   return (
-    <CandidateLayout user={profile} unreadMessages={0}>
+    <>
       <DashboardStatusCards profile={profile} profileScore={profileScore} />
       {/* Add more dashboard widgets/components here as needed */}
-    </CandidateLayout>
+    </>
   );
 }
