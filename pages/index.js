@@ -1,51 +1,50 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import LandingGraphics from '../components/LandingGraphics';
+import { useSession } from 'next-auth/react';
+import CandidateLayout from '../components/CandidateLayout';
+import Header from '../components/Header';
+
+// Helper to build a complete user object for CandidateLayout
+function getCandidateUser(session) {
+  if (!session?.user) return null;
+  return {
+    fullName: session.user.name || session.user.email?.split('@')[0],
+    email: session.user.email,
+    profilePhotoUrl: session.user.image || null,
+    ...session.user
+  };
+}
 
 export default function Home() {
-  return (
-    <>
-      <Head>
-        <title>The PMO Network – The Leading Platform for PMO Jobs, Contractors & Project Delivery Talent</title>
-        <meta name="description" content="PMO Network connects PMO professionals, contractors and employers hiring project delivery talent. Find PMO jobs, create a PMO-specific profile, or hire verified PMO professionals with skill-scored profiles." />
-        <meta name="keywords" content="PMO jobs, PMO careers, PMO contractors, project management roles, portfolio & programme management, hire PMO professionals, PMO recruitment, PMO talent network" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="canonical" href="https://www.pmonetwork.example/" />
-        <meta name="robots" content="index, follow" />
-        <meta name="theme-color" content="#1976d2" />
-        <meta property="og:title" content="The PMO Network – The Leading Platform for PMO Jobs, Contractors & Project Delivery Talent" />
-        <meta property="og:description" content="PMO Network connects PMO professionals, contractors and employers hiring project delivery talent. Find PMO jobs, create a PMO-specific profile, or hire verified PMO professionals with skill-scored profiles." />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://www.pmonetwork.example/" />
-        <meta property="og:image" content="https://www.pmonetwork.example/og-image.png" />
-        <meta property="og:site_name" content="PMO Network" />
-        <meta name="twitter:card" content="summary_large_image" />
-        import Head from 'next/head';
-        import Link from 'next/link';
-        import LandingGraphics from '../components/LandingGraphics';
-        import { useSession } from 'next-auth/react';
-        import CandidateLayout from '../components/CandidateLayout';
-        import Header from '../components/Header';
+  const { data: session } = useSession();
+  const userRole = session?.user?.role?.toLowerCase();
+  const isCandidate = userRole === 'candidate';
+  const user = isCandidate ? getCandidateUser(session) : null;
 
-        // Helper to build a complete user object for CandidateLayout
-        function getCandidateUser(session) {
-          if (!session?.user) return null;
-          return {
-            fullName: session.user.name || session.user.email?.split('@')[0],
-            email: session.user.email,
-            profilePhotoUrl: session.user.image || null,
-            ...session.user
-          };
-        }
+  const MainContent = (
+    <main className="min-h-screen bg-white text-slate-800">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-white to-slate-50">
+        <div className="max-w-7xl mx-auto px-6 py-16 lg:py-24">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h1 className="mt-4 text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight">The PMO Network – The Leading Platform for PMO Jobs, Contractors & Project Delivery Talent.</h1>
+              <p className="mt-6 text-lg text-slate-600 max-w-2xl">Join a professional network focused on project management roles and portfolio delivery. Build an expert PMO profile, get matched to the right roles, and connect with employers who understand PMO.</p>
 
-        export default function Home() {
-          const { data: session } = useSession();
-          const userRole = session?.user?.role?.toLowerCase();
-          const isCandidate = userRole === 'candidate';
-          const user = isCandidate ? getCandidateUser(session) : null;
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link href="/jobs" className="inline-flex items-center justify-center px-5 py-3 rounded-md bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700">Jobs Board</Link>
+                <Link href="/auth/register" className="inline-flex items-center justify-center px-5 py-3 rounded-md border border-indigo-600 text-indigo-600 font-medium hover:bg-indigo-50">Register Here</Link>
+                <Link href="/employers/post-job" className="inline-flex items-center justify-center px-5 py-3 rounded-md bg-slate-100 text-slate-800 font-medium hover:bg-slate-200">Demo</Link>
+              </div>
 
-          const MainContent = (
-            <main className="min-h-screen bg-white text-slate-800">
+              <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-slate-600">
+                <li>Expert PMO profiles and verified skills</li>
+                <li>AI-powered skills assessment & profile score</li>
+                <li>Streamlined hiring and compliance tools</li>
+                <li>Private document vault for CVs & certificates</li>
+              </ul>
+            </div>
               <div className="order-first lg:order-last relative">
                 <LandingGraphics className="hidden lg:block" />
                 <div className="shadow-lg rounded-xl overflow-hidden border border-slate-100 relative z-10">
@@ -288,6 +287,69 @@ export default function Home() {
           </div>
         </section>
       </main>
+  );
+
+  return (
+    <>
+      <Head>
+        <title>The PMO Network – The Leading Platform for PMO Jobs, Contractors & Project Delivery Talent</title>
+        <meta name="description" content="PMO Network connects PMO professionals, contractors and employers hiring project delivery talent. Find PMO jobs, create a PMO-specific profile, or hire verified PMO professionals with skill-scored profiles." />
+        <meta name="keywords" content="PMO jobs, PMO careers, PMO contractors, project management roles, portfolio & programme management, hire PMO professionals, PMO recruitment, PMO talent network" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="canonical" href="https://www.pmonetwork.example/" />
+        <meta name="robots" content="index, follow" />
+        <meta name="theme-color" content="#1976d2" />
+        <meta property="og:title" content="The PMO Network – The Leading Platform for PMO Jobs, Contractors & Project Delivery Talent" />
+        <meta property="og:description" content="PMO Network connects PMO professionals, contractors and employers hiring project delivery talent. Find PMO jobs, create a PMO-specific profile, or hire verified PMO professionals with skill-scored profiles." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.pmonetwork.example/" />
+        <meta property="og:image" content="https://www.pmonetwork.example/og-image.png" />
+        <meta property="og:site_name" content="PMO Network" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@pmonetwork" />
+        <meta name="twitter:title" content="The PMO Network – The Leading Platform for PMO Jobs, Contractors & Project Delivery Talent" />
+        <meta name="twitter:description" content="PMO Network connects PMO professionals, contractors and employers hiring project delivery talent. Find PMO jobs, create a PMO-specific profile, or hire verified PMO professionals with skill-scored profiles." />
+        <meta name="twitter:image" content="https://www.pmonetwork.example/og-image.png" />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "PMO Network",
+          "url": "https://www.pmonetwork.example/",
+          "logo": "/logo.svg",
+          "description": "A trusted professional network for PMO and project delivery specialists — find jobs, join as a contractor, or hire verified PMO talent."
+        }) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "name": "PMO Network",
+          "url": "https://www.pmonetwork.example/",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://www.pmonetwork.example/jobs?query={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        }) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://www.pmonetwork.example/"
+            }
+          ]
+        }) }} />
+      </Head>
+      {isCandidate && user ? (
+        <CandidateLayout user={user}>{MainContent}</CandidateLayout>
+      ) : (
+        <>
+          <Header />
+          {MainContent}
+        </>
+      )}
     </>
   );
 }
