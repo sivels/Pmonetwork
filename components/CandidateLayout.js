@@ -195,7 +195,7 @@ export default function CandidateLayout({ children, session }) {
           </div>
         </div>
       </header>
-      <main className="candidate-main-content">{children}</main>
+      {children}
       <style jsx>{`
         .candidate-layout{min-height:100vh;background:#f8f9fc}
         .candidate-header{position:sticky;top:0;z-index:1000;background:#fff;border-bottom:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,.05)}
