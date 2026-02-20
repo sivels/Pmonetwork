@@ -72,283 +72,360 @@ export async function getServerSideProps(ctx) {
 
 export default function CandidateDashboard({ profile, profileScore, userEmail }) {
   return (
-    <div className="candidate-dashboard-container">
+    <div className="candidate-dashboard">
       <style jsx>{`
-        .candidate-dashboard-container {
+        .candidate-dashboard {
+          min-height: 100vh;
+          background: #f3f4f6;
           padding: 2rem 1rem;
+        }
+        .dashboard-container {
           max-width: 1200px;
           margin: 0 auto;
         }
-        .dashboard-section {
+        .status-section {
           margin-bottom: 2rem;
         }
-        .section-title {
-          font-size: 1.5rem;
-          font-weight: 600;
-          margin-bottom: 1rem;
-          color: #1f2937;
+        .profile-banner {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          border-radius: 16px;
+          padding: 2rem;
+          margin-bottom: 2rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
         }
-        .profile-overview {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
+        .profile-header-left {
+          display: flex;
           gap: 1.5rem;
+          flex: 1;
+        }
+        .profile-photo {
+          width: 120px;
+          height: 120px;
+          border-radius: 12px;
+          object-fit: cover;
+          border: 4px solid rgba(255, 255, 255, 0.3);
+        }
+        .profile-banner-info h1 {
+          font-size: 1.75rem;
+          font-weight: 700;
+          margin: 0 0 0.5rem 0;
+        }
+        .profile-banner-info p {
+          margin: 0.25rem 0;
+          font-size: 0.95rem;
+          opacity: 0.95;
+        }
+        .profile-banner-actions {
+          display: flex;
+          gap: 1rem;
+        }
+        .btn {
+          padding: 0.625rem 1.25rem;
+          border-radius: 8px;
+          border: none;
+          font-weight: 500;
+          cursor: pointer;
+          text-decoration: none;
+          display: inline-block;
+          font-size: 0.875rem;
+          transition: all 0.2s;
+        }
+        .btn-primary {
+          background: white;
+          color: #667eea;
+        }
+        .btn-primary:hover {
+          background: rgba(255, 255, 255, 0.9);
+        }
+        .btn-secondary {
+          background: rgba(255, 255, 255, 0.15);
+          color: white;
+          border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .btn-secondary:hover {
+          background: rgba(255, 255, 255, 0.25);
+        }
+        .profile-grid {
+          display: grid;
+          grid-template-columns: 2fr 1fr;
+          gap: 2rem;
           margin-bottom: 2rem;
         }
         .profile-card {
           background: white;
           border-radius: 12px;
           padding: 1.5rem;
-          border: 1px solid #e5e7eb;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
-        .profile-header {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          margin-bottom: 1rem;
-        }
-        .profile-avatar {
-          width: 80px;
-          height: 80px;
-          border-radius: 50%;
-          object-fit: cover;
-          border: 3px solid #4f46e5;
-        }
-        .profile-info h2 {
-          font-size: 1.25rem;
-          font-weight: 600;
-          color: #1f2937;
-          margin: 0;
-        }
-        .profile-info p {
-          color: #6b7280;
-          margin: 0.25rem 0;
-          font-size: 0.875rem;
-        }
-        .profile-score {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-        .score-value {
-          font-size: 2rem;
-          font-weight: 700;
-          color: #4f46e5;
-        }
-        .score-label {
-          font-size: 0.875rem;
-          color: #6b7280;
-        }
-        .profile-section {
-          background: white;
-          border-radius: 12px;
-          padding: 1.5rem;
-          border: 1px solid #e5e7eb;
-        }
-        .profile-section h3 {
-          font-size: 1rem;
+        .card-title {
+          font-size: 1.125rem;
           font-weight: 600;
           margin: 0 0 1rem 0;
           color: #1f2937;
         }
-        .info-row {
+        .info-grid {
           display: grid;
-          grid-template-columns: 150px 1fr;
+          grid-template-columns: repeat(2, 1fr);
           gap: 1rem;
-          padding: 0.75rem 0;
-          border-bottom: 1px solid #f3f4f6;
         }
-        .info-row:last-child {
+        .info-item {
+          border-bottom: 1px solid #f3f4f6;
+          padding-bottom: 0.75rem;
+        }
+        .info-item:last-child {
           border-bottom: none;
         }
         .info-label {
-          font-weight: 500;
-          color: #6b7280;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: #9ca3af;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-bottom: 0.25rem;
         }
         .info-value {
+          font-size: 0.95rem;
+          font-weight: 500;
           color: #1f2937;
         }
-        .skills-list {
+        .score-card {
+          text-align: center;
+        }
+        .score-number {
+          font-size: 3rem;
+          font-weight: 700;
+          color: #667eea;
+          margin-bottom: 0.5rem;
+        }
+        .score-label {
+          font-size: 0.875rem;
+          color: #6b7280;
+          margin-bottom: 1rem;
+        }
+        .score-bar {
+          height: 8px;
+          background: #e5e7eb;
+          border-radius: 4px;
+          overflow: hidden;
+          margin-bottom: 1rem;
+        }
+        .score-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+          transition: width 0.3s;
+        }
+        .section-title {
+          font-size: 1rem;
+          font-weight: 600;
+          margin: 1.5rem 0 1rem 0;
+          color: #1f2937;
+        }
+        .skills-container {
           display: flex;
           flex-wrap: wrap;
-          gap: 0.5rem;
+          gap: 0.75rem;
         }
-        .skill-badge {
+        .skill-tag {
           background: #eef2ff;
-          color: #4f46e5;
+          color: #667eea;
           padding: 0.5rem 1rem;
           border-radius: 20px;
           font-size: 0.875rem;
           font-weight: 500;
+          border: 1px solid #c7d2fe;
         }
-        .applications-list {
-          display: grid;
+        .applications-container {
+          display: flex;
+          flex-direction: column;
           gap: 1rem;
         }
-        .application-item {
-          background: white;
+        .application-card {
+          background: #f9fafb;
           border: 1px solid #e5e7eb;
           border-radius: 8px;
           padding: 1rem;
           display: flex;
           justify-content: space-between;
           align-items: center;
+          transition: all 0.2s;
         }
-        .application-title {
-          font-weight: 600;
+        .application-card:hover {
+          border-color: #d1d5db;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .application-info h4 {
+          margin: 0 0 0.25rem 0;
+          font-size: 0.95rem;
           color: #1f2937;
         }
-        .application-company {
+        .application-info p {
+          margin: 0;
           font-size: 0.875rem;
           color: #6b7280;
         }
         .application-date {
           font-size: 0.875rem;
           color: #9ca3af;
+          white-space: nowrap;
         }
-        .btn-primary {
-          background: #4f46e5;
-          color: white;
-          padding: 0.5rem 1rem;
-          border-radius: 6px;
-          text-decoration: none;
-          font-size: 0.875rem;
-          font-weight: 500;
-          border: none;
-          cursor: pointer;
-          display: inline-block;
+        .empty-state {
+          text-align: center;
+          padding: 2rem;
+          color: #6b7280;
         }
-        .btn-primary:hover {
-          background: #4338ca;
+        .empty-state p {
+          margin: 0 0 1rem 0;
         }
         @media (max-width: 768px) {
-          .profile-overview {
+          .profile-banner {
+            flex-direction: column;
+          }
+          .profile-banner-actions {
+            width: 100%;
+            margin-top: 1rem;
+          }
+          .btn {
+            flex: 1;
+            text-align: center;
+          }
+          .profile-grid {
             grid-template-columns: 1fr;
           }
-          .info-row {
+          .info-grid {
             grid-template-columns: 1fr;
+          }
+          .profile-header-left {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
           }
         }
       `}</style>
 
-      <DashboardStatusCards profile={profile} profileScore={profileScore} />
+      <div className="dashboard-container">
+        {/* Status Cards */}
+        <div className="status-section">
+          <DashboardStatusCards profile={profile} profileScore={profileScore} />
+        </div>
 
-      {profile ? (
-        <div className="dashboard-section">
-          <h2 className="section-title">Your Profile</h2>
-          
-          {/* Profile Overview Cards */}
-          <div className="profile-overview">
-            <div className="profile-card">
-              <div className="profile-header">
+        {profile ? (
+          <>
+            {/* Profile Banner */}
+            <div className="profile-banner">
+              <div className="profile-header-left">
                 {profile.profilePhotoUrl && (
                   <img 
                     src={profile.profilePhotoUrl} 
                     alt={profile.fullName} 
-                    className="profile-avatar"
+                    className="profile-photo"
                   />
                 )}
-                <div className="profile-info">
-                  <h2>{profile.fullName || 'Your Name'}</h2>
-                  <p>{profile.jobTitle || 'Job Title'}</p>
-                  <p>{profile.location}</p>
+                <div className="profile-banner-info">
+                  <h1>{profile.fullName || 'Your Name'}</h1>
+                  <p>{profile.jobTitle || 'Add your job title'}</p>
+                  <p>{profile.location || 'Add location'}</p>
+                  {profile.summary && <p style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>{profile.summary.substring(0, 100)}...</p>}
                 </div>
+              </div>
+              <div className="profile-banner-actions">
+                <Link href="/dashboard/profile" className="btn btn-primary">Edit Profile</Link>
+                <Link href="/candidate/preview" className="btn btn-secondary">View Public</Link>
               </div>
             </div>
 
-            <div className="profile-card">
-              <div className="profile-score">
-                <div>
-                  <div className="score-value">{profileScore}</div>
-                  <div className="score-label">Profile Score</div>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ marginBottom: '0.5rem', fontSize: '0.875rem', color: '#6b7280' }}>Profile Completeness</div>
-                  <div style={{ height: '8px', background: '#f3f4f6', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div 
-                      style={{ 
-                        height: '100%', 
-                        background: '#4f46e5', 
-                        width: `${profileScore}%`,
-                        transition: 'width 0.3s'
-                      }} 
-                    />
+            {/* Profile Details Grid */}
+            <div className="profile-grid">
+              <div className="profile-card">
+                <h2 className="card-title">About</h2>
+                <div className="info-grid">
+                  <div className="info-item">
+                    <div className="info-label">Experience</div>
+                    <div className="info-value">{profile.yearsExperience ? `${profile.yearsExperience} years` : 'Not specified'}</div>
                   </div>
-                </div>
-              </div>
-              <Link href="/dashboard/profile-edit" className="btn-primary" style={{ display: 'block', marginTop: '1rem', textAlign: 'center' }}>
-                Edit Profile
-              </Link>
-            </div>
-          </div>
-
-          {/* Profile Details */}
-          <div className="profile-section" style={{ marginBottom: '2rem' }}>
-            <h3>About You</h3>
-            <div className="info-row">
-              <div className="info-label">Summary</div>
-              <div className="info-value">{profile.summary || 'No summary added'}</div>
-            </div>
-            <div className="info-row">
-              <div className="info-label">Experience</div>
-              <div className="info-value">{profile.yearsExperience ? `${profile.yearsExperience} years` : 'Not specified'}</div>
-            </div>
-            <div className="info-row">
-              <div className="info-label">Sector</div>
-              <div className="info-value">{profile.sector || 'Not specified'}</div>
-            </div>
-            <div className="info-row">
-              <div className="info-label">Day Rate</div>
-              <div className="info-value">{profile.dayRate ? `£${profile.dayRate}` : 'Not specified'}</div>
-            </div>
-            <div className="info-row">
-              <div className="info-label">Remote Preference</div>
-              <div className="info-value">
-                {profile.remotePreference === null ? 'Not specified' : profile.remotePreference ? 'Open to remote' : 'Prefer on-site'}
-              </div>
-            </div>
-          </div>
-
-          {/* Skills */}
-          {profile.skills && profile.skills.length > 0 && (
-            <div className="profile-section" style={{ marginBottom: '2rem' }}>
-              <h3>Skills ({profile.skills.length})</h3>
-              <div className="skills-list">
-                {profile.skills.map(skill => (
-                  <div key={skill.id} className="skill-badge">{skill.name}</div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Applications */}
-          {profile.applications && profile.applications.length > 0 && (
-            <div className="profile-section">
-              <h3>Recent Applications ({profile.applications.length})</h3>
-              <div className="applications-list">
-                {profile.applications.slice(0, 5).map(app => (
-                  <div key={app.id} className="application-item">
-                    <div>
-                      <div className="application-title">{app.job?.title}</div>
-                      <div className="application-company">{app.job?.employer?.companyName}</div>
-                      <div className="application-date">
-                        Applied {new Date(app.createdAt).toLocaleDateString()}
-                      </div>
+                  <div className="info-item">
+                    <div className="info-label">Sector</div>
+                    <div className="info-value">{profile.sector || 'Not specified'}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Day Rate</div>
+                    <div className="info-value">{profile.dayRate ? `£${profile.dayRate}` : 'Not specified'}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">Remote</div>
+                    <div className="info-value">
+                      {profile.remotePreference === null ? 'Not specified' : profile.remotePreference ? 'Open' : 'On-site'}
                     </div>
                   </div>
-                ))}
+                </div>
+
+                {profile.summary && (
+                  <>
+                    <h3 className="section-title">Professional Summary</h3>
+                    <p style={{ margin: 0, color: '#4b5563', lineHeight: 1.6 }}>{profile.summary}</p>
+                  </>
+                )}
+
+                {profile.skills && profile.skills.length > 0 && (
+                  <>
+                    <h3 className="section-title">Skills & Competencies</h3>
+                    <div className="skills-container">
+                      {profile.skills.map(skill => (
+                        <div key={skill.id} className="skill-tag">{skill.name}</div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Score Card */}
+              <div className="profile-card score-card">
+                <h2 className="card-title">Profile Score</h2>
+                <div className="score-number">{profileScore}</div>
+                <div className="score-label">Profile Completeness</div>
+                <div className="score-bar">
+                  <div className="score-fill" style={{ width: `${profileScore}%` }} />
+                </div>
+                <p style={{ margin: 0, fontSize: '0.875rem', color: '#6b7280' }}>Keep your profile updated to increase visibility with employers.</p>
               </div>
             </div>
-          )}
-        </div>
-      ) : (
-        <div className="profile-section" style={{ textAlign: 'center', padding: '3rem' }}>
-          <p style={{ color: '#6b7280', marginBottom: '1rem' }}>No profile found. Let's create one!</p>
-          <Link href="/dashboard/profile-edit" className="btn-primary">
-            Create Your Profile
-          </Link>
-        </div>
-      )}
+
+            {/* Applications Section */}
+            {profile.applications && profile.applications.length > 0 && (
+              <div className="profile-card">
+                <h2 className="card-title">Recent Applications ({profile.applications.length})</h2>
+                <div className="applications-container">
+                  {profile.applications.slice(0, 8).map(app => (
+                    <div key={app.id} className="application-card">
+                      <div className="application-info">
+                        <h4>{app.job?.title}</h4>
+                        <p>{app.job?.employer?.companyName}</p>
+                      </div>
+                      <div className="application-date">
+                        {new Date(app.createdAt).toLocaleDateString('en-GB', { 
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="profile-card empty-state">
+            <p style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.5rem' }}>No Profile Found</p>
+            <p>Let's get you started by creating your professional PMO profile.</p>
+            <Link href="/dashboard/profile" className="btn btn-primary" style={{ marginTop: '1rem' }}>
+              Create Your Profile
+            </Link>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
