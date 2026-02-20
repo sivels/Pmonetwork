@@ -2,17 +2,6 @@ import Head from 'next/head';
 import Link from 'next/link';
 import LandingGraphics from '../components/LandingGraphics';
 
-// Helper to build a complete user object for CandidateLayout
-function getCandidateUser(session) {
-  if (!session?.user) return null;
-  return {
-    fullName: session.user.name || session.user.email?.split('@')[0],
-    email: session.user.email,
-    profilePhotoUrl: session.user.image || null,
-    ...session.user
-  };
-}
-
 export default function Home() {
 
   const MainContent = (

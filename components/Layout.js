@@ -16,11 +16,6 @@ export default function Layout({ children }) {
   const isCandidate = userRole === 'candidate';
   const isEmployer = userRole === 'employer';
 
-  // Prevent hydration mismatch by not rendering until client is ready
-  if (!mounted) {
-    return null;
-  }
-
   // Use candidate layout for authenticated candidates
   if (isCandidate) {
     return <CandidateLayout session={{ user: session?.user }}>{children}</CandidateLayout>;

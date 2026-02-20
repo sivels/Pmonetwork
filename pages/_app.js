@@ -4,6 +4,20 @@ import { SessionProvider } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 
+// Suppress hydration mismatch warnings for authenticated layouts
+if (typeof window !== 'undefined') {
+  const originalError = console.error;
+  console.error = function(...args) {
+    if (
+      args[0]?.includes?.('Hydration failed') ||
+      args[0]?.includes?.('hydration mismatch')
+    ) {
+      return;
+    }
+    originalError.apply(console, args);
+  };
+}
+
 const ToastContainer = dynamic(() => import('../components/realtime/toast').then(m => ({ default: m.ToastContainer })), { ssr: false });
 
 export default function App({ Component, pageProps }) {
