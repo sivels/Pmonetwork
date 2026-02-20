@@ -5,23 +5,27 @@ import { signOut } from 'next-auth/react';
 import NotificationPanel from './NotificationPanel';
 import MessagePreviewPanel from './MessagePreviewPanel';
 
-export default function CandidateLayout({ children, user }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // --- EMPLOYER HEADER CLONE FOR CANDIDATE ---
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [messagesOpen, setMessagesOpen] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [candidateProfileId, setCandidateProfileId] = useState(null);
   const dropdownRef = useRef(null);
   const router = useRouter();
-  const currentPath = router.pathname;
+  const path = router.pathname;
+  const isActive = (p) => path.startsWith(p);
 
-  const isActive = (path) => currentPath.startsWith(path);
-
-  const handleSignOut = async () => {
-    await signOut({ callbackUrl: '/' });
-  };
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setProfileDropdownOpen(false);
+      }
+    }
+    if (profileDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [profileDropdownOpen]);
 
   // Fetch candidate profile ID
   useEffect(() => {
@@ -39,24 +43,13 @@ export default function CandidateLayout({ children, user }) {
     fetchProfileId();
   }, []);
 
-  useEffect(() => {
-    function onKey(e) {
-      if (e.key === 'Escape') setNotificationsOpen(false);
-    }
-    if (notificationsOpen) {
-      document.addEventListener('keydown', onKey);
-      return () => document.removeEventListener('keydown', onKey);
-    }
-  }, [notificationsOpen]);
-
   // Sync unread message count from messages page via localStorage/custom event
   useEffect(() => {
     function readUnreadFromStorage() {
       try {
         const raw = typeof window !== 'undefined' ? window.localStorage.getItem('unreadMessagesCount') : '0';
         const val = parseInt(raw || '0', 10);
-        const finalVal = Number.isFinite(val) ? val : 0;
-        setUnreadMessages(finalVal);
+        setUnreadMessages(Number.isFinite(val) ? val : 0);
       } catch {
         setUnreadMessages(0);
       }
@@ -76,47 +69,16 @@ export default function CandidateLayout({ children, user }) {
     };
   }, []);
 
-  // Poll for unread messages (for all pages except messages page itself)
-  useEffect(() => {
-    if (router.pathname === '/dashboard/messages') return; // Messages page handles its own polling
-    
-    if (!candidateProfileId) return;
-
-    const fetchUnreadCount = async () => {
-      try {
-        const res = await fetch(`/api/conversations?candidateId=${candidateProfileId}`);
-        const data = await res.json();
-        const conversations = data.items || [];
-        
-        // Count unread from non-archived conversations
-        const unread = conversations
-          .filter(c => !c.archivedByCandidate)
-          .reduce((sum, c) => sum + (c.unread || 0), 0);
-        
-        // Update localStorage and dispatch event
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem('unreadMessagesCount', String(unread));
-          window.dispatchEvent(new CustomEvent('unreadMessages', { detail: unread }));
-        }
-      } catch (err) {
-        console.error('Failed to fetch unread count:', err);
-      }
-    };
-
-    // Initial fetch
-    fetchUnreadCount();
-    
-    // Poll every 15 seconds
-    const interval = setInterval(fetchUnreadCount, 15000);
-    
-    return () => clearInterval(interval);
-  }, [router.pathname, candidateProfileId]);
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/' });
+  };
 
   return (
     <div className="candidate-layout">
       <header className="candidate-header">
-        <div className="candidate-header-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '2rem', flexDirection: 'row' }}>
-          <nav className="candidate-nav-horizontal" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className="candidate-header-container">
+          {/* Left icons: icon-only navigation */}
+          <nav className="candidate-left">
             <Link href="/dashboard/candidate" className={`icon-btn ${isActive('/dashboard/candidate') ? 'active' : ''}`} aria-label="Dashboard" title="Dashboard">
               <span className="icon-wrap">
                 <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,6 +117,9 @@ export default function CandidateLayout({ children, user }) {
                 {unreadMessages > 0 && <span className="icon-dot" aria-hidden="true"></span>}
               </span>
             </Link>
+          </nav>
+          {/* Right icons: Help and Profile Dropdown */}
+          <div className="employer-right">
             <Link href="/help" className={`icon-btn ${isActive('/help') ? 'active' : ''}`} aria-label="Help" title="Help">
               <span className="icon-wrap">
                 <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,42 +127,75 @@ export default function CandidateLayout({ children, user }) {
                 </svg>
               </span>
             </Link>
-          </nav>
-          <div className="candidate-profile-section" ref={dropdownRef} style={{ marginLeft: 'auto' }}>
-            <button 
-              className="profile-dropdown-trigger"
-              onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-              aria-expanded={profileDropdownOpen}
-            >
-              <img 
-                src={user?.profilePhotoUrl || '/images/avatar-placeholder.svg'} 
-                alt={user?.fullName || 'Profile'} 
-                className="profile-avatar"
-              />
-              <span className="profile-name">{user?.fullName || 'Candidate'}</span>
-              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" className={`dropdown-arrow ${profileDropdownOpen ? 'open' : ''}`}>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {profileDropdownOpen && (
-              <div className="profile-dropdown">
-                <div className="dropdown-header">
-                  <img 
-                    src={user?.profilePhotoUrl || '/images/avatar-placeholder.svg'} 
-                    alt={user?.fullName || 'Profile'} 
-                    className="dropdown-avatar"
-                  />
-                  <div className="dropdown-user-info">
-                    <div className="dropdown-company-name">{user?.fullName || 'Candidate'}</div>
-                    <div className="dropdown-role">Candidate</div>
-                    <div className="dropdown-email">{user?.email}</div>
+            <div className="employer-profile-section" ref={dropdownRef}>
+              <button 
+                className="profile-dropdown-trigger"
+                onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                aria-expanded={profileDropdownOpen}
+              >
+                <img 
+                  src={user?.profilePhotoUrl || '/images/avatar-placeholder.svg'} 
+                  alt={user?.fullName || 'Profile'} 
+                  className="profile-avatar"
+                />
+                <span className="profile-name">{user?.fullName || 'Candidate'}</span>
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" className={`dropdown-arrow ${profileDropdownOpen ? 'open' : ''}`}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {profileDropdownOpen && (
+                <div className="profile-dropdown">
+                  <div className="dropdown-header">
+                    <img 
+                      src={user?.profilePhotoUrl || '/images/avatar-placeholder.svg'} 
+                      alt={user?.fullName || 'Profile'} 
+                      className="dropdown-avatar"
+                    />
+                    <div className="dropdown-user-info">
+                      <div className="dropdown-company-name">{user?.fullName || 'Candidate'}</div>
+                      <div className="dropdown-role">Candidate</div>
+                      <div className="dropdown-email">{user?.email || ''}</div>
+                    </div>
+                  </div>
+                  <div className="dropdown-divider"></div>
+                  <div className="dropdown-section">
+                    <Link href="/dashboard/candidate" className="dropdown-item">
+                      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                      </svg>
+                      Dashboard
+                    </Link>
+                    <Link href="/dashboard/profile" className="dropdown-item">
+                      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      My Profile
+                    </Link>
+                    <Link href="/dashboard/settings" className="dropdown-item">
+                      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      Account Settings
+                    </Link>
+                  </div>
+                  <div className="dropdown-divider"></div>
+                  <div className="dropdown-section">
+                    <button onClick={handleSignOut} className="dropdown-item sign-out">
+                      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      Sign Out
+                    </button>
                   </div>
                 </div>
-                <div className="dropdown-divider"></div>
-                <div className="dropdown-section">
-                  <Link href="/dashboard/candidate" className="dropdown-item">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+      <main className="candidate-main-content">{children}</main>
+    </div>
                     </svg>
                     Dashboard
                   </Link>
@@ -232,7 +230,51 @@ export default function CandidateLayout({ children, user }) {
       <main className="candidate-main-content">{children}</main>
       <NotificationPanel isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} onUnreadChange={(total) => setUnreadNotifications(total)} />
       <MessagePreviewPanel isOpen={messagesOpen} onClose={() => setMessagesOpen(false)} />
-      {/* Add employer-style CSS here or import a shared style */}
+      <style jsx>{`
+        .candidate-layout{min-height:100vh;background:#f8f9fc}
+        .candidate-header{position:sticky;top:0;z-index:1000;background:#fff;border-bottom:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+        .candidate-header-container{max-width:1440px;margin:0 auto;padding:0 1.5rem;height:64px;display:flex;align-items:center;justify-content:space-between;gap:2rem}
+        .candidate-left,.candidate-right{display:flex;align-items:center;gap:.25rem}
+        .icon-btn{position:relative;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;color:#6b7280;text-decoration:none;transition:all .15s}
+        .icon-btn:hover{background:#f3f4f6;color:#374151}
+        .icon-btn.active{background:#eef2ff;color:#4f46e5}
+        .icon-wrap{position:relative;display:inline-flex}
+        .icon-dot{position:absolute;top:4px;right:4px;width:8px;height:8px;background:#ef4444;border-radius:50%;box-shadow:0 0 0 2px #fff}
+
+        .candidate-profile-section{position:relative}
+        .profile-dropdown-trigger{display:flex;align-items:center;gap:.75rem;padding:.5rem .75rem;border:1px solid #e5e7eb;border-radius:12px;background:#fff;cursor:pointer;transition:all .2s;color:#374151}
+        .profile-dropdown-trigger:hover{background:#f8fafc;border-color:#cbd5e1}
+        .profile-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid #e5e7eb}
+        .profile-name{font-size:.875rem;font-weight:600;color:#111827;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .dropdown-arrow{transition:transform .2s}
+        .dropdown-arrow.open{transform:rotate(180deg)}
+
+        .profile-dropdown{position:absolute;top:calc(100% + .5rem);right:0;width:280px;background:white;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.15),0 0 0 1px rgba(0,0,0,.05);z-index:1000;animation:slideDown .2s ease}
+        @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+
+        .dropdown-header{padding:1rem 1.25rem;display:flex;align-items:center;gap:.75rem;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:16px 16px 0 0}
+        .dropdown-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.3)}
+        .dropdown-user-info{flex:1;min-width:0}
+        .dropdown-company-name{font-size:.9375rem;font-weight:700;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .dropdown-role{font-size:.75rem;color:rgba(255,255,255,.8);margin-top:.125rem}
+        .dropdown-email{font-size:.6875rem;color:rgba(255,255,255,.7);margin-top:.25rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+        .dropdown-divider{height:1px;background:#e5e7eb;margin:.5rem 0}
+
+        .dropdown-section{padding:.5rem}
+        .dropdown-item{display:flex;align-items:center;gap:.75rem;width:100%;padding:.75rem 1rem;border-radius:10px;font-size:.875rem;font-weight:500;color:#374151;text-decoration:none;transition:all .15s;background:transparent;border:none;cursor:pointer;text-align:left;white-space:nowrap}
+        .dropdown-item:hover{background:#f3f4f6;color:#111827}
+        .dropdown-item.sign-out{color:#ef4444}
+        .dropdown-item.sign-out:hover{background:#fee2e2;color:#dc2626}
+        .dropdown-item svg{flex-shrink:0}
+
+        .candidate-content{min-height:calc(100vh - 64px)}
+
+        @media (max-width:768px){
+          .profile-name{display:none}
+          .profile-dropdown{right:auto;left:50%;transform:translateX(-50%);width:calc(100vw - 2rem);max-width:320px}
+        }
+      `}</style>
     </div>
   );
 }

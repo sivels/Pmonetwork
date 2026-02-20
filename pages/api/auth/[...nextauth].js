@@ -178,8 +178,20 @@ export const authOptions = {
       }
       // Mark onboarding needed if user lacks candidate/employer profile
       if (token.email) {
-        const dbUser = await prisma.user.findUnique({ where: { email: token.email }, include: { candidateCandidateProfile: true, employerEmployerProfile: true } });
+        const dbUser = await prisma.user.findUnique({ 
+          where: { email: token.email }, 
+          include: { 
+            candidateCandidateProfile: true, 
+            employerEmployerProfile: true 
+          } 
+        });
         token.onboardingNeeded = dbUser && !dbUser.candidateCandidateProfile && !dbUser.employerEmployerProfile;
+        
+        // Add employer profile data to token
+        if (dbUser?.employerEmployerProfile) {
+          token.companyName = dbUser.employerEmployerProfile.companyName;
+          token.companyLogoUrl = dbUser.employerEmployerProfile.logoUrl;
+        }
       }
       return token;
     },
@@ -187,6 +199,11 @@ export const authOptions = {
       if (token?.role) session.user.role = token.role;
       if (token?.id) session.user.id = token.id;
       session.user.onboardingNeeded = token.onboardingNeeded || false;
+      
+      // Add employer profile data to session
+      if (token?.companyName) session.user.companyName = token.companyName;
+      if (token?.companyLogoUrl) session.user.companyLogoUrl = token.companyLogoUrl;
+      
       return session;
     },
     async redirect({ url, baseUrl }) {

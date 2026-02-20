@@ -12,6 +12,7 @@ export default function EmployerLayout({ children }) {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [employerProfileId, setEmployerProfileId] = useState(null);
+  const [employerProfile, setEmployerProfile] = useState(null);
   const dropdownRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -27,7 +28,7 @@ export default function EmployerLayout({ children }) {
     }
   }, [profileDropdownOpen]);
 
-  // Fetch employer profile ID
+  // Fetch employer profile ID and data
   useEffect(() => {
     const fetchProfileId = async () => {
       try {
@@ -35,6 +36,7 @@ export default function EmployerLayout({ children }) {
         const data = await res.json();
         if (data.employerProfile?.id) {
           setEmployerProfileId(data.employerProfile.id);
+          setEmployerProfile(data.employerProfile);
         }
       } catch (err) {
         console.error('Failed to fetch profile ID:', err);
@@ -178,11 +180,11 @@ export default function EmployerLayout({ children }) {
                 aria-expanded={profileDropdownOpen}
               >
                 <img 
-                  src={session?.user?.companyLogoUrl || '/images/avatar-placeholder.svg'} 
-                  alt={session?.user?.companyName || 'Company'} 
+                  src={employerProfile?.logoUrl || session?.user?.companyLogoUrl || '/images/avatar-placeholder.svg'} 
+                  alt={employerProfile?.companyName || session?.user?.companyName || 'Company'} 
                   className="profile-avatar"
                 />
-                <span className="profile-name">{session?.user?.companyName || 'Company'}</span>
+                <span className="profile-name">{employerProfile?.companyName || session?.user?.companyName || 'Company'}</span>
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" className={`dropdown-arrow ${profileDropdownOpen ? 'open' : ''}`}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
@@ -193,12 +195,12 @@ export default function EmployerLayout({ children }) {
                   {/* Account Summary Section */}
                   <div className="dropdown-header">
                     <img 
-                      src={session?.user?.companyLogoUrl || '/images/avatar-placeholder.svg'} 
-                      alt={session?.user?.companyName || 'Company'} 
+                      src={employerProfile?.logoUrl || session?.user?.companyLogoUrl || '/images/avatar-placeholder.svg'} 
+                      alt={employerProfile?.companyName || session?.user?.companyName || 'Company'} 
                       className="dropdown-avatar"
                     />
                     <div className="dropdown-user-info">
-                      <div className="dropdown-company-name">{session?.user?.companyName || 'Company'}</div>
+                      <div className="dropdown-company-name">{employerProfile?.companyName || session?.user?.companyName || 'Company'}</div>
                       <div className="dropdown-role">Hiring Company</div>
                       <div className="dropdown-email">{session?.user?.email}</div>
                     </div>

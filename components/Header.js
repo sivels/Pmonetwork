@@ -41,21 +41,14 @@ export default function Header() {
       </div>
 
       <div className="header-actions">
-        {status === 'authenticated' ? (
-          <>
-            <button
-              className="mobile-nav-toggle"
-              aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-              aria-expanded={menuOpen}
-              aria-controls="primary-nav"
-              onClick={toggleMenu}
-            >
-              <span aria-hidden="true">{menuOpen ? '✕' : '☰'}</span>
-            </button>
-          </>
-        ) : (
-          <>
+        {isHome ? (
+          status === 'authenticated' ? (
+            <Link href={session.user.role?.toLowerCase() === 'employer' ? '/dashboard/employer' : '/dashboard/candidate'} className="header-sign-in-btn">Dashboard</Link>
+          ) : (
             <Link href="/auth/login" className="header-sign-in-btn">Sign In</Link>
+          )
+        ) : (
+          status === 'authenticated' ? (
             <button
               className="mobile-nav-toggle"
               aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
@@ -65,7 +58,20 @@ export default function Header() {
             >
               <span aria-hidden="true">{menuOpen ? '✕' : '☰'}</span>
             </button>
-          </>
+          ) : (
+            <>
+              <Link href="/auth/login" className="header-sign-in-btn">Sign In</Link>
+              <button
+                className="mobile-nav-toggle"
+                aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                aria-expanded={menuOpen}
+                aria-controls="primary-nav"
+                onClick={toggleMenu}
+              >
+                <span aria-hidden="true">{menuOpen ? '✕' : '☰'}</span>
+              </button>
+            </>
+          )
         )}
       </div>
       <nav id="primary-nav" ref={navRef} aria-label="Primary" className={`primary-nav ${menuOpen ? 'open' : ''}`}>
