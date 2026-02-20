@@ -2,8 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { signOut } from 'next-auth/react';
-import NotificationPanel from './NotificationPanel';
-import MessagePreviewPanel from './MessagePreviewPanel';
 
 export default function CandidateLayout({ children, session }) {
   // --- EMPLOYER HEADER CLONE FOR CANDIDATE ---
@@ -14,6 +12,8 @@ export default function CandidateLayout({ children, session }) {
   const router = useRouter();
   const path = router.pathname;
   const isActive = (p) => path.startsWith(p);
+  
+  const user = session?.user;
 
   // Close dropdown when clicking outside
   useEffect(() => {
