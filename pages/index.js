@@ -324,7 +324,7 @@ export default function Home() {
         }) }} />
       </Head>
       {isCandidate && user ? (
-        <CandidateLayout user={user}>{MainContent}</CandidateLayout>
+        <CandidateLayout session={{ user }}>{MainContent}</CandidateLayout>
       ) : (
         <>
           <Header />
