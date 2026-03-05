@@ -184,8 +184,8 @@ export default function CandidateDashboard({ profile, profileScore }) {
           color: #1f2937;
         }
         .info-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
+          display: flex;
+          flex-direction: column;
           gap: 1rem;
         }
         .info-item {
@@ -306,9 +306,6 @@ export default function CandidateDashboard({ profile, profileScore }) {
           .btn {
             flex: 1;
             text-align: center;
-          }
-          .info-grid {
-            grid-template-columns: 1fr;
           }
           .profile-header-left {
             flex-direction: column;
