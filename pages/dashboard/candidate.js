@@ -1,7 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../api/auth/[...nextauth]';
 import { prisma } from '../../lib/prisma';
-import DashboardStatusCards from '../../components/DashboardStatusCards';
 import Head from 'next/head';
 import Link from 'next/link';
 
@@ -64,9 +63,6 @@ export default function CandidateDashboard({ profile, profileScore }) {
         .dashboard-container {
           max-width: 1200px;
           margin: 0 auto;
-        }
-        .status-section {
-          margin-bottom: 2rem;
         }
         .profile-banner {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -287,11 +283,6 @@ export default function CandidateDashboard({ profile, profileScore }) {
       `}</style>
 
       <div className="dashboard-container">
-        {/* Status Cards */}
-        <div className="status-section">
-          <DashboardStatusCards profile={profile} profileScore={profileScore} />
-        </div>
-
         {profile ? (
           <>
             {/* Profile Banner */}
