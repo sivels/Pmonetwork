@@ -165,8 +165,8 @@ export default function CandidateDashboard({ profile, profileScore }) {
           background: rgba(255, 255, 255, 0.25);
         }
         .profile-grid {
-          display: grid;
-          grid-template-columns: 2fr 1fr;
+          display: flex;
+          flex-direction: column;
           gap: 2rem;
           margin-bottom: 2rem;
         }
@@ -305,9 +305,6 @@ export default function CandidateDashboard({ profile, profileScore }) {
           .btn {
             flex: 1;
             text-align: center;
-          }
-          .profile-grid {
-            grid-template-columns: 1fr;
           }
           .info-grid {
             grid-template-columns: 1fr;
