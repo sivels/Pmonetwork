@@ -170,27 +170,35 @@ export const authOptions = {
         token.role = user.role || token.role;
         token.id = user.id;
       } else if (token.email && !token.role) {
-        const dbUser = await prisma.user.findUnique({ where: { email: token.email } });
-        if (dbUser) {
-          token.role = dbUser.role;
-          token.id = dbUser.id;
+        try {
+          const dbUser = await prisma.user.findUnique({ where: { email: token.email } });
+          if (dbUser) {
+            token.role = dbUser.role;
+            token.id = dbUser.id;
+          }
+        } catch (error) {
+          console.error('Error fetching user in jwt callback:', error);
         }
       }
       // Mark onboarding needed if user lacks candidate/employer profile
       if (token.email) {
-        const dbUser = await prisma.user.findUnique({ 
-          where: { email: token.email }, 
-          include: { 
-            candidateCandidateProfile: true, 
-            employerEmployerProfile: true 
-          } 
-        });
-        token.onboardingNeeded = dbUser && !dbUser.candidateCandidateProfile && !dbUser.employerEmployerProfile;
-        
-        // Add employer profile data to token
-        if (dbUser?.employerEmployerProfile) {
-          token.companyName = dbUser.employerEmployerProfile.companyName;
-          token.companyLogoUrl = dbUser.employerEmployerProfile.logoUrl;
+        try {
+          const dbUser = await prisma.user.findUnique({ 
+            where: { email: token.email }, 
+            include: { 
+              candidateCandidateProfile: true, 
+              employerEmployerProfile: true 
+            } 
+          });
+          token.onboardingNeeded = dbUser && !dbUser.candidateCandidateProfile && !dbUser.employerEmployerProfile;
+          
+          // Add employer profile data to token
+          if (dbUser?.employerEmployerProfile) {
+            token.companyName = dbUser.employerEmployerProfile.companyName;
+            token.companyLogoUrl = dbUser.employerEmployerProfile.logoUrl;
+          }
+        } catch (error) {
+          console.error('Error fetching user profile in jwt callback:', error);
         }
       }
       return token;
