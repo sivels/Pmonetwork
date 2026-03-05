@@ -156,9 +156,7 @@ export default function CandidateDashboard({ profile, profileScore }) {
           display: flex;
           flex-direction: column;
           transition: all 0.3s;
-          position: fixed;
-          left: 0;
-          top: 0;
+          position: relative;
           height: 100vh;
           z-index: 1000;
         }
