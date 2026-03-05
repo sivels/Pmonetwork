@@ -15,7 +15,7 @@ export async function getServerSideProps(ctx) {
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: {
-      candidateProfile: {
+      candidateCandidateProfile: {
         include: {
           skills: true,
           certifications: true,
@@ -34,7 +34,7 @@ export async function getServerSideProps(ctx) {
       },
     },
   });
-  const profile = user?.candidateProfile || null;
+  const profile = user?.candidateCandidateProfile || null;
   let profileScore = 0;
   if (profile) {
     if (profile.fullName) profileScore += 10;
