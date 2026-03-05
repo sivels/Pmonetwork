@@ -237,18 +237,19 @@ export default function CandidateDashboard({ profile, profileScore }) {
           overflow-y: auto;
           display: flex;
           flex-direction: column;
+          width: 100%;
         }
         .dashboard-content {
           flex: 1;
           padding: 2rem;
-          max-width: 1200px;
-          margin: 0 auto;
+          padding-top: 0;
           width: 100%;
         }
         .content-header {
           background: white;
           padding: 2rem;
-          margin: -2rem -2rem 2rem -2rem;
+          margin: 0 -2rem 2rem -2rem;
+          width: calc(100% + 4rem);
           border-bottom: 1px solid #e5e7eb;
         }
         .content-title {
