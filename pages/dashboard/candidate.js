@@ -136,7 +136,7 @@ export default function CandidateDashboard({ profile, profileScore }) {
       <style jsx>{`
         .modern-dashboard {
           display: flex;
-          height: 100vh;
+          min-height: 100vh;
           background: #f3f4f6;
         }
         .sidebar-overlay {
@@ -235,15 +235,21 @@ export default function CandidateDashboard({ profile, profileScore }) {
           flex: 1;
           margin-left: 280px;
           overflow-y: auto;
+          display: flex;
+          flex-direction: column;
         }
         .dashboard-content {
+          flex: 1;
           padding: 2rem;
           max-width: 1200px;
           margin: 0 auto;
           width: 100%;
         }
         .content-header {
-          margin-bottom: 2rem;
+          background: white;
+          padding: 2rem;
+          margin: -2rem -2rem 2rem -2rem;
+          border-bottom: 1px solid #e5e7eb;
         }
         .content-title {
           font-size: 1.875rem;
