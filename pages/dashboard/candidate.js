@@ -3,6 +3,7 @@ import { authOptions } from '../api/auth/[...nextauth]';
 import { prisma } from '../../lib/prisma';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 export async function getServerSideProps(ctx) {
   const session = await getServerSession(ctx.req, ctx.res, authOptions);
@@ -90,9 +91,171 @@ export async function getServerSideProps(ctx) {
 }
 
 export default function CandidateDashboard({ profile, profileScore }) {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      setSidebarOpen(false);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    function readUnreadFromStorage() {
+      try {
+        const raw = typeof window !== 'undefined' ? window.localStorage.getItem('candidateUnreadMessagesCount') : '0';
+        const val = parseInt(raw || '0', 10);
+        setUnreadMessages(Number.isFinite(val) ? val : 0);
+      } catch {
+        setUnreadMessages(0);
+      }
+    }
+    const onCustom = (e) => {
+      if (typeof e?.detail === 'number') setUnreadMessages(e.detail);
+    };
+    const onStorage = (e) => {
+      if (e.key === 'candidateUnreadMessagesCount') readUnreadFromStorage();
+    };
+    readUnreadFromStorage();
+    window.addEventListener('candidateUnreadMessages', onCustom);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('candidateUnreadMessages', onCustom);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
+
   return (
-    <div className="candidate-dashboard">
+    <>
+      <Head>
+        <title>Candidate Dashboard – PMO Network</title>
+        <meta name="description" content="Manage your PMO profile and applications." />
+      </Head>
+      <div className="modern-dashboard">
       <style jsx>{`
+        .modern-dashboard {
+          display: flex;
+          height: 100vh;
+          background: #f3f4f6;
+        }
+        .sidebar-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 999;
+        }
+        .dashboard-sidebar {
+          width: 280px;
+          background: white;
+          border-right: 1px solid #e5e7eb;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          transition: all 0.3s;
+          position: fixed;
+          left: 0;
+          top: 0;
+          height: 100vh;
+          z-index: 1000;
+        }
+        .dashboard-sidebar.closed {
+          display: none;
+        }
+        .sidebar-header {
+          padding: 1rem;
+          border-bottom: 1px solid #e5e7eb;
+          display: flex;
+          justify-content: flex-end;
+        }
+        .sidebar-close-btn {
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: #6b7280;
+          padding: 0.5rem;
+          display: none;
+        }
+        .sidebar-nav {
+          flex: 1;
+          padding: 0.5rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+        .sidebar-item {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.75rem 1rem;
+          border-radius: 10px;
+          border: none;
+          background: none;
+          color: #6b7280;
+          cursor: pointer;
+          font-size: 0.9375rem;
+          font-weight: 500;
+          text-decoration: none;
+          transition: all 0.15s;
+          position: relative;
+          text-align: left;
+          width: 100%;
+        }
+        .sidebar-item:hover {
+          background: #f3f4f6;
+          color: #374151;
+        }
+        .sidebar-item.active {
+          background: #eef2ff;
+          color: #4f46e5;
+        }
+        .sidebar-item svg {
+          flex-shrink: 0;
+        }
+        .sidebar-badge {
+          margin-left: auto;
+          background: #ef4444;
+          color: white;
+          font-size: 0.75rem;
+          font-weight: 600;
+          padding: 0.25rem 0.5rem;
+          border-radius: 6px;
+          min-width: 20px;
+          text-align: center;
+        }
+        .sidebar-divider {
+          height: 1px;
+          background: #e5e7eb;
+          margin: 0.5rem 0;
+        }
+        .dashboard-main {
+          flex: 1;
+          margin-left: 280px;
+          overflow-y: auto;
+        }
+        .dashboard-content {
+          padding: 2rem;
+          max-width: 1200px;
+          margin: 0 auto;
+          width: 100%;
+        }
+        .content-header {
+          margin-bottom: 2rem;
+        }
+        .content-title {
+          font-size: 1.875rem;
+          font-weight: 700;
+          margin: 0 0 0.5rem 0;
+          color: #1f2937;
+        }
+        .content-subtitle {
+          font-size: 0.9375rem;
+          color: #6b7280;
+          margin: 0;
+        }
         .candidate-dashboard {
           min-height: 100vh;
           background: #f3f4f6;
@@ -297,6 +460,22 @@ export default function CandidateDashboard({ profile, profileScore }) {
           margin: 0 0 1rem 0;
         }
         @media (max-width: 768px) {
+          .dashboard-sidebar {
+            width: 100%;
+            left: -100%;
+          }
+          .dashboard-sidebar.open {
+            left: 0;
+          }
+          .sidebar-close-btn {
+            display: block;
+          }
+          .dashboard-main {
+            margin-left: 0;
+          }
+          .dashboard-content {
+            padding: 1.5rem 1rem;
+          }
           .profile-banner {
             flex-direction: column;
           }
@@ -316,10 +495,75 @@ export default function CandidateDashboard({ profile, profileScore }) {
         }
       `}</style>
 
-      <div className="dashboard-container">
-        {profile ? (
-          <>
-            {/* Profile Banner */}
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>
+      )}
+      
+      {/* Sidebar Navigation */}
+      <aside className={`dashboard-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
+        <div className="sidebar-header">
+          <button className="sidebar-close-btn" onClick={() => setSidebarOpen(false)} aria-label="Close menu">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <nav className="sidebar-nav">
+          <button className={`sidebar-item ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span>Overview</span>
+          </button>
+          <Link href="/dashboard/applications" className={`sidebar-item ${activeTab === 'applications' ? 'active' : ''}`}>
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <span>Applications</span>
+          </Link>
+          <Link href="/jobs" className="sidebar-item">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span>Browse Jobs</span>
+          </Link>
+          <Link href="/dashboard/messages" className="sidebar-item">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            <span>Messages</span>
+            {unreadMessages > 0 && <span className="sidebar-badge">{unreadMessages}</span>}
+          </Link>
+          <div className="sidebar-divider"></div>
+          <Link href="/dashboard/profile" className="sidebar-item">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span>Edit Profile</span>
+          </Link>
+          <Link href="/dashboard/settings" className="sidebar-item">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span>Settings</span>
+          </Link>
+        </nav>
+      </aside>
+
+      {/* Main Content */}
+      <main className="dashboard-main">
+        {activeTab === 'overview' && (
+          <div className="dashboard-content">
+            <div className="content-header">
+              <h1 className="content-title">Candidate Dashboard</h1>
+              <p className="content-subtitle">{profile?.fullName || 'Your Profile'}</p>
+            </div>
+
+            <div className="dashboard-container">
+            {profile ? (
+              <>
             <div className="profile-banner">
               <div className="profile-header-left">
                 {profile.profilePhotoUrl && (
@@ -421,17 +665,21 @@ export default function CandidateDashboard({ profile, profileScore }) {
                 </div>
               </div>
             )}
-          </>
-        ) : (
-          <div className="profile-card empty-state">
-            <p style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.5rem' }}>No Profile Found</p>
-            <p>Let's get you started by creating your professional PMO profile.</p>
-            <Link href="/dashboard/profile" className="btn btn-primary" style={{ marginTop: '1rem' }}>
-              Create Your Profile
-            </Link>
+              </>
+            ) : (
+              <div className="profile-card empty-state">
+                <p style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.5rem' }}>No Profile Found</p>
+                <p>Let's get you started by creating your professional PMO profile.</p>
+                <Link href="/dashboard/profile" className="btn btn-primary" style={{ marginTop: '1rem' }}>
+                  Create Your Profile
+                </Link>
+              </div>
+            )}
+            </div>
           </div>
         )}
-      </div>
+      </main>
     </div>
+    </>
   );
 }
