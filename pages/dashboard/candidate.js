@@ -101,13 +101,15 @@ export default function CandidateDashboard({ profile, profileScore }) {
         .dashboard-container {
           max-width: 1200px;
           margin: 0 auto;
+          display: flex;
+          flex-direction: column;
+          gap: 2rem;
         }
         .profile-banner {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
           border-radius: 16px;
           padding: 2rem;
-          margin-bottom: 2rem;
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
@@ -168,7 +170,6 @@ export default function CandidateDashboard({ profile, profileScore }) {
           display: flex;
           flex-direction: column;
           gap: 2rem;
-          margin-bottom: 2rem;
         }
         .profile-card {
           background: white;
