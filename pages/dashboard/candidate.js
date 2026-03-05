@@ -48,7 +48,45 @@ export async function getServerSideProps(ctx) {
     if (profile.certifications && profile.certifications.length > 0) profileScore += 10;
     if (profile.profilePhotoUrl) profileScore += 10;
   }
-  return { props: { profile: JSON.parse(JSON.stringify(profile)), profileScore } };
+  
+  // Serialize dates to avoid serialization errors
+  const serializedProfile = profile ? {
+    ...profile,
+    createdAt: profile.createdAt?.toISOString() || null,
+    updatedAt: profile.updatedAt?.toISOString() || null,
+    skills: profile.skills?.map(s => ({
+      ...s,
+      createdAt: s.createdAt?.toISOString() || null,
+      updatedAt: s.updatedAt?.toISOString() || null,
+    })) || [],
+    certifications: profile.certifications?.map(c => ({
+      ...c,
+      createdAt: c.createdAt?.toISOString() || null,
+      updatedAt: c.updatedAt?.toISOString() || null,
+    })) || [],
+    documents: profile.documents?.map(d => ({
+      ...d,
+      createdAt: d.createdAt?.toISOString() || null,
+      updatedAt: d.updatedAt?.toISOString() || null,
+    })) || [],
+    applications: profile.applications?.map(a => ({
+      ...a,
+      createdAt: a.createdAt?.toISOString() || null,
+      updatedAt: a.updatedAt?.toISOString() || null,
+      job: a.job ? {
+        ...a.job,
+        createdAt: a.job.createdAt?.toISOString() || null,
+        updatedAt: a.job.updatedAt?.toISOString() || null,
+        employer: a.job.employer ? {
+          ...a.job.employer,
+          createdAt: a.job.employer.createdAt?.toISOString() || null,
+          updatedAt: a.job.employer.updatedAt?.toISOString() || null,
+        } : null,
+      } : null,
+    })) || [],
+  } : null;
+  
+  return { props: { profile: serializedProfile, profileScore } };
 }
 
 export default function CandidateDashboard({ profile, profileScore }) {
