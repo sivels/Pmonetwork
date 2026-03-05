@@ -175,6 +175,7 @@ export default function CandidateDashboard({ profile, profileScore }) {
           border-radius: 12px;
           padding: 1.5rem;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+          width: 100%;
         }
         .card-title {
           font-size: 1.125rem;
