@@ -80,7 +80,17 @@ export default function CandidateLayout({ children, session }) {
         <div className="candidate-header-container">
           {/* Left icons: icon-only navigation */}
           <nav className="candidate-left">
-            <Link href="/dashboard/candidate" className={`icon-btn ${isActive('/dashboard/candidate') ? 'active' : ''}`} aria-label="Dashboard" title="Dashboard">
+            <Link 
+              href="/dashboard/candidate" 
+              className={`icon-btn ${isActive('/dashboard/candidate') ? 'active' : ''}`} 
+              aria-label="Dashboard" 
+              title="Dashboard"
+              onClick={(e) => {
+                if (path === '/dashboard/candidate') {
+                  e.preventDefault();
+                }
+              }}
+            >
               <span className="icon-wrap">
                 <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
