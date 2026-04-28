@@ -160,6 +160,14 @@ export default function EmployerLayout({ children }) {
                 </svg>
               </span>
             </Link>
+            <Link href="/employer/offers" className={`icon-btn ${isActive('/employer/offers') ? 'active' : ''}`} aria-label="Offers" title="Offers">
+              <span className="icon-wrap">
+                <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-3.314 0-6 1.79-6 4s2.686 4 6 4 6-1.79 6-4-2.686-4-6-4z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v2m0 14v2m7-9h2M3 12h2m11.95-6.95l1.414 1.414M5.636 18.364l1.414-1.414m0-10.486L5.636 5.05m12.728 12.728-1.414-1.414" />
+                </svg>
+              </span>
+            </Link>
           </nav>
 
           {/* Right icons */}
@@ -227,6 +235,13 @@ export default function EmployerLayout({ children }) {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>
                       Company Profile
+                    </Link>
+                    <Link href="/employer/offers" className="dropdown-item">
+                      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-3.314 0-6 1.79-6 4s2.686 4 6 4 6-1.79 6-4-2.686-4-6-4z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v2m0 14v2m7-9h2M3 12h2" />
+                      </svg>
+                      Offers
                     </Link>
                     <Link href="/employer/settings" className="dropdown-item">
                       <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
