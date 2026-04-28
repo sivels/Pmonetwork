@@ -7,6 +7,8 @@ export default function CandidateInterviews() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [interviews, setInterviews] = useState([]);
+  const [offers, setOffers] = useState([]);
+  const [respondingOfferId, setRespondingOfferId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, upcoming, past
 
@@ -19,6 +21,7 @@ export default function CandidateInterviews() {
   useEffect(() => {
     if (status === 'authenticated') {
       fetchInterviews();
+      fetchOffers();
     }
   }, [status]);
 
@@ -33,6 +36,43 @@ export default function CandidateInterviews() {
       console.error('Error fetching interviews:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchOffers = async () => {
+    try {
+      const res = await fetch('/api/offers/candidate');
+      if (res.ok) {
+        const data = await res.json();
+        setOffers(data.offers || []);
+      }
+    } catch (error) {
+      console.error('Error fetching offers:', error);
+    }
+  };
+
+  const handleOfferDecision = async (offerId, decision) => {
+    setRespondingOfferId(offerId);
+    try {
+      const res = await fetch(`/api/offers/${offerId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ decision }),
+      });
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error || 'Failed to update offer');
+      }
+
+      await fetchOffers();
+    } catch (error) {
+      console.error('Error responding to offer:', error);
+      alert(error.message || 'Failed to respond to offer');
+    } finally {
+      setRespondingOfferId(null);
     }
   };
 
@@ -129,6 +169,70 @@ export default function CandidateInterviews() {
 
         {/* Interviews List */}
         <div className="interviews-container">
+          {offers.length > 0 && (
+            <div className="offers-section">
+              <h2 className="offers-title">Job Offers</h2>
+              <div className="offers-grid">
+                {offers.map((offer) => {
+                  const status = (offer.status || '').toUpperCase();
+                  return (
+                    <div key={offer.id} className="offer-card">
+                      <div className="offer-head">
+                        <div>
+                          <h3>{offer.title}</h3>
+                          <p>{offer.application?.job?.employer?.companyName || 'Employer'} · {offer.application?.job?.title || 'Role'}</p>
+                        </div>
+                        <span className={`offer-status ${status.toLowerCase()}`}>{status}</span>
+                      </div>
+
+                      {(offer.salary || offer.startDate) && (
+                        <p className="offer-meta">
+                          {offer.salary ? `Compensation: ${offer.salary}` : ''}
+                          {offer.salary && offer.startDate ? ' · ' : ''}
+                          {offer.startDate ? `Start date: ${new Date(offer.startDate).toLocaleDateString()}` : ''}
+                        </p>
+                      )}
+
+                      {offer.message && <p className="offer-message">{offer.message}</p>}
+
+                      {offer.attachments?.length > 0 && (
+                        <div className="offer-attachments">
+                          <strong>Attachments</strong>
+                          <ul>
+                            {offer.attachments.map((file, index) => (
+                              <li key={`${offer.id}-file-${index}`}>
+                                <a href={file.url} target="_blank" rel="noreferrer">{file.name}</a>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {status === 'SENT' && (
+                        <div className="offer-actions">
+                          <button
+                            className="accept-btn"
+                            onClick={() => handleOfferDecision(offer.id, 'ACCEPTED')}
+                            disabled={respondingOfferId === offer.id}
+                          >
+                            Accept Offer
+                          </button>
+                          <button
+                            className="decline-btn"
+                            onClick={() => handleOfferDecision(offer.id, 'DECLINED')}
+                            disabled={respondingOfferId === offer.id}
+                          >
+                            Decline
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {filteredInterviews.length === 0 ? (
             <div className="empty-state">
               <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -298,6 +402,128 @@ export default function CandidateInterviews() {
 
         .interviews-container {
           min-height: 400px;
+        }
+
+        .offers-section {
+          margin-bottom: 2rem;
+        }
+
+        .offers-title {
+          margin: 0 0 0.75rem;
+          font-size: 1.3rem;
+          color: #111827;
+        }
+
+        .offers-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 1rem;
+        }
+
+        .offer-card {
+          border: 1px solid #dbeafe;
+          background: #f8fbff;
+          border-radius: 12px;
+          padding: 1rem;
+        }
+
+        .offer-head {
+          display: flex;
+          justify-content: space-between;
+          gap: 0.75rem;
+          margin-bottom: 0.5rem;
+        }
+
+        .offer-head h3 {
+          margin: 0 0 0.25rem;
+          font-size: 1rem;
+          color: #0f172a;
+        }
+
+        .offer-head p {
+          margin: 0;
+          color: #475569;
+          font-size: 0.9rem;
+        }
+
+        .offer-status {
+          border-radius: 9999px;
+          padding: 0.35rem 0.6rem;
+          font-size: 0.75rem;
+          font-weight: 700;
+          height: fit-content;
+        }
+
+        .offer-status.sent {
+          background: #fde68a;
+          color: #92400e;
+        }
+
+        .offer-status.accepted {
+          background: #bbf7d0;
+          color: #166534;
+        }
+
+        .offer-status.declined {
+          background: #fecaca;
+          color: #991b1b;
+        }
+
+        .offer-meta {
+          margin: 0 0 0.5rem;
+          color: #1e3a8a;
+          font-size: 0.88rem;
+          font-weight: 600;
+        }
+
+        .offer-message {
+          margin: 0 0 0.75rem;
+          color: #334155;
+          white-space: pre-wrap;
+        }
+
+        .offer-attachments strong {
+          color: #374151;
+          font-size: 0.88rem;
+        }
+
+        .offer-attachments ul {
+          margin: 0.35rem 0 0;
+          padding-left: 1rem;
+        }
+
+        .offer-attachments a {
+          color: #1d4ed8;
+          text-decoration: none;
+        }
+
+        .offer-attachments a:hover {
+          text-decoration: underline;
+        }
+
+        .offer-actions {
+          margin-top: 0.8rem;
+          display: flex;
+          gap: 0.6rem;
+        }
+
+        .accept-btn,
+        .decline-btn {
+          border: none;
+          border-radius: 8px;
+          padding: 0.55rem 0.8rem;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .accept-btn {
+          background: #16a34a;
+          color: white;
+        }
+
+        .decline-btn {
+          background: #e5e7eb;
+          color: #374151;
         }
 
         .interviews-grid {

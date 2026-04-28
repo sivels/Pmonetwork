@@ -372,6 +372,7 @@ model Application {
   statusHistory ApplicationStatusHistory[]
   activities    ActivityLog[]
   interviews    Interview[]
+  jobOffers     JobOffer[]
 }
 
 model ApplicationStatusHistory {
@@ -450,6 +451,32 @@ model Interview {
   application Application?     @relation(fields: [applicationId], references: [id])
   employer    EmployerProfile  @relation(fields: [employerId], references: [id])
   candidate   CandidateProfile @relation(fields: [candidateId], references: [id])
+  jobOffers   JobOffer[]
+}
+
+model JobOffer {
+  id              String    @id @default(cuid())
+  applicationId   String
+  interviewId     String?
+  title           String
+  message         String?
+  salary          String?
+  startDate       DateTime?
+  status          String    @default("SENT") // SENT, ACCEPTED, DECLINED, WITHDRAWN
+  attachmentsJson String?   // JSON: [{name, url, type, size}]
+  sentByUserId    String
+  sentAt          DateTime  @default(now())
+  respondedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  application Application @relation(fields: [applicationId], references: [id])
+  interview   Interview?  @relation(fields: [interviewId], references: [id])
+
+  @@index([applicationId])
+  @@index([interviewId])
+  @@index([status])
+  @@index([sentAt])
 }
 
 model Report {

@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import EditInterviewModal from '../../components/EditInterviewModal';
 import CancelInterviewModal from '../../components/CancelInterviewModal';
+import SendOfferModal from '../../components/SendOfferModal';
 
 export default function EmployerInterviews() {
   const { data: session, status } = useSession();
@@ -13,6 +14,8 @@ export default function EmployerInterviews() {
   const [filter, setFilter] = useState('all'); // all, upcoming, past
   const [editingInterview, setEditingInterview] = useState(null);
   const [cancellingInterview, setCancellingInterview] = useState(null);
+  const [offersByApplication, setOffersByApplication] = useState({});
+  const [offerInterview, setOfferInterview] = useState(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -23,6 +26,7 @@ export default function EmployerInterviews() {
   useEffect(() => {
     if (status === 'authenticated') {
       fetchInterviews();
+      fetchOffers();
     }
   }, [status]);
 
@@ -38,6 +42,28 @@ export default function EmployerInterviews() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchOffers = async () => {
+    try {
+      const res = await fetch('/api/offers/employer');
+      if (!res.ok) return;
+      const data = await res.json();
+      const grouped = (data.offers || []).reduce((acc, offer) => {
+        if (!offer?.applicationId) return acc;
+        acc[offer.applicationId] = offer;
+        return acc;
+      }, {});
+      setOffersByApplication(grouped);
+    } catch (error) {
+      console.error('Error fetching offers:', error);
+    }
+  };
+
+  const hasActiveOffer = (applicationId) => {
+    const offer = offersByApplication[applicationId];
+    if (!offer) return false;
+    return ['SENT', 'ACCEPTED'].includes((offer.status || '').toUpperCase());
   };
 
   const formatDate = (dateString) => {
@@ -258,6 +284,17 @@ export default function EmployerInterviews() {
                       >
                         View Application
                       </a>
+                      {!isUpcoming && interview.applicationId && !hasActiveOffer(interview.applicationId) && (
+                        <button
+                          onClick={() => setOfferInterview(interview)}
+                          className="offer-btn"
+                        >
+                          Send Offer
+                        </button>
+                      )}
+                      {!isUpcoming && interview.applicationId && hasActiveOffer(interview.applicationId) && (
+                        <span className="offer-sent-badge">Offer sent</span>
+                      )}
                       {isUpcoming && (
                         <>
                           <button
@@ -588,6 +625,37 @@ export default function EmployerInterviews() {
           background: #fee2e2;
         }
 
+        .offer-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.75rem 1.5rem;
+          background: #16a34a;
+          color: #fff;
+          border: 1px solid #15803d;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 0.95rem;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .offer-btn:hover {
+          background: #15803d;
+        }
+
+        .offer-sent-badge {
+          display: inline-flex;
+          align-items: center;
+          border-radius: 9999px;
+          padding: 0.45rem 0.85rem;
+          background: #dcfce7;
+          color: #166534;
+          font-size: 0.85rem;
+          font-weight: 700;
+          border: 1px solid #bbf7d0;
+        }
+
         .empty-state {
           text-align: center;
           padding: 4rem 2rem;
@@ -670,7 +738,8 @@ export default function EmployerInterviews() {
           .join-btn,
           .view-app-btn,
           .edit-btn,
-          .cancel-btn {
+          .cancel-btn,
+          .offer-btn {
             width: 100%;
             justify-content: center;
           }
@@ -695,6 +764,18 @@ export default function EmployerInterviews() {
           onSuccess={() => {
             fetchInterviews();
             setCancellingInterview(null);
+          }}
+        />
+      )}
+
+      {offerInterview && (
+        <SendOfferModal
+          interview={offerInterview}
+          onClose={() => setOfferInterview(null)}
+          onSuccess={() => {
+            fetchInterviews();
+            fetchOffers();
+            setOfferInterview(null);
           }}
         />
       )}
