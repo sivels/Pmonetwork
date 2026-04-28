@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 export async function getServerSideProps(ctx) {
   const session = await getServerSession(ctx.req, ctx.res, authOptions);
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } };
-  if ((session.user.role || '').toLowerCase() !== 'employer') return { redirect: { destination: '/dashboard/candidate', permanent: false } };
+  if ((session.user.role || '').toLowerCase() !== 'employer') return { redirect: { destination: '/dashboard', permanent: false } };
   const { id } = ctx.params;
   const user = await prisma.user.findUnique({ where: { email: session.user.email }, include: { employerEmployerProfile: true } });
   const employerProfile = user?.employerEmployerProfile;

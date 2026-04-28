@@ -206,22 +206,6 @@ export default function EmployerLayout({ children }) {
                     </div>
                   </div>
 
-                  {/* Stats Section */}
-                  <div className="dropdown-stats">
-                    <Link href="/employer/jobs" className="stat-item">
-                      <div className="stat-value">12</div>
-                      <div className="stat-label">Active Jobs</div>
-                    </Link>
-                    <Link href="/employer/applicants" className="stat-item">
-                      <div className="stat-value">48</div>
-                      <div className="stat-label">Applicants</div>
-                    </Link>
-                    <Link href="/employer/messages" className="stat-item">
-                      <div className="stat-value">5</div>
-                      <div className="stat-label">Unread</div>
-                    </Link>
-                  </div>
-
                   <div className="dropdown-divider"></div>
 
                   {/* Quick Actions Section */}
@@ -287,31 +271,25 @@ export default function EmployerLayout({ children }) {
         .employer-profile-section{position:relative}
         .profile-dropdown-trigger{display:flex;align-items:center;gap:.75rem;padding:.5rem .75rem;border:1px solid #e5e7eb;border-radius:12px;background:#fff;cursor:pointer;transition:all .2s;color:#374151}
         .profile-dropdown-trigger:hover{background:#f8fafc;border-color:#cbd5e1}
-        .profile-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid #e5e7eb}
+        .profile-avatar{display:block;width:32px;height:32px;min-width:32px;min-height:32px;border-radius:50%;object-fit:contain;object-position:center center;border:2px solid #e5e7eb;box-sizing:border-box;overflow:hidden;flex-shrink:0;background:#fff;padding:2px}
         .profile-name{font-size:.875rem;font-weight:600;color:#111827;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .dropdown-arrow{transition:transform .2s}
         .dropdown-arrow.open{transform:rotate(180deg)}
         
-        .profile-dropdown{position:absolute;top:calc(100% + .5rem);right:0;width:280px;background:white;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.15),0 0 0 1px rgba(0,0,0,.05);z-index:1000;animation:slideDown .2s ease}
+        .profile-dropdown{position:absolute;top:calc(100% + .5rem);right:0;width:320px;background:#fff;border-radius:18px;box-shadow:0 24px 60px rgba(15,23,42,.16),0 0 0 1px rgba(15,23,42,.08);z-index:1000;animation:slideDown .2s ease;overflow:hidden}
         @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
         
-        .dropdown-header{padding:1rem 1.25rem;display:flex;align-items:center;gap:.75rem;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:16px 16px 0 0}
-        .dropdown-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.3)}
+        .dropdown-header{padding:1.1rem 1.25rem;display:flex;align-items:center;gap:.75rem;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}
+        .dropdown-avatar{display:block;width:48px;height:48px;min-width:48px;min-height:48px;border-radius:50%;object-fit:contain;object-position:center center;border:3px solid rgba(255,255,255,.3);box-sizing:border-box;overflow:hidden;flex-shrink:0;background:#fff;padding:3px}
         .dropdown-user-info{flex:1;min-width:0}
         .dropdown-company-name{font-size:.9375rem;font-weight:700;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .dropdown-role{font-size:.75rem;color:rgba(255,255,255,.8);margin-top:.125rem}
         .dropdown-email{font-size:.6875rem;color:rgba(255,255,255,.7);margin-top:.25rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         
-        .dropdown-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;padding:1rem;background:#fafbfc}
-        .stat-item{text-align:center;padding:.25rem;text-decoration:none;border-radius:8px;transition:all .2s;cursor:pointer}
-        .stat-item:hover{background:#fff;transform:translateY(-2px)}
-        .stat-value{font-size:1.25rem;font-weight:700;color:#111827;line-height:1;margin-bottom:.25rem}
-        .stat-label{font-size:.625rem;color:#6b7280;font-weight:500}
+        .dropdown-divider{height:1px;background:#e5e7eb;margin:0}
         
-        .dropdown-divider{height:1px;background:#e5e7eb;margin:.5rem 0}
-        
-        .dropdown-section{padding:.5rem}
-        .dropdown-item{display:flex;align-items:center;gap:.75rem;width:100%;padding:.75rem 1rem;border-radius:10px;font-size:.875rem;font-weight:500;color:#374151;text-decoration:none;transition:all .15s;background:transparent;border:none;cursor:pointer;text-align:left;white-space:nowrap}
+        .dropdown-section{padding:.625rem}
+        .dropdown-item{display:flex;align-items:center;gap:.75rem;width:100%;padding:.85rem 1rem;border-radius:10px;font-size:.95rem;font-weight:500;color:#374151;text-decoration:none;transition:all .15s;background:transparent;border:none;cursor:pointer;text-align:left;white-space:nowrap}
         .dropdown-item:hover{background:#f3f4f6;color:#111827}
         .dropdown-item.sign-out{color:#ef4444}
         .dropdown-item.sign-out:hover{background:#fee2e2;color:#dc2626}

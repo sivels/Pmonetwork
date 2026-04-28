@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]';
 import { prisma } from '../../../../lib/prisma';
+import { resolveEmployerContext } from '../../../../lib/employerContext';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -137,23 +138,16 @@ export default async function handler(req, res) {
     // Get total count for pagination
     const total = await prisma.candidateProfile.count({ where });
 
-    // Check which candidates are bookmarked by this employer
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: {
-        employerEmployerProfile: {
-          include: {
-            savedCandidates: {
-              select: { candidateId: true }
-            }
-          }
-        }
-      }
-    });
+    // Check which candidates are bookmarked by this employer/company
+    const context = await resolveEmployerContext({ userId: session.user.id });
+    const savedCandidates = context?.employerProfile
+      ? await prisma.savedCandidate.findMany({
+          where: { employerId: context.employerProfile.id },
+          select: { candidateId: true },
+        })
+      : [];
 
-    const savedCandidateIds = new Set(
-      user?.employerEmployerProfile?.savedCandidates?.map(sc => sc.candidateId) || []
-    );
+    const savedCandidateIds = new Set(savedCandidates.map((item) => item.candidateId));
 
     // Format results
     const results = candidates.map(c => ({

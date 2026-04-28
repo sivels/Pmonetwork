@@ -8,12 +8,16 @@ export default function CandidateLayout({ children, session }) {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [candidateProfileId, setCandidateProfileId] = useState(null);
+  const [candidateProfile, setCandidateProfile] = useState(null);
   const dropdownRef = useRef(null);
   const router = useRouter();
   const path = router.pathname;
   const isActive = (p) => path.startsWith(p);
   
   const user = session?.user;
+  const profileName = candidateProfile?.fullName || user?.fullName || user?.name || 'Candidate';
+  const profileEmail = candidateProfile?.email || user?.email || '';
+  const profileAvatar = candidateProfile?.profilePhotoUrl || user?.profilePhotoUrl || '/images/avatar-placeholder.svg';
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -28,7 +32,7 @@ export default function CandidateLayout({ children, session }) {
     }
   }, [profileDropdownOpen]);
 
-  // Fetch candidate profile ID
+  // Fetch candidate profile details
   useEffect(() => {
     const fetchProfileId = async () => {
       try {
@@ -36,6 +40,9 @@ export default function CandidateLayout({ children, session }) {
         const data = await res.json();
         if (data.candidateProfile?.id) {
           setCandidateProfileId(data.candidateProfile.id);
+        }
+        if (data.candidateProfile) {
+          setCandidateProfile(data.candidateProfile);
         }
       } catch (err) {
         console.error('Failed to fetch profile ID:', err);
@@ -114,9 +121,8 @@ export default function CandidateLayout({ children, session }) {
             </Link>
             <Link href="/dashboard/interviews" className={`icon-btn ${isActive('/dashboard/interviews') ? 'active' : ''}`} aria-label="Interviews" title="Interviews">
               <span className="icon-wrap">
-                <svg width="22" height="22" fill="none" stroke="#6366F1" viewBox="0 0 24 24">
-                  <rect x="3" y="4" width="18" height="18" rx="2" fill="#E0E7FF" stroke="#6366F1" strokeWidth="1.5" />
-                  <path d="M8 10h8M8 14h5" stroke="#6366F1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </span>
             </Link>
@@ -130,7 +136,7 @@ export default function CandidateLayout({ children, session }) {
             </Link>
           </nav>
           {/* Right icons: Help and Profile Dropdown */}
-          <div className="employer-right">
+          <div className="candidate-right">
             <Link href="/help" className={`icon-btn ${isActive('/help') ? 'active' : ''}`} aria-label="Help" title="Help">
               <span className="icon-wrap">
                 <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,18 +144,19 @@ export default function CandidateLayout({ children, session }) {
                 </svg>
               </span>
             </Link>
-            <div className="employer-profile-section" ref={dropdownRef}>
+            <div className="candidate-profile-section" ref={dropdownRef}>
               <button 
                 className="profile-dropdown-trigger"
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                 aria-expanded={profileDropdownOpen}
+                aria-label="Open candidate menu"
               >
                 <img 
-                  src={user?.profilePhotoUrl || '/images/avatar-placeholder.svg'} 
-                  alt={user?.fullName || 'Profile'} 
+                  src={profileAvatar}
+                  alt={profileName}
                   className="profile-avatar"
                 />
-                <span className="profile-name">{user?.fullName || 'Candidate'}</span>
+                <span className="profile-name">{profileName}</span>
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" className={`dropdown-arrow ${profileDropdownOpen ? 'open' : ''}`}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
@@ -158,14 +165,14 @@ export default function CandidateLayout({ children, session }) {
                 <div className="profile-dropdown">
                   <div className="dropdown-header">
                     <img 
-                      src={user?.profilePhotoUrl || '/images/avatar-placeholder.svg'} 
-                      alt={user?.fullName || 'Profile'} 
+                      src={profileAvatar}
+                      alt={profileName}
                       className="dropdown-avatar"
                     />
                     <div className="dropdown-user-info">
-                      <div className="dropdown-company-name">{user?.fullName || 'Candidate'}</div>
+                      <div className="dropdown-company-name">{profileName}</div>
                       <div className="dropdown-role">Candidate</div>
-                      <div className="dropdown-email">{user?.email || ''}</div>
+                      <div className="dropdown-email">{profileEmail}</div>
                     </div>
                   </div>
                   <div className="dropdown-divider"></div>
@@ -220,25 +227,25 @@ export default function CandidateLayout({ children, session }) {
         .candidate-profile-section{position:relative}
         .profile-dropdown-trigger{display:flex;align-items:center;gap:.75rem;padding:.5rem .75rem;border:1px solid #e5e7eb;border-radius:12px;background:#fff;cursor:pointer;transition:all .2s;color:#374151}
         .profile-dropdown-trigger:hover{background:#f8fafc;border-color:#cbd5e1}
-        .profile-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;object-position:center;border:2px solid #e5e7eb;flex-shrink:0}
+        .profile-avatar{display:block;width:32px;height:32px;min-width:32px;min-height:32px;border-radius:50%;object-fit:contain;object-position:center center;border:2px solid #e5e7eb;box-sizing:border-box;overflow:hidden;flex-shrink:0;background:#fff;padding:2px}
         .profile-name{font-size:.875rem;font-weight:600;color:#111827;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .dropdown-arrow{transition:transform .2s}
         .dropdown-arrow.open{transform:rotate(180deg)}
 
-        .profile-dropdown{position:absolute;top:calc(100% + .5rem);right:0;width:280px;background:white;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.15),0 0 0 1px rgba(0,0,0,.05);z-index:1000;animation:slideDown .2s ease}
+        .profile-dropdown{position:absolute;top:calc(100% + .5rem);right:0;width:320px;background:#fff;border-radius:18px;box-shadow:0 24px 60px rgba(15,23,42,.16),0 0 0 1px rgba(15,23,42,.08);z-index:1000;animation:slideDown .2s ease;overflow:hidden}
         @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 
-        .dropdown-header{padding:1rem 1.25rem;display:flex;align-items:center;gap:.75rem;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:16px 16px 0 0}
-        .dropdown-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:center;border:3px solid rgba(255,255,255,.3);flex-shrink:0}
+        .dropdown-header{padding:1.1rem 1.25rem;display:flex;align-items:center;gap:.75rem;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}
+        .dropdown-avatar{display:block;width:48px;height:48px;min-width:48px;min-height:48px;border-radius:50%;object-fit:contain;object-position:center center;border:3px solid rgba(255,255,255,.3);box-sizing:border-box;overflow:hidden;flex-shrink:0;background:#fff;padding:3px}
         .dropdown-user-info{flex:1;min-width:0}
         .dropdown-company-name{font-size:.9375rem;font-weight:700;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .dropdown-role{font-size:.75rem;color:rgba(255,255,255,.8);margin-top:.125rem}
         .dropdown-email{font-size:.6875rem;color:rgba(255,255,255,.7);margin-top:.25rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-        .dropdown-divider{height:1px;background:#e5e7eb;margin:.5rem 0}
+        .dropdown-divider{height:1px;background:#e5e7eb;margin:0}
 
-        .dropdown-section{padding:.5rem}
-        .dropdown-item{display:flex;align-items:center;gap:.75rem;width:100%;padding:.75rem 1rem;border-radius:10px;font-size:.875rem;font-weight:500;color:#374151;text-decoration:none;transition:all .15s;background:transparent;border:none;cursor:pointer;text-align:left;white-space:nowrap}
+        .dropdown-section{padding:.625rem}
+        .dropdown-item{display:flex;align-items:center;gap:.75rem;width:100%;padding:.85rem 1rem;border-radius:10px;font-size:.95rem;font-weight:500;color:#374151;text-decoration:none;transition:all .15s;background:transparent;border:none;cursor:pointer;text-align:left;white-space:nowrap}
         .dropdown-item:hover{background:#f3f4f6;color:#111827}
         .dropdown-item.sign-out{color:#ef4444}
         .dropdown-item.sign-out:hover{background:#fee2e2;color:#dc2626}

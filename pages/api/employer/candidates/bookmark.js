@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]';
 import { prisma } from '../../../../lib/prisma';
+import { resolveEmployerContext } from '../../../../lib/employerContext';
 
 export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
@@ -8,16 +9,13 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    include: { employerEmployerProfile: true }
-  });
+  const context = await resolveEmployerContext({ userId: session.user.id });
 
-  if (!user?.employerEmployerProfile) {
+  if (!context?.employerProfile) {
     return res.status(404).json({ error: 'Employer profile not found' });
   }
 
-  const employerId = user.employerEmployerProfile.id;
+  const employerId = context.employerProfile.id;
   const { candidateId } = req.query;
 
   if (req.method === 'POST') {

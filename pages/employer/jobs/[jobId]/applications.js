@@ -15,6 +15,7 @@ export default function ApplicationsPage() {
   const [openId, setOpenId] = useState(applicationId || null);
   const [interviewApplicationId, setInterviewApplicationId] = useState(null);
   const [selectedApplication, setSelectedApplication] = useState(null);
+  const [jobTitle, setJobTitle] = useState('');
 
   // Auto-open detail panel when applicationId is in URL
   useEffect(() => {
@@ -22,6 +23,31 @@ export default function ApplicationsPage() {
       setOpenId(applicationId);
     }
   }, [applicationId]);
+
+  useEffect(() => {
+    if (!jobId) return;
+
+    let mounted = true;
+
+    async function loadJobTitle() {
+      try {
+        const res = await fetch(`/api/employer/jobs/${jobId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (mounted) {
+          setJobTitle(data?.job?.title || '');
+        }
+      } catch (error) {
+        console.error('Failed to load job title:', error);
+      }
+    }
+
+    loadJobTitle();
+
+    return () => {
+      mounted = false;
+    };
+  }, [jobId]);
 
   function handleOpenDetails(id) {
     setOpenId(id);
@@ -70,6 +96,11 @@ export default function ApplicationsPage() {
       <div className="mx-auto max-w-7xl p-6">
         <div className="mb-4">
           <h1 className="text-2xl font-semibold">Applications</h1>
+          {jobTitle && (
+            <p className="mt-1 text-sm font-medium text-indigo-700">
+              Job: {jobTitle}
+            </p>
+          )}
           <p className="text-sm text-gray-600">Review, shortlist, and message candidates in real time.</p>
         </div>
 

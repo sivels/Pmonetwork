@@ -28,7 +28,17 @@ datasource db {
 model User {
   id                        String               @id @default(cuid())
   email                     String               @unique
+  username                  String?              @unique
   password                  String
+  accountStatus             String               @default("ACTIVE") // ACTIVE, LOCKED, SUSPENDED, DEACTIVATED
+  verificationStatus        String               @default("UNVERIFIED") // UNVERIFIED, PENDING, VERIFIED, REJECTED
+  isLocked                  Boolean              @default(false)
+  isSuspended               Boolean              @default(false)
+  mfaEnabled                Boolean              @default(false)
+  mustResetPassword         Boolean              @default(false)
+  failedLoginAttempts       Int                  @default(0)
+  lastLoginAt               DateTime?
+  deactivatedAt             DateTime?
   emailVerified             DateTime?
   role                      String               @default("CANDIDATE")
   createdAt                 DateTime             @default(now())
@@ -38,6 +48,16 @@ model User {
   verificationTokens        VerificationToken[]  @relation("UserVerificationTokens")
   passwordResetTokens       PasswordResetToken[] @relation("UserPasswordResetTokens")
   accounts                  Account[]
+  supportTicketsCreated     SupportTicket[]      @relation("SupportTicketCreatedBy")
+  supportTicketsAssigned    SupportTicket[]      @relation("SupportTicketAssignedTo")
+  supportTicketsTargeted    SupportTicket[]      @relation("SupportTicketTargetUser")
+  supportTicketNotes        SupportTicketNote[]  @relation("SupportTicketNoteAuthor")
+  adminActionsPerformed     AdminActionAudit[]   @relation("AdminActionBy")
+  adminActionsTargeted      AdminActionAudit[]   @relation("AdminActionTarget")
+  loginAttempts             LoginAttempt[]
+  employerTeamMemberships   EmployerTeamMember[] @relation("EmployerTeamMemberUser")
+  employerTeamInvitesSent   EmployerTeamInvite[] @relation("EmployerTeamInviteBy")
+  employerTeamInvitesAccepted EmployerTeamInvite[] @relation("EmployerTeamInviteAcceptedBy")
 }
 
 model CandidateProfile {
@@ -88,6 +108,7 @@ model CandidateProfile {
   conversations    Conversation[]
   activityLogs     ActivityLog[]
   interviews       Interview[]
+  reportsAgainst   Report[]        @relation("ReportsOfCandidate")
 
   user User @relation("UserCandidate", fields: [userId], references: [id])
 }
@@ -117,13 +138,53 @@ model EmployerProfile {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user            User             @relation("UserEmployer", fields: [userId], references: [id])
-  savedCandidates SavedCandidate[]
-  sharedDocuments SharedDocument[]
-  jobs            Job[]
-  conversations   Conversation[]
-  activityLogs    ActivityLog[]
-  interviews      Interview[]
+  user              User             @relation("UserEmployer", fields: [userId], references: [id])
+  savedCandidates   SavedCandidate[]
+  sharedDocuments   SharedDocument[]
+  jobs              Job[]
+  conversations     Conversation[]
+  activityLogs      ActivityLog[]
+  interviews        Interview[]
+  reportsSubmitted  Report[]         @relation("ReportsByEmployer")
+  teamMembers       EmployerTeamMember[]
+  teamInvites       EmployerTeamInvite[]
+}
+
+model EmployerTeamMember {
+  id           String          @id @default(cuid())
+  employerId   String
+  userId       String
+  role         String          @default("RECRUITER") // OWNER, ADMIN, RECRUITER, VIEWER
+  status       String          @default("ACTIVE") // ACTIVE, REMOVED
+  invitedById  String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  employer     EmployerProfile @relation(fields: [employerId], references: [id])
+  user         User            @relation("EmployerTeamMemberUser", fields: [userId], references: [id])
+
+  @@unique([employerId, userId])
+}
+
+model EmployerTeamInvite {
+  id            String          @id @default(cuid())
+  employerId    String
+  email         String
+  role          String          @default("RECRUITER") // ADMIN, RECRUITER, VIEWER
+  status        String          @default("PENDING") // PENDING, ACCEPTED, EXPIRED, REVOKED
+  token         String          @unique
+  invitedById   String
+  acceptedById  String?
+  expiresAt     DateTime
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  employer      EmployerProfile @relation(fields: [employerId], references: [id])
+  invitedBy     User            @relation("EmployerTeamInviteBy", fields: [invitedById], references: [id])
+  acceptedBy    User?           @relation("EmployerTeamInviteAcceptedBy", fields: [acceptedById], references: [id])
+
+  @@index([employerId, status])
+  @@index([email, status])
 }
 
 model Skill {
@@ -372,23 +433,104 @@ model ActivityLog {
 
 model Interview {
   id            String   @id @default(cuid())
-  applicationId String
+  applicationId String?
   employerId    String
   candidateId   String
-  jobId         String
+  jobId         String?
   meetingUrl    String?
   startTime     DateTime
-  endTime       DateTime
+  endTime       DateTime?
   duration      Int      // minutes
   provider      String   @default("google_meet") // google_meet, phone
-  status        String   @default("scheduled") // scheduled, completed, cancelled, rescheduled
-  message       String?  // Optional message from employer to candidate
+  status        String   @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED, RESCHEDULED
+  notes         String?  // Optional message from employer to candidate
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  application Application      @relation(fields: [applicationId], references: [id])
+  application Application?     @relation(fields: [applicationId], references: [id])
   employer    EmployerProfile  @relation(fields: [employerId], references: [id])
   candidate   CandidateProfile @relation(fields: [candidateId], references: [id])
+}
+
+model Report {
+  id                    String   @id @default(cuid())
+  reportedByEmployerId  String
+  reportedCandidateId   String
+  reason                String
+  type                  String   @default("CANDIDATE_BEHAVIOR") // CANDIDATE_BEHAVIOR, INAPPROPRIATE_CONTACT, GHOSTING, etc
+  status                String   @default("PENDING") // PENDING, REVIEWED, RESOLVED, DISMISSED
+  adminNotes            String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  reportedByEmployer EmployerProfile @relation("ReportsByEmployer", fields: [reportedByEmployerId], references: [id])
+  reportedCandidate  CandidateProfile @relation("ReportsOfCandidate", fields: [reportedCandidateId], references: [id])
+}
+
+model SupportTicket {
+  id               String              @id @default(cuid())
+  reference        String              @unique
+  createdByUserId  String
+  targetUserId     String?
+  assignedToUserId String?
+  targetType       String              // USER, CANDIDATE, EMPLOYER
+  category         String              // LOGIN_ISSUE, PROFILE_ISSUE, FRAUD, ACCOUNT_ACCESS, BILLING, OTHER
+  priority         String              @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  status           String              @default("OPEN") // OPEN, IN_PROGRESS, ON_HOLD, ESCALATED, RESOLVED, CLOSED
+  subject          String
+  description      String
+  slaDueAt         DateTime?
+  firstResponseAt  DateTime?
+  resolvedAt       DateTime?
+  tags             String?             // JSON array
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  createdBy  User               @relation("SupportTicketCreatedBy", fields: [createdByUserId], references: [id])
+  targetUser User?              @relation("SupportTicketTargetUser", fields: [targetUserId], references: [id])
+  assignedTo User?              @relation("SupportTicketAssignedTo", fields: [assignedToUserId], references: [id])
+  notes      SupportTicketNote[]
+}
+
+model SupportTicketNote {
+  id           String        @id @default(cuid())
+  ticketId     String
+  authorUserId String
+  note         String
+  isInternal   Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id])
+  author User          @relation("SupportTicketNoteAuthor", fields: [authorUserId], references: [id])
+}
+
+model AdminActionAudit {
+  id           String   @id @default(cuid())
+  actorUserId  String
+  targetUserId String?
+  entityType   String   // USER, TICKET, PROFILE
+  action       String   // PASSWORD_RESET_TRIGGERED, ACCOUNT_LOCKED, TICKET_ASSIGNED, etc
+  summary      String
+  metadata     String?  // JSON
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  actor  User  @relation("AdminActionBy", fields: [actorUserId], references: [id])
+  target User? @relation("AdminActionTarget", fields: [targetUserId], references: [id])
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  userId    String?
+  email     String
+  ipAddress String?
+  userAgent String?
+  success   Boolean  @default(false)
+  reason    String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
 }
 
 // Role and Availability enums removed for SQLite compatibility; use string fields instead

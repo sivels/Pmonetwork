@@ -71,14 +71,16 @@ export default function HelpPage({ user }) {
 
         {/* Quick Actions */}
         <div className="quick-actions">
-          <Link href="/dashboard/messages?support=true" className="action-card">
-            <div className="action-icon messages">
-              <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-              </svg>
-            </div>
-            <h3>Message Support</h3>
-            <p>Chat with our support team</p>
+          <Link href="/dashboard/support" legacyBehavior>
+            <a className="action-card">
+              <div className="action-icon messages">
+                <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+              </div>
+              <h3>Message Support</h3>
+              <p>Chat with our support team</p>
+            </a>
           </Link>
           <a href="mailto:support@pmonetwork.com" className="action-card">
             <div className="action-icon email">
@@ -89,14 +91,16 @@ export default function HelpPage({ user }) {
             <h3>Email Us</h3>
             <p>support@pmonetwork.com</p>
           </a>
-          <Link href="/dashboard/profile" className="action-card">
-            <div className="action-icon profile">
-              <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <h3>Profile Help</h3>
-            <p>Optimize your profile</p>
+          <Link href="/dashboard/profile" legacyBehavior>
+            <a className="action-card">
+              <div className="action-icon profile">
+                <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3>Profile Help</h3>
+              <p>Optimize your profile</p>
+            </a>
           </Link>
         </div>
 
@@ -130,8 +134,10 @@ export default function HelpPage({ user }) {
           <h2>Still need help?</h2>
           <p>Our support team is here to help you Monday - Friday, 9am - 6pm GMT</p>
           <div className="contact-buttons">
-            <Link href="/dashboard/messages?support=true" className="btn-primary">
-              Start a Conversation
+            <Link href="/dashboard/support" legacyBehavior>
+              <a className="btn-primary">
+                Start a Conversation
+              </a>
             </Link>
             <a href="mailto:support@pmonetwork.com" className="btn-secondary">
               Email Support

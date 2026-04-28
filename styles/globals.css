@@ -1223,15 +1223,15 @@ textarea { min-height: 120px; }
   text-align: center;
 }
 
-/* Main Content */
-.dashboard-main {
+/* Main Content (legacy dashboard container only) */
+.dashboard-container .dashboard-main {
   flex: 1;
   margin-left: 260px;
   padding: 32px;
   transition: margin-left 0.3s;
 }
 
-.dashboard-sidebar.closed + .dashboard-main {
+.dashboard-container .dashboard-sidebar.closed + .dashboard-main {
   margin-left: 0;
 }
 
@@ -1955,7 +1955,7 @@ textarea { min-height: 120px; }
     display: block;
   }
 
-  .dashboard-main {
+  .dashboard-container .dashboard-main {
     margin-left: 0;
     padding: 16px;
   }

@@ -2,6 +2,7 @@ import Head from 'next/head';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../api/auth/[...nextauth]';
 import { prisma } from '../../lib/prisma';
+import { resolveEmployerContext } from '../../lib/employerContext';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
@@ -11,13 +12,10 @@ export async function getServerSideProps(ctx) {
     return { redirect: { destination: '/auth/login', permanent: false } };
   }
   if ((session.user.role || '').toLowerCase() !== 'employer') {
-    return { redirect: { destination: '/dashboard/candidate', permanent: false } };
+    return { redirect: { destination: '/dashboard', permanent: false } };
   }
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    include: { employerEmployerProfile: true }
-  });
-  const profile = user?.employerEmployerProfile || null;
+  const context = await resolveEmployerContext({ userId: session.user.id });
+  const profile = context?.employerProfile || null;
   let jobCount = 0;
   let latestJobs = [];
   if (profile) {
@@ -382,8 +380,11 @@ export default function EmployerDashboard({ profile, jobCount, latestJobs }) {
 
       <style jsx>{`
         .modern-dashboard{display:flex;min-height:100vh;background:#f8f9fc}
-        .dashboard-sidebar{width:260px;background:#fff;border-right:1px solid #e5e7eb;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;transition:all 0.3s}
+        .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999}
+        .dashboard-sidebar{width:260px;background:#fff;border-right:1px solid #e5e7eb;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;transition:all 0.3s;z-index:1000}
         .dashboard-sidebar.closed{width:0;overflow:hidden}
+        .sidebar-header{display:none}
+        .sidebar-close-btn{background:none;border:none;cursor:pointer;color:#6b7280;padding:0.5rem;display:none}
         .sidebar-nav{padding:1.5rem 0;display:flex;flex-direction:column;gap:0.25rem}
         .sidebar-item{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.5rem;color:#6b7280;text-decoration:none;transition:all 0.15s;border:none;background:transparent;width:100%;text-align:left;cursor:pointer;position:relative}
         .sidebar-item:hover{background:#f3f4f6;color:#374151}
@@ -391,34 +392,33 @@ export default function EmployerDashboard({ profile, jobCount, latestJobs }) {
         .sidebar-item svg{flex-shrink:0}
         .sidebar-badge{margin-left:auto;background:#7c3aed;color:#fff;font-size:0.7rem;font-weight:600;padding:0.125rem 0.5rem;border-radius:9999px;min-width:20px;text-align:center}
         .sidebar-divider{height:1px;background:#e5e7eb;margin:0.5rem 1.5rem}
-        
-        .dashboard-main{flex:1;overflow-y:auto;padding:2.5rem 3rem;max-width:1400px;margin:0 auto;width:100%}
-        .dashboard-content{width:100%;max-width:100%}
-        .content-header{margin-bottom:2rem;padding-bottom:1rem;border-bottom:1px solid #e5e7eb}
-        .content-title{font-size:2rem;font-weight:700;color:#111827;margin:0 0 0.5rem}
-        .content-subtitle{font-size:1.125rem;color:#6b7280;margin:0}
-        
-        .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;margin-bottom:2rem}
-        .stat-card{background:#fff;border-radius:12px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);display:flex;align-items:center;gap:1rem}
-        .stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+
+        .dashboard-main{flex:1;overflow-y:auto;padding:2rem;min-width:0;display:flex;justify-content:flex-start;margin-left:0}
+        .dashboard-content{width:100%;max-width:1200px;margin:0}
+        .content-header{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #e5e7eb}
+        .content-title{font-size:1.75rem;font-weight:700;color:#111827;margin:0 0 0.25rem}
+        .content-subtitle{font-size:1rem;color:#6b7280;margin:0}
+
+        .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem}
+        .stat-card{background:#fff;border-radius:12px;padding:1.25rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);display:flex;align-items:center;gap:0.875rem}
+        .stat-icon{width:42px;height:42px;min-width:42px;border-radius:10px;display:flex;align-items:center;justify-content:center}
         .stat-icon.blue{background:#dbeafe;color:#1e40af}
         .stat-icon.green{background:#d1fae5;color:#065f46}
         .stat-icon.purple{background:#e9d5ff;color:#6b21a8}
-        .stat-details{display:flex;flex-direction:column;gap:0.25rem}
-        .stat-label{font-size:0.875rem;color:#6b7280}
-        .stat-value{font-size:1.875rem;font-weight:700;color:#111827}
-        
-        .content-card{background:#fff;border-radius:16px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);margin-bottom:1.5rem}
-        .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid #f3f4f6}
-        .card-title{font-size:1.25rem;font-weight:600;color:#111827;margin:0}
-        .card-action{color:#4f46e5;font-size:0.9rem;font-weight:500;text-decoration:none}
+        .stat-details{display:flex;flex-direction:column;gap:0.15rem;min-width:0}
+        .stat-label{font-size:0.8rem;color:#6b7280}
+        .stat-value{font-size:1.5rem;font-weight:700;color:#111827}
+
+        .content-card{background:#fff;border-radius:14px;padding:1.25rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);margin-bottom:1.25rem}
+        .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;padding-bottom:0.875rem;border-bottom:1px solid #f3f4f6}
+        .card-title{font-size:1.125rem;font-weight:600;color:#111827;margin:0}
+        .card-action{color:#4f46e5;font-size:0.875rem;font-weight:500;text-decoration:none}
         .card-action:hover{text-decoration:underline}
-        
-        .profile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem}
+
+        .profile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem}
         .profile-item{display:flex;flex-direction:column;gap:0.25rem}
         .profile-label{font-size:0.875rem;color:#6b7280}
         .profile-value{font-size:1rem;color:#111827;font-weight:500}
-        
         .empty-state{color:#6b7280;text-align:center;padding:2rem}
         .jobs-list{display:flex;flex-direction:column;gap:1rem}
         .job-item{border:1px solid #e5e7eb;border-radius:12px;padding:1rem}
@@ -442,11 +442,22 @@ export default function EmployerDashboard({ profile, jobCount, latestJobs }) {
         .form-actions{display:flex;gap:0.5rem}
         .error-msg{color:#b91c1c;font-size:0.875rem;margin:0}
         .success-msg{color:#065f46;font-size:0.875rem;margin:0}
-        
+
+        @media (max-width:1024px){
+          .dashboard-main{padding:1.5rem}
+        }
         @media (max-width:768px){
           .dashboard-sidebar{position:fixed;z-index:1000;box-shadow:2px 0 8px rgba(0,0,0,0.1)}
-          .dashboard-main{padding:1rem}
+          .sidebar-header{display:flex;padding:1rem;border-bottom:1px solid #e5e7eb;justify-content:flex-end}
+          .sidebar-close-btn{display:block}
+          .dashboard-main{padding:1rem 1rem}
+          .stats-grid{grid-template-columns:repeat(2,1fr)}
+          .card-header{flex-direction:column;align-items:flex-start}
+        }
+        @media (max-width:480px){
           .stats-grid{grid-template-columns:1fr}
+          .dashboard-main{padding:0.875rem}
+          .form-row-2,.form-row-3{grid-template-columns:1fr}
         }
       `}</style>
     </>

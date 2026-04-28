@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   }
 
   const hashed = await bcrypt.hash(newPassword, 10);
-  await prisma.user.update({ where: { id: record.userId }, data: { password: hashed } });
+  await prisma.user.update({ where: { id: record.userId }, data: { password: hashed, mustResetPassword: false } });
   await prisma.passwordResetToken.delete({ where: { id: record.id } });
 
   return res.status(200).json({ ok: true });

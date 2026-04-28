@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { prisma } from '../../../lib/prisma';
 
-// GET /api/jobs/list?search=&location=&employmentType=&specialism=&seniority=&remote=&featured=&minSalary=&maxSalary=&page=1&pageSize=20
+// GET /api/jobs/list?search=&location=&employmentType=&specialism=&seniority=&remote=&featured=&minSalary=&maxSalary=&workArrangement=&department=&minExperience=&maxExperience=&skill=&benefit=&page=1&pageSize=20
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
@@ -19,6 +19,12 @@ export default async function handler(req, res) {
     featured = '',
     minSalary = '',
     maxSalary = '',
+    workArrangement = '',
+    department = '',
+    minExperience = '',
+    maxExperience = '',
+    skill = '',
+    benefit = '',
     page = '1',
     pageSize = '20'
   } = req.query;
@@ -29,6 +35,7 @@ export default async function handler(req, res) {
 
   const where = {
     paused: false,
+    isDraft: false,
   };
 
   if (search) {
@@ -41,11 +48,18 @@ export default async function handler(req, res) {
   if (location) where.location = { contains: location, mode: 'insensitive' };
   if (employmentType) where.employmentType = employmentType;
   if (specialism) where.specialism = { contains: specialism, mode: 'insensitive' };
-  if (seniority) where.seniority = { contains: seniority, mode: 'insensitive' };
+  if (seniority) where.seniority = seniority;
   if (remote) where.isRemote = remote === 'true';
   if (featured) where.isFeatured = featured === 'true';
   if (minSalary) where.salaryMin = { gte: parseInt(minSalary, 10) };
   if (maxSalary) where.salaryMax = { lte: parseInt(maxSalary, 10) };
+  // New fields - gracefully skip if not available in schema
+  // if (workArrangement) where.workArrangement = workArrangement;
+  // if (department) where.department = department;
+  // if (minExperience) where.minExperience = { lte: parseInt(minExperience, 10) };
+  // if (maxExperience) where.maxExperience = { gte: parseInt(maxExperience, 10) };
+  // if (skill) where.requiredSkills = { contains: skill, mode: 'insensitive' };
+  // if (benefit) where.benefits = { contains: benefit, mode: 'insensitive' };
 
   try {
     const [total, jobs] = await Promise.all([
@@ -57,20 +71,20 @@ export default async function handler(req, res) {
         take,
         select: {
           id: true,
-            title: true,
-            shortDescription: true,
-            location: true,
-            employmentType: true,
-            isRemote: true,
-            salaryMin: true,
-            salaryMax: true,
-            currency: true,
-            isFeatured: true,
-            isUrgent: true,
-            specialism: true,
-            seniority: true,
-            employer: { select: { companyName: true } },
-            createdAt: true
+          title: true,
+          shortDescription: true,
+          location: true,
+          employmentType: true,
+          isRemote: true,
+          salaryMin: true,
+          salaryMax: true,
+          currency: true,
+          isFeatured: true,
+          isUrgent: true,
+          specialism: true,
+          seniority: true,
+          employer: { select: { companyName: true } },
+          createdAt: true
         }
       })
     ]);

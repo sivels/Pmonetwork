@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../api/auth/[...nextauth]';
+import AdvancedJobFilters from '../../components/AdvancedJobFilters';
 
 export async function getServerSideProps(ctx) {
   const session = await getServerSession(ctx.req, ctx.res, authOptions);
@@ -22,7 +23,22 @@ export default function JobBoardPage({ initial, isCandidate, isEmployer }) {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(initial.totalPages || 0);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({ search:'', location:'', employmentType:'', specialism:'', seniority:'', remote:false });
+  const [filters, setFilters] = useState({
+    search: '',
+    location: '',
+    employmentType: '',
+    specialism: '',
+    seniority: '',
+    remote: false,
+    workArrangement: '',
+    department: '',
+    minExperience: '',
+    maxExperience: '',
+    skill: '',
+    benefit: '',
+    minSalary: '',
+    maxSalary: ''
+  });
   const [savedJobs, setSavedJobs] = useState(new Set());
 
   async function load(pageToLoad = 1, replace = false) {
@@ -35,7 +51,15 @@ export default function JobBoardPage({ initial, isCandidate, isEmployer }) {
       employmentType: filters.employmentType,
       specialism: filters.specialism,
       seniority: filters.seniority,
-      remote: filters.remote ? 'true' : ''
+      remote: filters.remote ? 'true' : '',
+      workArrangement: filters.workArrangement,
+      department: filters.department,
+      minExperience: filters.minExperience,
+      maxExperience: filters.maxExperience,
+      skill: filters.skill,
+      benefit: filters.benefit,
+      minSalary: filters.minSalary,
+      maxSalary: filters.maxSalary
     });
     const res = await fetch(`/api/jobs/list?${params.toString()}`);
     const data = await res.json();
@@ -48,9 +72,35 @@ export default function JobBoardPage({ initial, isCandidate, isEmployer }) {
   }
 
   function applyFilters(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
     load(1, true);
   }
+
+  function resetFilters() {
+    setFilters({
+      search: '',
+      location: '',
+      employmentType: '',
+      specialism: '',
+      seniority: '',
+      remote: false,
+      workArrangement: '',
+      department: '',
+      minExperience: '',
+      maxExperience: '',
+      skill: '',
+      benefit: '',
+      minSalary: '',
+      maxSalary: ''
+    });
+  }
+
+  // Filter effects - intentional setState trigger
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    // When filters change, reload from page 1
+    load(1, true);
+  }, [filters]);
 
   async function toggleSave(jobId) {
     const isSaved = savedJobs.has(jobId);
@@ -88,32 +138,11 @@ export default function JobBoardPage({ initial, isCandidate, isEmployer }) {
         <meta name="description" content="Browse PMO jobs, PMO careers, project management roles and PMO contractor opportunities." />
         <meta name="keywords" content="PMO jobs, PMO careers, project management roles, PMO contractors" />
       </Head>
-        <main className="min-h-screen py-8" style={{ background: isCandidate ? 'transparent' : '#f9fafb' }}>
+      <main className="min-h-screen py-8" style={{ background: isCandidate ? 'transparent' : '#f9fafb' }}>
         <div className="max-w-7xl mx-auto px-4">
           <h1 className="text-3xl font-semibold mb-6">PMO Job Board</h1>
-          <form onSubmit={applyFilters} className="grid gap-4 md:grid-cols-6 mb-8 bg-white p-4 rounded-md border border-gray-200">
-            <input placeholder="Search role" value={filters.search} onChange={e=>setFilters(f=>({...f,search:e.target.value}))} className="rounded-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 md:col-span-2" />
-            <input placeholder="Location" value={filters.location} onChange={e=>setFilters(f=>({...f,location:e.target.value}))} className="rounded-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500" />
-            <input placeholder="Specialism" value={filters.specialism} onChange={e=>setFilters(f=>({...f,specialism:e.target.value}))} className="rounded-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500" />
-            <input placeholder="Seniority" value={filters.seniority} onChange={e=>setFilters(f=>({...f,seniority:e.target.value}))} className="rounded-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500" />
-            <select value={filters.employmentType} onChange={e=>setFilters(f=>({...f,employmentType:e.target.value}))} className="rounded-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500">
-              <option value="">Type</option>
-              <option value="contract">Contract</option>
-              <option value="full-time">Full-Time</option>
-              <option value="part-time">Part-Time</option>
-              <option value="temporary">Temporary</option>
-              <option value="internship">Internship</option>
-              <option value="fractional">Fractional</option>
-            </select>
-            <label className="flex items-center text-sm text-gray-700">
-              <input type="checkbox" checked={filters.remote} onChange={e=>setFilters(f=>({...f,remote:e.target.checked}))} className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
-              <span className="ml-2">Remote</span>
-            </label>
-            <div className="md:col-span-6 flex gap-3">
-              <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Apply Filters</button>
-              <button type="button" onClick={()=>{setFilters({search:'',location:'',employmentType:'',specialism:'',seniority:'',remote:false}); load(1,true);}} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">Reset</button>
-            </div>
-          </form>
+          
+          <AdvancedJobFilters filters={filters} setFilters={setFilters} onSearch={() => load(1, true)} />
           <div className="grid gap-4">
             {jobs.map(job => (
               <article key={job.id} className={`bg-white border rounded-md p-5 shadow-sm hover:shadow-md transition relative ${job.isFeatured ? 'ring-2 ring-indigo-300' : ''}`}>
@@ -133,7 +162,13 @@ export default function JobBoardPage({ initial, isCandidate, isEmployer }) {
                   <Link href={`/jobs/${job.id}`} className="hover:text-indigo-600">{job.title}</Link>
                 </h2>
                 <p className="text-sm text-gray-600 mb-1">{job.employer?.companyName || 'Company'} • {job.location || (job.isRemote ? 'Remote' : 'Location TBC')}</p>
-                <p className="text-sm text-gray-600 mb-2">{job.employmentType} {job.isRemote && '· Remote'} {job.salaryMin ? `· ${job.currency || 'GBP'} ${job.salaryMin}${job.salaryMax?'-'+job.salaryMax:''}` : ''}</p>
+                <div className="text-sm text-gray-600 mb-2 flex flex-wrap gap-2">
+                  {job.employmentType && <span>{job.employmentType}</span>}
+                  {job.seniority && <span>•</span>}
+                  {job.seniority && <span>{job.seniority}</span>}
+                  {job.salaryMin && <span>•</span>}
+                  {job.salaryMin && <span>{job.currency || 'GBP'} {job.salaryMin}{job.salaryMax ? '-' + job.salaryMax : ''}</span>}
+                </div>
                 <p className="text-gray-700 mb-4">{job.shortDescription || 'PMO role – description coming soon.'}</p>
                 <div className="flex items-center gap-3">
                   <Link href={`/jobs/${job.id}`} className="text-sm text-indigo-600 hover:underline">View Details</Link>

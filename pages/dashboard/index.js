@@ -6,12 +6,14 @@ export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN', 'SUPPORT_MANAGER', 'SUPPORT_AGENT'];
+
   useEffect(() => {
     if (status === 'loading') return;
     if (!session) router.replace('/auth/login');
-    else if (session.user.role === 'CANDIDATE') router.replace('/dashboard/candidate');
-    else if (session.user.role === 'EMPLOYER') router.replace('/dashboard/employer');
-    else if (session.user.role === 'ADMIN') router.replace('/dashboard/admin');
+    else if (ADMIN_ROLES.includes((session.user.role || '').toUpperCase())) router.replace('/dashboard/admin');
+    else if ((session.user.role || '').toUpperCase() === 'EMPLOYER') router.replace('/dashboard/employer');
+    else router.replace('/dashboard/candidate');
   }, [session, status, router]);
 
   return <div>Redirecting...</div>;

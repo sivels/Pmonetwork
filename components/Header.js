@@ -3,6 +3,22 @@ import { useRouter } from 'next/router';
 import { useState, useEffect, useRef } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 
+const SUPPORT_ROLES = ['SUPER_ADMIN', 'ADMIN', 'SUPPORT_MANAGER', 'SUPPORT_AGENT'];
+
+function getDashboardHref(role) {
+  const normalizedRole = (role || '').toUpperCase();
+
+  if (SUPPORT_ROLES.includes(normalizedRole)) {
+    return '/dashboard/admin';
+  }
+
+  if (normalizedRole === 'EMPLOYER') {
+    return '/dashboard/employer';
+  }
+
+  return '/dashboard/candidate';
+}
+
 export default function Header() {
   const router = useRouter();
   const path = router?.pathname || '/';
@@ -43,7 +59,7 @@ export default function Header() {
       <div className="header-actions">
         {isHome ? (
           status === 'authenticated' ? (
-            <Link href={session.user.role?.toLowerCase() === 'employer' ? '/dashboard/employer' : '/dashboard/candidate'} className="header-sign-in-btn">Dashboard</Link>
+            <Link href={getDashboardHref(session.user.role)} className="header-sign-in-btn">Dashboard</Link>
           ) : (
             <Link href="/auth/login" className="header-sign-in-btn">Sign In</Link>
           )
@@ -86,7 +102,7 @@ export default function Header() {
         {status === 'authenticated' && (
           <ul className="nav-list auth-list">
             <li>
-              <Link href={session.user.role?.toLowerCase() === 'employer' ? '/dashboard/employer' : '/dashboard/candidate'}>Dashboard</Link>
+              <Link href={getDashboardHref(session.user.role)}>Dashboard</Link>
             </li>
             <li>
               <button type="button" onClick={()=>signOut({ callbackUrl: '/' })} className="logout-btn">Logout</button>

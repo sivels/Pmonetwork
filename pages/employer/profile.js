@@ -10,7 +10,7 @@ export async function getServerSideProps(ctx) {
   const session = await getServerSession(ctx.req, ctx.res, authOptions);
   if (!session) return { redirect: { destination: '/auth/login', permanent: false } };
   if ((session.user.role || '').toLowerCase() !== 'employer') {
-    return { redirect: { destination: '/dashboard/candidate', permanent: false } };
+    return { redirect: { destination: '/dashboard', permanent: false } };
   }
   
   const user = await prisma.user.findUnique({

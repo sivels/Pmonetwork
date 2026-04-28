@@ -4,6 +4,7 @@ import { authOptions } from '../api/auth/[...nextauth]';
 import { prisma } from '../../lib/prisma';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 
 export async function getServerSideProps(ctx) {
   const session = await getServerSession(ctx.req, ctx.res, authOptions);
@@ -11,7 +12,7 @@ export async function getServerSideProps(ctx) {
     return { redirect: { destination: '/auth/login', permanent: false } };
   }
   if ((session.user.role || '').toLowerCase() !== 'candidate') {
-    return { redirect: { destination: '/dashboard/employer', permanent: false } };
+    return { redirect: { destination: '/dashboard', permanent: false } };
   }
   
   const user = await prisma.user.findUnique({
@@ -1277,21 +1278,55 @@ function ConnectedAccounts({ accounts, onSave }) {
 
 // Account Management Component
 function AccountManagement({ user, onSave }) {
+  const router = useRouter();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [requestingData, setRequestingData] = useState(false);
+
+  const handleRequestData = async () => {
+    setRequestingData(true);
+    try {
+      const response = await fetch('/api/candidate/support-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: 'DATA_REQUEST',
+          subject: 'Data Request: Candidate Account Export',
+          message:
+            `Hello PMO Support,\n\nI would like to request a copy of my account data for my candidate profile (${user.email}).\n\nPlease process this GDPR data request and let me know when it is ready.\n\nThank you.`
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        onSave('Data request submitted to support. We will contact you when your export is ready.');
+        if (data?.ticket?.id) {
+          router.push(`/dashboard/support?ticketId=${encodeURIComponent(data.ticket.id)}`);
+        } else {
+          router.push('/dashboard/support');
+        }
+      } else {
+        onSave('Failed to submit data request. Please try again.');
+      }
+    } catch (error) {
+      onSave('Error submitting data request. Please try again.');
+    } finally {
+      setRequestingData(false);
+    }
+  };
 
   return (
     <div className="section-content">
       <h2 className="section-title">Account Management</h2>
       <p className="section-description">Manage your account data and preferences</p>
 
-      {/* Data Export */}
+      {/* Data Request */}
       <div className="management-card">
         <div className="card-content">
-          <h3 className="card-title">Download Your Data</h3>
-          <p className="card-description">Request a copy of all your account data (GDPR compliant)</p>
+          <h3 className="card-title">Request Your Data</h3>
+          <p className="card-description">Submit a GDPR data request to support and receive your account export securely</p>
         </div>
-        <button className="btn secondary">
-          Download Data
+        <button className="btn secondary" onClick={handleRequestData} disabled={requestingData}>
+          {requestingData ? 'Submitting...' : 'Request Data'}
         </button>
       </div>
 

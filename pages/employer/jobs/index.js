@@ -42,8 +42,12 @@ export default function EmployerJobs() {
     });
   };
 
-  const handleDeleteDraft = async (jobId) => {
-    if (!confirm('Are you sure you want to delete this draft?')) return;
+  const handleDeleteJob = async (jobId, isDraft = false) => {
+    const prompt = isDraft
+      ? 'Are you sure you want to delete this draft?'
+      : 'Are you sure you want to delete this job post? This action cannot be undone.';
+
+    if (!confirm(prompt)) return;
     
     try {
       const response = await fetch(`/api/employer/jobs/${jobId}`, {
@@ -53,11 +57,11 @@ export default function EmployerJobs() {
       if (response.ok) {
         setJobs(jobs.filter(j => j.id !== jobId));
       } else {
-        alert('Failed to delete draft');
+        alert('Failed to delete job');
       }
     } catch (error) {
-      console.error('Error deleting draft:', error);
-      alert('Error deleting draft');
+      console.error('Error deleting job:', error);
+      alert('Error deleting job');
     }
   };
 
@@ -131,13 +135,11 @@ export default function EmployerJobs() {
                   <Link href={`/employer/post-job?jobId=${job.id}`} className="btn ghost">
                     {(job.isDraft || false) ? 'Continue Editing' : 'Edit'}
                   </Link>
-                  {(job.isDraft || false) && (
-                    <button onClick={() => handleDeleteDraft(job.id)} className="btn delete">
-                      Delete Draft
-                    </button>
-                  )}
+                  <button onClick={() => handleDeleteJob(job.id, job.isDraft || false)} className="btn delete">
+                    {(job.isDraft || false) ? 'Delete Draft' : 'Delete Job'}
+                  </button>
                   {!(job.isDraft || false) && !job.paused && (
-                    <Link href="/employer/applicants" className="btn">
+                    <Link href={`/employer/jobs/${job.id}/applications`} className="btn">
                       View Applicants
                     </Link>
                   )}

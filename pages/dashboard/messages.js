@@ -11,7 +11,7 @@ export async function getServerSideProps(ctx) {
     return { redirect: { destination: '/auth/login', permanent: false } };
   }
   if ((session.user.role || '').toLowerCase() !== 'candidate') {
-    return { redirect: { destination: '/dashboard/employer', permanent: false } };
+    return { redirect: { destination: '/dashboard', permanent: false } };
   }
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
@@ -76,7 +76,7 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
   const moreOptionsRef = useRef(null);
 
   const filters = [
-    { id: 'all', label: 'All Messages' },
+    { id: 'all', label: 'All' },
     { id: 'unread', label: 'Unread' },
     { id: 'companies', label: 'Companies' },
     { id: 'archived', label: 'Archived' }
@@ -468,12 +468,16 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
 
       <style jsx>{`
         .messages-container {
-          max-width: 1400px;
-          margin: 0 auto;
+          width: 100%;
+          max-width: 100%;
+          margin: 0;
           padding: 0;
-          height: calc(100vh - 120px);
+          min-height: calc(100dvh - 64px);
+          height: calc(100dvh - 64px);
           display: flex;
           flex-direction: column;
+          overflow: hidden;
+          background: #fafbfc;
         }
 
         .messages-header {
@@ -506,7 +510,7 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
 
         .messages-layout {
           display: grid;
-          grid-template-columns: 380px 1fr;
+          grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
           flex: 1;
           overflow: hidden;
           background: #fafbfc;
@@ -521,25 +525,29 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
         }
 
         .filter-tabs {
-          display: flex;
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 0.5rem;
           padding: 1rem;
           background: #fafbfc;
           border-bottom: 2px solid #f1f5f9;
-          overflow-x: auto;
+          overflow: hidden;
         }
 
         .filter-btn {
-          padding: 0.5rem 1rem;
+          min-width: 0;
+          padding: 0.45rem 0.5rem;
           background: white;
           border: 2px solid #e5e7eb;
           border-radius: 8px;
-          font-size: 0.875rem;
+          font-size: 0.8rem;
           font-weight: 500;
           color: #6b7280;
           cursor: pointer;
           transition: all 0.2s;
           white-space: nowrap;
+          text-overflow: ellipsis;
+          overflow: hidden;
         }
 
         .filter-btn:hover {
@@ -824,6 +832,7 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
           display: flex;
           flex-direction: column;
           gap: 1rem;
+          min-height: 0;
         }
 
         .message-bubble {
@@ -925,14 +934,44 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
         }
 
         @media (max-width: 1024px) {
+          .messages-container {
+            min-height: calc(100dvh - 64px);
+            height: calc(100dvh - 64px);
+          }
+
+          .messages-header {
+            padding: 1.25rem 1.25rem;
+          }
+
           .messages-layout {
-            grid-template-columns: 320px 1fr;
+            grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
           }
         }
 
         @media (max-width: 768px) {
+          .messages-container {
+            min-height: calc(100dvh - 64px);
+            height: calc(100dvh - 64px);
+          }
+
+          .messages-header {
+            padding: 1rem;
+          }
+
+          .messages-header h1 {
+            font-size: 1.5rem;
+          }
+
           .messages-layout {
             grid-template-columns: 1fr;
+          }
+
+          .filter-tabs,
+          .chat-header,
+          .message-composer,
+          .messages-thread {
+            padding-left: 1rem;
+            padding-right: 1rem;
           }
 
           .conversations-sidebar {

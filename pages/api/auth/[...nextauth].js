@@ -55,23 +55,114 @@ export const authOptions = {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' }
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
+        const email = credentials?.email?.trim().toLowerCase();
+        const ipAddress = req?.headers?.['x-forwarded-for']?.toString().split(',')[0]?.trim() || req?.socket?.remoteAddress || null;
+        const userAgent = req?.headers?.['user-agent'] || null;
+
         if (!credentials?.email || !credentials?.password) {
-          console.log('No credentials provided');
+          if (email) {
+            await prisma.loginAttempt.create({
+              data: {
+                email,
+                ipAddress,
+                userAgent,
+                success: false,
+                reason: 'MISSING_CREDENTIALS',
+              },
+            }).catch(() => {});
+          }
           return null;
         }
-        const user = await prisma.user.findUnique({ where: { email: credentials.email } });
+
+        const user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
-          console.log('No user found for email:', credentials.email);
+          await prisma.loginAttempt.create({
+            data: {
+              email,
+              ipAddress,
+              userAgent,
+              success: false,
+              reason: 'USER_NOT_FOUND',
+            },
+          }).catch(() => {});
           return null;
         }
-        console.log('User found:', user.email, 'Password hash:', user.password);
+
+        if (user.isSuspended || user.accountStatus === 'SUSPENDED') {
+          await prisma.loginAttempt.create({
+            data: {
+              userId: user.id,
+              email: user.email,
+              ipAddress,
+              userAgent,
+              success: false,
+              reason: 'ACCOUNT_SUSPENDED',
+            },
+          }).catch(() => {});
+          return null;
+        }
+
+        if (user.isLocked || user.accountStatus === 'LOCKED' || user.accountStatus === 'DEACTIVATED') {
+          await prisma.loginAttempt.create({
+            data: {
+              userId: user.id,
+              email: user.email,
+              ipAddress,
+              userAgent,
+              success: false,
+              reason: user.accountStatus === 'DEACTIVATED' ? 'ACCOUNT_DEACTIVATED' : 'ACCOUNT_LOCKED',
+            },
+          }).catch(() => {});
+          return null;
+        }
+
         const valid = await bcrypt.compare(credentials.password, user.password);
-        console.log('Password comparison result:', valid, 'Input password:', credentials.password);
         if (!valid) {
-          console.log('Invalid password for user:', credentials.email);
+          const nextFailedAttempts = (user.failedLoginAttempts || 0) + 1;
+          const shouldLock = nextFailedAttempts >= 5;
+
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              failedLoginAttempts: nextFailedAttempts,
+              isLocked: shouldLock,
+              accountStatus: shouldLock ? 'LOCKED' : user.accountStatus,
+            },
+          }).catch(() => {});
+
+          await prisma.loginAttempt.create({
+            data: {
+              userId: user.id,
+              email: user.email,
+              ipAddress,
+              userAgent,
+              success: false,
+              reason: shouldLock ? 'INVALID_PASSWORD_LOCKED' : 'INVALID_PASSWORD',
+            },
+          }).catch(() => {});
           return null;
         }
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            failedLoginAttempts: 0,
+            lastLoginAt: new Date(),
+          },
+        }).catch(() => {});
+
+        await prisma.loginAttempt.create({
+          data: {
+            userId: user.id,
+            email: user.email,
+            ipAddress,
+            userAgent,
+            success: true,
+            reason: 'LOGIN_SUCCESS',
+          },
+        }).catch(() => {});
+
         return { id: user.id, email: user.email, role: user.role };
       }
     }),
@@ -169,48 +260,57 @@ export const authOptions = {
       if (user) {
         token.role = user.role || token.role;
         token.id = user.id;
-      } else if (token.email && !token.role) {
-        try {
-          const dbUser = await prisma.user.findUnique({ where: { email: token.email } });
-          if (dbUser) {
-            token.role = dbUser.role;
-            token.id = dbUser.id;
-          }
-        } catch (error) {
-          console.error('Error fetching user in jwt callback:', error);
-        }
       }
-      // Mark onboarding needed if user lacks candidate/employer profile
+      // Always refresh role + profile data from DB on every token refresh
       if (token.email) {
         try {
           const dbUser = await prisma.user.findUnique({ 
             where: { email: token.email }, 
             include: { 
               candidateCandidateProfile: true, 
-              employerEmployerProfile: true 
+              employerEmployerProfile: true,
+              employerTeamMemberships: {
+                where: { status: 'ACTIVE' },
+                include: { employer: true },
+                take: 1,
+              },
             } 
           });
-          token.onboardingNeeded = dbUser && !dbUser.candidateCandidateProfile && !dbUser.employerEmployerProfile;
-          
-          // Add employer profile data to token
-          if (dbUser?.employerEmployerProfile) {
-            token.companyName = dbUser.employerEmployerProfile.companyName;
-            token.companyLogoUrl = dbUser.employerEmployerProfile.logoUrl;
+          if (dbUser) {
+            // Always keep role and id fresh from DB
+            token.role = dbUser.role;
+            token.id = dbUser.id;
+            const hasActiveEmployerTeam = Boolean(dbUser.employerTeamMemberships?.[0]?.employer);
+            token.onboardingNeeded = !dbUser.candidateCandidateProfile && !dbUser.employerEmployerProfile && !hasActiveEmployerTeam;
+            if (dbUser.employerEmployerProfile) {
+              token.companyName = dbUser.employerEmployerProfile.companyName;
+              token.companyLogoUrl = dbUser.employerEmployerProfile.logoUrl;
+              token.employerTeamRole = 'OWNER';
+            } else if (dbUser.employerTeamMemberships?.[0]?.employer) {
+              token.companyName = dbUser.employerTeamMemberships[0].employer.companyName;
+              token.companyLogoUrl = dbUser.employerTeamMemberships[0].employer.logoUrl;
+              token.employerTeamRole = dbUser.employerTeamMemberships[0].role || 'RECRUITER';
+            } else {
+              token.companyName = null;
+              token.companyLogoUrl = null;
+              token.employerTeamRole = null;
+            }
           }
         } catch (error) {
-          console.error('Error fetching user profile in jwt callback:', error);
+          console.error('Error fetching user in jwt callback:', error);
         }
       }
       return token;
     },
     async session({ session, token }) {
-      if (token?.role) session.user.role = token.role;
+      session.user.role = token.role || null;
       if (token?.id) session.user.id = token.id;
       session.user.onboardingNeeded = token.onboardingNeeded || false;
       
       // Add employer profile data to session
       if (token?.companyName) session.user.companyName = token.companyName;
       if (token?.companyLogoUrl) session.user.companyLogoUrl = token.companyLogoUrl;
+      if (token?.employerTeamRole) session.user.employerTeamRole = token.employerTeamRole;
       
       return session;
     },

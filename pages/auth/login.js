@@ -33,7 +33,7 @@ export default function Login() {
     setLoading(true);
     // Redirect directly to dashboard, skip onboarding
     const rt = returnTo || sessionStorage.getItem('pmo_returnTo') || '';
-    const callbackUrl = rt || `${window.location.origin}/dashboard/candidate`;
+    const callbackUrl = rt || `${window.location.origin}/dashboard`;
     try {
       const res = await signIn('credentials', { redirect: true, email, password, callbackUrl });
       // next-auth handles redirect; if error returned as string in URL we surface message
@@ -53,7 +53,7 @@ export default function Login() {
 
   const oauthSignIn = (provider) => {
     const rt = returnTo || sessionStorage.getItem('pmo_returnTo') || '';
-    const callbackUrl = rt || `${window.location.origin}/dashboard/candidate`;
+    const callbackUrl = rt || `${window.location.origin}/dashboard`;
     signIn(provider, { callbackUrl });
   };
 

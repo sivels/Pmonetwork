@@ -16,7 +16,7 @@ export default function SessionDebug() {
           <p><strong>Onboarding Needed:</strong> {String(session.user?.onboardingNeeded)}</p>
           <hr />
           <p><strong>Dashboard Link Would Be:</strong></p>
-          <p>{session.user?.role?.toLowerCase() === 'employer' ? '/dashboard/employer' : '/dashboard/candidate'}</p>
+          <p>{['SUPER_ADMIN','ADMIN','SUPPORT_MANAGER','SUPPORT_AGENT'].includes((session.user?.role||'').toUpperCase()) ? '/dashboard/admin' : (session.user?.role||'').toUpperCase() === 'EMPLOYER' ? '/dashboard/employer' : '/dashboard/candidate'}</p>
           <hr />
           <pre>{JSON.stringify(session, null, 2)}</pre>
         </>

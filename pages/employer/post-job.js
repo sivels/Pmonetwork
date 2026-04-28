@@ -11,15 +11,18 @@ export async function getServerSideProps(ctx) {
     return { redirect: { destination: '/employer-login', permanent: false } };
   }
   if ((session.user.role || '').toLowerCase() !== 'employer') {
-    return { redirect: { destination: '/dashboard/candidate', permanent: false } };
+    return { redirect: { destination: '/dashboard', permanent: false } };
   }
   return { props: {} };
 }
 
 export default function EmployerPostJob() {
   const router = useRouter();
+  const editJobId = typeof router.query.jobId === 'string' ? router.query.jobId : null;
+  const isEditMode = Boolean(editJobId);
   const [showPreview, setShowPreview] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingJob, setIsLoadingJob] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
   const [toast, setToast] = useState('');
   const autoSaveTimer = useRef(null);
@@ -120,10 +123,20 @@ export default function EmployerPostJob() {
   const saveDraft = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch('/api/employer/jobs/draft', {
-        method: 'POST',
+      const endpoint = isEditMode ? `/api/employer/jobs/${editJobId}` : '/api/employer/jobs/draft';
+      const method = isEditMode ? 'PUT' : 'POST';
+
+      const res = await fetch(endpoint, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(
+          isEditMode
+            ? formData
+            : {
+                ...formData,
+                jobId: undefined,
+              }
+        )
       });
       if (res.ok) setLastSaved(new Date());
     } catch (error) {
@@ -132,6 +145,53 @@ export default function EmployerPostJob() {
       setIsSaving(false);
     }
   };
+
+  useEffect(() => {
+    if (!router.isReady || !editJobId) return;
+
+    const loadJobForEdit = async () => {
+      setIsLoadingJob(true);
+      try {
+        const res = await fetch(`/api/employer/jobs/${editJobId}`);
+        if (!res.ok) {
+          showToast('Could not load existing job details');
+          return;
+        }
+
+        const payload = await res.json();
+        const job = payload?.job;
+        if (!job) return;
+
+        const locationParts = (job.location || '')
+          .split(',')
+          .map((part) => part.trim())
+          .filter(Boolean);
+
+        setFormData((prev) => ({
+          ...prev,
+          jobTitle: job.title || '',
+          department: job.specialism || '',
+          seniorityLevel: job.seniority || '',
+          employmentType: job.employmentType || '',
+          workArrangement: job.isRemote ? 'Remote' : prev.workArrangement,
+          country: locationParts.length > 1 ? locationParts.slice(1).join(', ') : '',
+          city: locationParts[0] || '',
+          salaryMin: job.salaryMin ?? '',
+          salaryMax: job.salaryMax ?? '',
+          jobSummary: job.description || '',
+          responsibilities: job.shortDescription || '',
+          currency: job.currency || 'GBP',
+        }));
+      } catch (error) {
+        console.error('Failed to load job for edit:', error);
+        showToast('Error loading job details');
+      } finally {
+        setIsLoadingJob(false);
+      }
+    };
+
+    loadJobForEdit();
+  }, [router.isReady, editJobId]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -163,19 +223,22 @@ export default function EmployerPostJob() {
     }
     setIsSaving(true);
     try {
-      const res = await fetch('/api/employer/jobs', {
-        method: 'POST',
+      const endpoint = isEditMode ? `/api/employer/jobs/${editJobId}` : '/api/employer/jobs';
+      const method = isEditMode ? 'PUT' : 'POST';
+
+      const res = await fetch(endpoint, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, status: 'published' })
       });
       if (res.ok) {
-        showToast('Job posted successfully!');
+        showToast(isEditMode ? 'Job updated successfully!' : 'Job posted successfully!');
         setTimeout(() => router.push('/employer/jobs'), 1500);
       } else {
-        showToast('Failed to publish job');
+        showToast(isEditMode ? 'Failed to update job' : 'Failed to publish job');
       }
     } catch (error) {
-      showToast('Error publishing job');
+      showToast(isEditMode ? 'Error updating job' : 'Error publishing job');
     } finally {
       setIsSaving(false);
     }
@@ -250,7 +313,7 @@ export default function EmployerPostJob() {
   return (
     <>
       <Head>
-        <title>Post a New Job – Employer Dashboard</title>
+        <title>{isEditMode ? 'Edit Job – Employer Dashboard' : 'Post a New Job – Employer Dashboard'}</title>
       </Head>
 
       <div className="post-job-page">
@@ -258,8 +321,9 @@ export default function EmployerPostJob() {
           <div className="header-content">
             <Link href="/employer/jobs" className="back-link">← Back to Jobs</Link>
             <div className="header-title">
-              <h1>Post a New Job</h1>
-              <p>Create a detailed job posting to attract top talent</p>
+              <h1>{isEditMode ? 'Edit Job Posting' : 'Post a New Job'}</h1>
+              <p>{isEditMode ? 'Update your existing job posting details' : 'Create a detailed job posting to attract top talent'}</p>
+              {isEditMode && isLoadingJob && <p>Loading existing job details...</p>}
             </div>
             <div className="save-status">
               {isSaving && <span className="saving">💾 Saving...</span>}
@@ -1046,9 +1110,9 @@ export default function EmployerPostJob() {
 
             {/* Sticky Footer */}
             <div className="sticky-footer">
-              <button type="button" onClick={saveDraft} className="secondary-btn" disabled={isSaving}>💾 Save Draft</button>
+              <button type="button" onClick={saveDraft} className="secondary-btn" disabled={isSaving}>{isEditMode ? '💾 Save Changes' : '💾 Save Draft'}</button>
               <button type="button" onClick={() => setShowPreview(!showPreview)} className="secondary-btn">👁️ Preview</button>
-              <button type="submit" className="primary-btn" disabled={isSaving}>🚀 Publish Job</button>
+              <button type="submit" className="primary-btn" disabled={isSaving}>{isEditMode ? '✅ Update Job' : '🚀 Publish Job'}</button>
             </div>
           </form>
         </div>

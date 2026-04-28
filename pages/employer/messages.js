@@ -10,7 +10,7 @@ export async function getServerSideProps(ctx) {
     return { redirect: { destination: '/auth/login', permanent: false } };
   }
   if ((session.user.role || '').toLowerCase() !== 'employer') {
-    return { redirect: { destination: '/dashboard/candidate', permanent: false } };
+    return { redirect: { destination: '/dashboard', permanent: false } };
   }
 
   // Get employer profile
@@ -56,7 +56,22 @@ export default function EmployerMessages({ conversations: initialConversations, 
   const [messageText, setMessageText] = useState('');
   const [conversations, setConversations] = useState(initialConversations);
   const [messages, setMessages] = useState([]);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showMenuDropdown, setShowMenuDropdown] = useState(false);
   const messagesEndRef = useRef(null);
+  const menuDropdownRef = useRef(null);
+
+  // Close menu dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuDropdownRef.current && !menuDropdownRef.current.contains(e.target)) {
+        setShowMenuDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -165,6 +180,54 @@ export default function EmployerMessages({ conversations: initialConversations, 
     }
   };
 
+  const handleArchiveConversation = async () => {
+    if (!selectedConversation) return;
+    try {
+      const res = await fetch(`/api/conversations/${selectedConversation.id}/archive`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employerId: employerProfile.id })
+      });
+
+      if (!res.ok) throw new Error('Failed to archive');
+
+      // Remove from conversations list
+      setConversations(conversations.filter(c => c.id !== selectedConversation.id));
+      setSelectedConversation(null);
+      setShowMenuDropdown(false);
+    } catch (error) {
+      console.error('Error archiving conversation:', error);
+      alert('Failed to archive conversation');
+    }
+  };
+
+  const handleReportCandidate = async () => {
+    if (!selectedConversation) return;
+    const reason = prompt('Please provide a reason for reporting this candidate:');
+    if (!reason) return;
+
+    try {
+      const res = await fetch('/api/reports/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reportedByEmployerId: employerProfile.id,
+          reportedCandidateId: selectedConversation.candidateId,
+          reason: reason,
+          type: 'CANDIDATE_BEHAVIOR'
+        })
+      });
+
+      if (!res.ok) throw new Error('Failed to report');
+
+      alert('Report submitted successfully');
+      setShowMenuDropdown(false);
+    } catch (error) {
+      console.error('Error reporting candidate:', error);
+      alert('Failed to submit report');
+    }
+  };
+
   return (
     <>
       <Head>
@@ -255,16 +318,57 @@ export default function EmployerMessages({ conversations: initialConversations, 
                     </div>
                   </div>
                   <div className="chat-actions">
-                    <button className="action-btn" title="View Profile">
+                    <button 
+                      className="action-btn" 
+                      title="View Profile"
+                      onClick={() => setShowProfileModal(true)}
+                    >
                       <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                     </button>
-                    <button className="action-btn" title="More Options">
-                      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                      </svg>
-                    </button>
+                    <div className="menu-wrapper" ref={menuDropdownRef}>
+                      <button 
+                        className="action-btn" 
+                        title="More Options"
+                        onClick={() => setShowMenuDropdown(!showMenuDropdown)}
+                      >
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                        </svg>
+                      </button>
+                      {showMenuDropdown && (
+                        <div className="action-menu">
+                          <button 
+                            className="menu-item"
+                            onClick={() => setShowInviteModal(true)}
+                          >
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m0 0h6" />
+                            </svg>
+                            Invite to Interview
+                          </button>
+                          <button 
+                            className="menu-item"
+                            onClick={handleArchiveConversation}
+                          >
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8" />
+                            </svg>
+                            Archive Conversation
+                          </button>
+                          <button 
+                            className="menu-item menu-item-danger"
+                            onClick={handleReportCandidate}
+                          >
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4v2m0 0v2m0-6h2m0 0h2" />
+                            </svg>
+                            Report Candidate
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -303,6 +407,173 @@ export default function EmployerMessages({ conversations: initialConversations, 
           </main>
         </div>
       </div>
+
+      {/* Profile Modal */}
+      {showProfileModal && selectedConversation && (
+        <div className="profile-modal-overlay" onClick={() => setShowProfileModal(false)}>
+          <div className="profile-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-modal-header">
+              <h2>Candidate Profile</h2>
+              <button className="close-btn" onClick={() => setShowProfileModal(false)}>×</button>
+            </div>
+            <div className="profile-modal-content">
+              <div className="profile-section">
+                <img 
+                  src={selectedConversation.candidate?.profilePhotoUrl || '/images/avatar-placeholder.svg'} 
+                  alt={selectedConversation.candidate?.fullName}
+                  className="profile-photo"
+                />
+                <h3>{selectedConversation.candidate?.fullName || 'Candidate'}</h3>
+                <p className="profile-title">{selectedConversation.candidate?.jobTitle || 'No title specified'}</p>
+              </div>
+
+              <div className="profile-details">
+                {selectedConversation.candidate?.summary && (
+                  <div className="detail-block">
+                    <h4>Summary</h4>
+                    <p>{selectedConversation.candidate.summary}</p>
+                  </div>
+                )}
+
+                {selectedConversation.candidate?.yearsExperience && (
+                  <div className="detail-block">
+                    <h4>Experience</h4>
+                    <p>{selectedConversation.candidate.yearsExperience} years</p>
+                  </div>
+                )}
+
+                {selectedConversation.candidate?.sector && (
+                  <div className="detail-block">
+                    <h4>Sector</h4>
+                    <p>{selectedConversation.candidate.sector}</p>
+                  </div>
+                )}
+
+                {selectedConversation.candidate?.location && (
+                  <div className="detail-block">
+                    <h4>Location</h4>
+                    <p>{selectedConversation.candidate.location}</p>
+                  </div>
+                )}
+
+                {selectedConversation.candidate?.remotePreference && (
+                  <div className="detail-block">
+                    <h4>Remote Preference</h4>
+                    <p>{selectedConversation.candidate.remotePreference}</p>
+                  </div>
+                )}
+
+                {selectedConversation.candidate?.dayRate && (
+                  <div className="detail-block">
+                    <h4>Day Rate</h4>
+                    <p>£{selectedConversation.candidate.dayRate.toLocaleString()}</p>
+                  </div>
+                )}
+
+                <div className="detail-block">
+                  <h4>Contact</h4>
+                  {selectedConversation.candidate?.email && <p>Email: {selectedConversation.candidate.email}</p>}
+                  {selectedConversation.candidate?.phone && <p>Phone: {selectedConversation.candidate.phone}</p>}
+                </div>
+
+                <div className="profile-links">
+                  {selectedConversation.candidate?.linkedinUrl && (
+                    <a href={selectedConversation.candidate.linkedinUrl} target="_blank" rel="noopener noreferrer" className="link-btn">LinkedIn</a>
+                  )}
+                  {selectedConversation.candidate?.portfolioUrl && (
+                    <a href={selectedConversation.candidate.portfolioUrl} target="_blank" rel="noopener noreferrer" className="link-btn">Portfolio</a>
+                  )}
+                  {selectedConversation.candidate?.cvUrl && (
+                    <a href={selectedConversation.candidate.cvUrl} target="_blank" rel="noopener noreferrer" className="link-btn">CV</a>
+                  )}
+                  {selectedConversation.candidate?.githubUrl && (
+                    <a href={selectedConversation.candidate.githubUrl} target="_blank" rel="noopener noreferrer" className="link-btn">GitHub</a>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invite to Interview Modal */}
+      {showInviteModal && selectedConversation && (
+        <div className="invite-modal-overlay" onClick={() => setShowInviteModal(false)}>
+          <div className="invite-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="invite-modal-header">
+              <h2>Invite to Interview</h2>
+              <button className="close-btn" onClick={() => setShowInviteModal(false)}>×</button>
+            </div>
+
+            <div className="invite-candidate-info">
+              <p><strong>Candidate:</strong> {selectedConversation.candidate?.fullName}</p>
+            </div>
+
+            <form className="invite-form" onSubmit={async (e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target);
+              
+              try {
+                const res = await fetch('/api/interviews/schedule-direct', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    conversationId: selectedConversation.id,
+                    candidateId: selectedConversation.candidateId,
+                    employerId: employerProfile.id,
+                    startTime: new Date(`${formData.get('date')}T${formData.get('time')}`).toISOString(),
+                    duration: parseInt(formData.get('duration') || 60),
+                    meetingUrl: formData.get('meetingUrl'),
+                    message: formData.get('message')
+                  })
+                });
+
+                if (!res.ok) {
+                  const error = await res.json();
+                  throw new Error(error.error || 'Failed to schedule interview');
+                }
+
+                alert('Interview scheduled successfully!');
+                setShowInviteModal(false);
+                setShowMenuDropdown(false);
+              } catch (error) {
+                console.error('Error scheduling interview:', error);
+                alert(error.message);
+              }
+            }}>
+              <div className="form-group">
+                <label htmlFor="date">Interview Date *</label>
+                <input type="date" id="date" name="date" required min={new Date().toISOString().split('T')[0]} />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="time">Interview Time *</label>
+                <input type="time" id="time" name="time" required />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="duration">Duration (minutes)</label>
+                <input type="number" id="duration" name="duration" defaultValue="60" min="15" step="15" />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="meetingUrl">Meeting URL</label>
+                <input type="url" id="meetingUrl" name="meetingUrl" placeholder="https://zoom.us/..." />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="message">Message to Candidate</label>
+                <textarea id="message" name="message" rows="4" placeholder="Invite message..." />
+              </div>
+
+              <div className="form-actions">
+                <button type="button" className="btn-cancel" onClick={() => setShowInviteModal(false)}>Cancel</button>
+                <button type="submit" className="btn-submit">Schedule Interview</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .messages-container {
@@ -359,25 +630,30 @@ export default function EmployerMessages({ conversations: initialConversations, 
         }
 
         .filter-tabs {
-          display: flex;
-          gap: 0.5rem;
-          padding: 1rem;
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 0.375rem;
+          padding: 0.875rem;
           background: #fafbfc;
           border-bottom: 2px solid #f1f5f9;
-          overflow-x: auto;
+          overflow: hidden;
         }
 
         .filter-btn {
-          padding: 0.5rem 1rem;
+          min-width: 0;
+          padding: 0.5rem 0.45rem;
           background: white;
-          border: 2px solid #e5e7eb;
+          border: 1px solid #d1d5db;
           border-radius: 8px;
-          font-size: 0.875rem;
+          font-size: 0.8rem;
           font-weight: 500;
           color: #6b7280;
           cursor: pointer;
           transition: all 0.2s;
           white-space: nowrap;
+          text-align: center;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .filter-btn:hover {
@@ -707,6 +983,336 @@ export default function EmployerMessages({ conversations: initialConversations, 
           cursor: not-allowed;
         }
 
+        /* Menu Dropdown Styles */
+        .menu-wrapper {
+          position: relative;
+        }
+
+        .action-menu {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          background: white;
+          border: 2px solid #e5e7eb;
+          border-radius: 8px;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+          z-index: 1000;
+          min-width: 180px;
+          margin-top: 0.5rem;
+        }
+
+        .menu-item {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          width: 100%;
+          padding: 0.75rem 1rem;
+          background: none;
+          border: none;
+          border-bottom: 1px solid #f3f4f6;
+          font-size: 0.875rem;
+          color: #374151;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-align: left;
+        }
+
+        .menu-item:last-child {
+          border-bottom: none;
+        }
+
+        .menu-item:hover {
+          background: #f9fafb;
+          color: #4f46e5;
+        }
+
+        .menu-item-danger:hover {
+          background: #fee2e2;
+          color: #dc2626;
+        }
+
+        .menu-item svg {
+          flex-shrink: 0;
+        }
+
+        /* Profile Modal Styles */
+        .profile-modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1001;
+        }
+
+        .profile-modal {
+          background: white;
+          border-radius: 12px;
+          max-width: 500px;
+          width: 90%;
+          max-height: 80vh;
+          overflow-y: auto;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1.5rem;
+          border-bottom: 2px solid #f3f4f6;
+        }
+
+        .profile-modal-header h2 {
+          margin: 0;
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: #111827;
+        }
+
+        .close-btn {
+          background: none;
+          border: none;
+          font-size: 1.5rem;
+          cursor: pointer;
+          color: #6b7280;
+          padding: 0;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+          color: #111827;
+          background: #f3f4f6;
+          border-radius: 6px;
+        }
+
+        .profile-modal-content {
+          padding: 2rem 1.5rem;
+        }
+
+        .profile-section {
+          text-align: center;
+          margin-bottom: 2rem;
+          padding-bottom: 2rem;
+          border-bottom: 2px solid #f3f4f6;
+        }
+
+        .profile-photo {
+          width: 100px;
+          height: 100px;
+          border-radius: 50%;
+          object-fit: cover;
+          margin-bottom: 1rem;
+          border: 3px solid #e5e7eb;
+        }
+
+        .profile-section h3 {
+          margin: 0 0 0.5rem;
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: #111827;
+        }
+
+        .profile-title {
+          margin: 0;
+          color: #6b7280;
+          font-size: 0.9375rem;
+        }
+
+        .profile-details {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+
+        .detail-block {
+          border-left: 3px solid #4f46e5;
+          padding-left: 1rem;
+        }
+
+        .detail-block h4 {
+          margin: 0 0 0.5rem;
+          font-size: 0.875rem;
+          font-weight: 700;
+          color: #4f46e5;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .detail-block p {
+          margin: 0;
+          font-size: 0.9375rem;
+          color: #374151;
+          line-height: 1.5;
+        }
+
+        .profile-links {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.75rem;
+          padding-top: 1.5rem;
+          border-top: 2px solid #f3f4f6;
+        }
+
+        .link-btn {
+          padding: 0.5rem 1rem;
+          background: #f3f4f6;
+          color: #4f46e5;
+          border: none;
+          border-radius: 6px;
+          font-size: 0.875rem;
+          font-weight: 500;
+          text-decoration: none;
+          cursor: pointer;
+          transition: all 0.2s;
+          display: inline-block;
+        }
+
+        .link-btn:hover {
+          background: #4f46e5;
+          color: white;
+        }
+
+        /* Invite Modal Styles */
+        .invite-modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1002;
+        }
+
+        .invite-modal {
+          background: white;
+          border-radius: 12px;
+          max-width: 450px;
+          width: 90%;
+          max-height: 90vh;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .invite-modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1.5rem;
+          border-bottom: 2px solid #f3f4f6;
+          flex-shrink: 0;
+        }
+
+        .invite-modal-header h2 {
+          margin: 0;
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: #111827;
+        }
+
+        .invite-candidate-info {
+          padding: 1rem 1.5rem;
+          background: #f9fafb;
+          border-bottom: 2px solid #f3f4f6;
+          flex-shrink: 0;
+        }
+
+        .invite-candidate-info p {
+          margin: 0;
+          font-size: 0.9375rem;
+          color: #374151;
+        }
+
+        .invite-form {
+          padding: 1.5rem;
+          display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
+          flex: 1;
+          overflow-y: auto;
+        }
+
+        .form-group {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .form-group label {
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: #374151;
+        }
+
+        .form-group input,
+        .form-group textarea {
+          padding: 0.75rem;
+          border: 2px solid #e5e7eb;
+          border-radius: 6px;
+          font-size: 0.9375rem;
+          font-family: inherit;
+          transition: all 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+          outline: none;
+          border-color: #4f46e5;
+          box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .form-actions {
+          display: flex;
+          gap: 1rem;
+          padding: 1.5rem;
+          border-top: 2px solid #f3f4f6;
+          background: white;
+          flex-shrink: 0;
+        }
+
+        .btn-cancel,
+        .btn-submit {
+          flex: 1;
+          padding: 0.75rem;
+          border: none;
+          border-radius: 6px;
+          font-size: 0.9375rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .btn-cancel {
+          background: #f3f4f6;
+          color: #374151;
+        }
+
+        .btn-cancel:hover {
+          background: #e5e7eb;
+        }
+
+        .btn-submit {
+          background: #4f46e5;
+          color: white;
+        }
+
+        .btn-submit:hover {
+          background: #4338ca;
+        }
+
         @media (max-width: 1024px) {
           .messages-layout {
             grid-template-columns: 320px 1fr;
@@ -716,6 +1322,10 @@ export default function EmployerMessages({ conversations: initialConversations, 
         @media (max-width: 768px) {
           .messages-layout {
             grid-template-columns: 1fr;
+          }
+
+          .filter-tabs {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
           .conversations-sidebar {
@@ -728,6 +1338,12 @@ export default function EmployerMessages({ conversations: initialConversations, 
 
           .message-bubble {
             max-width: 85%;
+          }
+
+          .profile-modal,
+          .invite-modal {
+            width: 95%;
+            max-height: 90vh;
           }
         }
       `}</style>

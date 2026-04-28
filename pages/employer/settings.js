@@ -2,6 +2,7 @@ import Head from 'next/head';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../api/auth/[...nextauth]';
 import { prisma } from '../../lib/prisma';
+import { resolveEmployerContext } from '../../lib/employerContext';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import GoogleAccountStatus from '../../components/GoogleAccountStatus';
@@ -13,24 +14,23 @@ export async function getServerSideProps(ctx) {
     return { redirect: { destination: '/employer-login', permanent: false } };
   }
   if ((session.user.role || '').toLowerCase() !== 'employer') {
-    return { redirect: { destination: '/dashboard/candidate', permanent: false } };
+    return { redirect: { destination: '/dashboard', permanent: false } };
   }
   
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    include: { 
-      employerEmployerProfile: true
-    }
-  });
+  const context = await resolveEmployerContext({ userId: session.user.id });
+  if (!context?.user) {
+    return { redirect: { destination: '/auth/login', permanent: false } };
+  }
 
-  const profile = user?.employerEmployerProfile || null;
+  const profile = context?.employerProfile || null;
 
   return { 
     props: { 
       user: {
-        id: user.id,
-        email: user.email,
-        createdAt: user.createdAt.toISOString()
+        id: context.user.id,
+        email: context.user.email,
+        createdAt: context.user.createdAt.toISOString(),
+        employerTeamRole: context.teamRole || 'OWNER',
       },
       profile: profile ? {
         id: profile.id,
@@ -47,6 +47,7 @@ export default function EmployerSettings({ user, profile }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('company');
   const [saving, setSaving] = useState(false);
+  const [requestingData, setRequestingData] = useState(false);
   const [toast, setToast] = useState('');
 
   // Check for tab query parameter on mount
@@ -106,6 +107,15 @@ export default function EmployerSettings({ user, profile }) {
     jobCredits: 5,
     aiCredits: 10
   });
+
+  const [teamInviteEmail, setTeamInviteEmail] = useState('');
+  const [teamInviteRole, setTeamInviteRole] = useState('RECRUITER');
+  const [teamLoading, setTeamLoading] = useState(false);
+  const [teamSubmitting, setTeamSubmitting] = useState(false);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [teamInvites, setTeamInvites] = useState([]);
+  const [teamCanManage, setTeamCanManage] = useState(false);
+  const [teamInviteLink, setTeamInviteLink] = useState('');
 
   const tabs = [
     { id: 'company', label: 'Company Information', icon: '🏢' },
@@ -212,6 +222,127 @@ export default function EmployerSettings({ user, profile }) {
       showToast('Error saving changes');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const loadTeam = async () => {
+    setTeamLoading(true);
+    try {
+      const res = await fetch('/api/employer/team');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load team');
+      setTeamMembers(data.members || []);
+      setTeamInvites(data.invites || []);
+      setTeamCanManage(Boolean(data.permissions?.canManage));
+    } catch (error) {
+      showToast(error.message || 'Failed to load team members');
+    } finally {
+      setTeamLoading(false);
+    }
+  };
+
+  const handleSendInvite = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!teamInviteEmail.trim()) {
+      showToast('Enter an email address');
+      return;
+    }
+
+    setTeamSubmitting(true);
+    setTeamInviteLink('');
+    try {
+      const res = await fetch('/api/employer/team', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: teamInviteEmail.trim(), role: teamInviteRole }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send invite');
+
+      if (data.activatedImmediately) {
+        showToast('Team member added successfully');
+      } else {
+        showToast('Team invite sent successfully');
+      }
+
+      if (data?.invite?.inviteUrl) {
+        setTeamInviteLink(data.invite.inviteUrl);
+      }
+
+      setTeamInviteEmail('');
+      await loadTeam();
+    } catch (error) {
+      showToast(error.message || 'Failed to send invite');
+    } finally {
+      setTeamSubmitting(false);
+    }
+  };
+
+  const handleUpdateTeamRole = async (memberId, nextRole) => {
+    try {
+      const res = await fetch(`/api/employer/team/${memberId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: nextRole }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update member role');
+      showToast('Member permissions updated');
+      await loadTeam();
+    } catch (error) {
+      showToast(error.message || 'Failed to update member role');
+    }
+  };
+
+  const handleRemoveTeamMember = async (memberId) => {
+    if (!confirm('Remove this team member from the company workspace?')) return;
+
+    try {
+      const res = await fetch(`/api/employer/team/${memberId}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Failed to remove team member');
+      showToast('Team member removed');
+      await loadTeam();
+    } catch (error) {
+      showToast(error.message || 'Failed to remove team member');
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'team') {
+      loadTeam();
+    }
+  }, [activeTab]);
+
+  const handleRequestCompanyData = async () => {
+    setRequestingData(true);
+    try {
+      const response = await fetch('/api/candidate/support-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: 'DATA_REQUEST',
+          subject: 'Data Request: Employer Account Export',
+          message:
+            `Hello PMO Support,\n\nI would like to request a copy of my employer/company account data (${user.email}).\n\nPlease process this GDPR data request and confirm when the export is ready.\n\nThank you.`
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        showToast('Data request submitted to support. We will notify you when it is ready.');
+        if (data?.ticket?.id) {
+          router.push(`/dashboard/support?ticketId=${encodeURIComponent(data.ticket.id)}`);
+        } else {
+          router.push('/dashboard/support');
+        }
+      } else {
+        showToast('Failed to submit data request');
+      }
+    } catch (error) {
+      showToast('Error submitting data request');
+    } finally {
+      setRequestingData(false);
     }
   };
 
@@ -709,23 +840,99 @@ export default function EmployerSettings({ user, profile }) {
                   <h2>Team Management</h2>
                   <p>Invite team members and manage permissions</p>
                 </div>
-                <div className="team-invite">
-                  <input type="email" placeholder="Enter email address" className="invite-input" />
-                  <button className="btn-primary">Send Invite</button>
-                </div>
-                <div className="team-list">
-                  <div className="team-member">
-                    <div className="member-info">
-                      <div className="member-avatar">JS</div>
-                      <div>
-                        <strong>John Smith</strong>
-                        <span className="member-email">john@company.com</span>
-                      </div>
-                    </div>
-                    <span className="member-role">Admin</span>
-                    <span className="member-status active">Active</span>
+
+                {/* Invite Form */}
+                <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '0.75rem', padding: '1.5rem', marginBottom: '2rem' }}>
+                  <p style={{ fontWeight: 600, fontSize: '0.95rem', color: '#374151', marginBottom: '0.75rem' }}>Invite a team member</p>
+                  <input
+                    type="email"
+                    placeholder="Email address"
+                    value={teamInviteEmail}
+                    onChange={(e) => setTeamInviteEmail(e.target.value)}
+                    disabled={!teamCanManage || teamSubmitting}
+                    style={{ display: 'block', width: '100%', padding: '0.75rem 1rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', fontSize: '0.95rem', color: '#111827', background: '#fff', boxSizing: 'border-box', marginBottom: '0.75rem' }}
+                  />
+                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                    <select
+                      value={teamInviteRole}
+                      onChange={(e) => setTeamInviteRole(e.target.value)}
+                      disabled={!teamCanManage || teamSubmitting}
+                      style={{ padding: '0.7rem 0.9rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', background: 'white', color: '#111827', fontSize: '0.875rem', width: '180px' }}
+                    >
+                      <option value="ADMIN">Admin</option>
+                      <option value="RECRUITER">Recruiter</option>
+                      <option value="VIEWER">Viewer</option>
+                    </select>
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      disabled={!teamCanManage || teamSubmitting}
+                      onClick={handleSendInvite}
+                    >
+                      {teamSubmitting ? 'Sending...' : 'Send Invite'}
+                    </button>
                   </div>
                 </div>
+
+                {teamInviteLink && (
+                  <div className="team-link-box">
+                    <strong>Invite Link:</strong>
+                    <a href={teamInviteLink} target="_blank" rel="noreferrer">{teamInviteLink}</a>
+                  </div>
+                )}
+
+                {teamLoading ? (
+                  <p className="muted">Loading team members...</p>
+                ) : (
+                  <>
+                    <div className="team-list">
+                      {teamMembers.map((member) => (
+                        <div className="team-member" key={member.id}>
+                          <div className="member-info">
+                            <div className="member-avatar">{(member.email || '?').slice(0, 2).toUpperCase()}</div>
+                            <div>
+                              <strong>{member.email}</strong>
+                              <span className="member-email">{member.isOwner ? 'Company Owner' : 'Team Member'}</span>
+                            </div>
+                          </div>
+                          {member.isOwner ? (
+                            <span className="member-role">OWNER</span>
+                          ) : (
+                            <select
+                              className="role-select"
+                              value={member.role}
+                              disabled={!teamCanManage}
+                              onChange={(e) => handleUpdateTeamRole(member.id, e.target.value)}
+                            >
+                              <option value="ADMIN">ADMIN</option>
+                              <option value="RECRUITER">RECRUITER</option>
+                              <option value="VIEWER">VIEWER</option>
+                            </select>
+                          )}
+                          <span className="member-status active">Active</span>
+                          {!member.isOwner && (
+                            <button className="btn-danger" type="button" disabled={!teamCanManage} onClick={() => handleRemoveTeamMember(member.id)}>
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {teamInvites.length > 0 && (
+                      <div className="pending-invites">
+                        <h3>Pending Invites</h3>
+                        {teamInvites.map((invite) => (
+                          <div className="invite-row" key={invite.id}>
+                            <span>{invite.email}</span>
+                            <span>{invite.role}</span>
+                            <span className="member-status pending">Pending</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
 
@@ -738,10 +945,12 @@ export default function EmployerSettings({ user, profile }) {
                 </div>
                 <div className="danger-card">
                   <div className="danger-info">
-                    <strong>Export Company Data</strong>
-                    <span>Download all your company data and applicant information</span>
+                    <strong>Request Company Data</strong>
+                    <span>Submit a support ticket to request your company and applicant data export</span>
                   </div>
-                  <button className="btn-secondary">Export Data</button>
+                  <button className="btn-secondary" onClick={handleRequestCompanyData} disabled={requestingData}>
+                    {requestingData ? 'Submitting...' : 'Request Data'}
+                  </button>
                 </div>
                 <div className="danger-card">
                   <div className="danger-info">
@@ -1171,15 +1380,74 @@ export default function EmployerSettings({ user, profile }) {
 
         .team-invite {
           display: flex;
-          gap: 1rem;
+          align-items: center;
+          flex-wrap: nowrap;
+          gap: 0.75rem;
           margin-bottom: 2rem;
+          width: 100%;
+          box-sizing: border-box;
         }
 
-        .invite-input {
-          flex: 1;
+        .team-invite .invite-input {
+          flex: 1 1 0%;
+          min-width: 0;
+          max-width: 100%;
           padding: 0.75rem 1rem;
           border: 1px solid #d1d5db;
           border-radius: 0.5rem;
+          font-size: 0.95rem;
+          color: #111827;
+          background: #fff;
+          box-sizing: border-box;
+        }
+
+        .team-invite .role-select {
+          flex: 0 0 160px;
+          width: 160px;
+          max-width: 160px;
+          min-width: 0;
+          box-sizing: border-box;
+        }
+
+        .team-invite .btn-primary {
+          flex: 0 0 auto;
+          white-space: nowrap;
+        }
+
+        .role-select {
+          padding: 0.7rem 0.9rem;
+          border: 1px solid #d1d5db;
+          border-radius: 0.5rem;
+          background: white;
+          color: #111827;
+          font-size: 0.875rem;
+          min-width: 140px;
+          box-sizing: border-box;
+        }
+
+        .team-invite > .role-select {
+          flex: 0 0 160px !important;
+          width: 160px !important;
+          max-width: 160px !important;
+          min-width: 0 !important;
+        }
+
+        .team-link-box {
+          background: #f0f9ff;
+          border: 1px solid #bae6fd;
+          border-radius: 0.5rem;
+          padding: 0.75rem 1rem;
+          margin-bottom: 1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+          font-size: 0.85rem;
+        }
+
+        .team-link-box a {
+          color: #1d4ed8;
+          text-decoration: underline;
+          word-break: break-all;
         }
 
         .team-list {
@@ -1240,6 +1508,44 @@ export default function EmployerSettings({ user, profile }) {
         .member-status.active {
           background: #d1fae5;
           color: #065f46;
+        }
+
+        .member-status.pending {
+          background: #fef3c7;
+          color: #92400e;
+        }
+
+        .pending-invites {
+          margin-top: 1rem;
+          padding: 1rem;
+          border: 1px dashed #d1d5db;
+          border-radius: 0.5rem;
+          background: #f9fafb;
+        }
+
+        .pending-invites h3 {
+          margin: 0 0 0.75rem 0;
+          font-size: 0.95rem;
+          color: #111827;
+        }
+
+        .invite-row {
+          display: grid;
+          grid-template-columns: 1fr auto auto;
+          gap: 0.75rem;
+          align-items: center;
+          padding: 0.5rem 0;
+          border-top: 1px solid #e5e7eb;
+          font-size: 0.875rem;
+        }
+
+        .invite-row:first-of-type {
+          border-top: none;
+        }
+
+        .muted {
+          color: #6b7280;
+          font-size: 0.875rem;
         }
 
         .danger-card {
@@ -1374,6 +1680,18 @@ export default function EmployerSettings({ user, profile }) {
         @media (max-width: 640px) {
           .form-row {
             grid-template-columns: 1fr;
+          }
+
+          .team-invite {
+            flex-wrap: wrap;
+          }
+
+          .team-invite .invite-input,
+          .team-invite .role-select,
+          .team-invite .btn-primary {
+            width: 100%;
+            min-width: 0;
+            flex: 1 1 100%;
           }
 
           .integration-card {

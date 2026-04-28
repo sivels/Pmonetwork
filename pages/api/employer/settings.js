@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { prisma } from '../../../lib/prisma';
+import { canManageEmployerTeam, resolveEmployerContext } from '../../../lib/employerContext';
 
 export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
@@ -12,56 +13,47 @@ export default async function handler(req, res) {
   if (req.method === 'PUT') {
     try {
       const { section, data } = req.body;
-      const user = await prisma.user.findUnique({
-        where: { email: session.user.email },
-        include: { employerEmployerProfile: true }
-      });
+      const context = await resolveEmployerContext({ userId: session.user.id });
 
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
+      if (!context?.user || !context?.employerProfile) {
+        return res.status(404).json({ error: 'Employer profile not found' });
       }
+
+      const canManage = canManageEmployerTeam(context);
 
       // Handle different sections
       if (section === 'company') {
-        // Update company information in employerProfile
-        if (user.employerEmployerProfile) {
-          await prisma.employerProfile.update({
-            where: { id: user.employerEmployerProfile.id },
-            data: {
-              companyName: data.companyName,
-              website: data.website,
-              // Add other fields as they're added to the schema
-            }
-          });
-        } else {
-          // Create profile if it doesn't exist
-          await prisma.employerProfile.create({
-            data: {
-              userId: user.id,
-              companyName: data.companyName,
-              website: data.website,
-            }
-          });
+        if (!canManage) {
+          return res.status(403).json({ error: 'Insufficient permissions to update company settings' });
         }
+
+        await prisma.employerProfile.update({
+          where: { id: context.employerProfile.id },
+          data: {
+            companyName: data.companyName,
+            website: data.website,
+          }
+        });
         return res.status(200).json({ message: 'Company information updated' });
       }
 
       if (section === 'contact') {
-        // Update contact details
-        if (user.employerEmployerProfile) {
-          await prisma.employerProfile.update({
-            where: { id: user.employerEmployerProfile.id },
-            data: {
-              contactName: data.primaryName,
-              phone: data.primaryPhone,
-            }
-          });
+        if (!canManage) {
+          return res.status(403).json({ error: 'Insufficient permissions to update contact settings' });
         }
+
+        await prisma.employerProfile.update({
+          where: { id: context.employerProfile.id },
+          data: {
+            contactName: data.primaryName,
+            phone: data.primaryPhone,
+          }
+        });
         
         // Update user email if changed
-        if (data.primaryEmail !== user.email) {
+        if (data.primaryEmail !== context.user.email) {
           await prisma.user.update({
-            where: { id: user.id },
+            where: { id: context.user.id },
             data: { email: data.primaryEmail }
           });
         }
