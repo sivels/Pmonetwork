@@ -38,6 +38,7 @@ export default async function handler(req, res) {
         specialism: jobData.department || jobData.specialism || null,
         salaryMin: parseFloat(jobData.salaryMin) || null,
         salaryMax: parseFloat(jobData.salaryMax) || null,
+        probationCompletionBonus: jobData.probationCompletionBonus?.toString().trim() || null,
         currency: jobData.currency || 'GBP',
         isFeatured: jobData.isFeatured || false,
         isUrgent: jobData.isUrgent || false,

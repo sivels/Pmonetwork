@@ -43,6 +43,7 @@ export default function EmployerPostJob() {
     salaryType: 'Annual',
     salaryMin: '',
     salaryMax: '',
+    probationCompletionBonus: '',
     salaryVisibility: 'show',
     hasBonus: false,
     hasCommission: false,
@@ -178,6 +179,7 @@ export default function EmployerPostJob() {
           city: locationParts[0] || '',
           salaryMin: job.salaryMin ?? '',
           salaryMax: job.salaryMax ?? '',
+          probationCompletionBonus: job.probationCompletionBonus || '',
           jobSummary: job.description || '',
           responsibilities: job.shortDescription || '',
           currency: job.currency || 'GBP',
@@ -568,6 +570,16 @@ export default function EmployerPostJob() {
                       <option value="hide">Hide salary</option>
                       <option value="application">Show only on application</option>
                     </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Probation Completion Bonus (£)</label>
+                    <input
+                      type="text"
+                      value={formData.probationCompletionBonus}
+                      onChange={(e) => updateField('probationCompletionBonus', e.target.value)}
+                      placeholder="e.g., 2000 after successful probation"
+                    />
                   </div>
 
                   <div className="form-group">
@@ -1084,6 +1096,7 @@ export default function EmployerPostJob() {
                         <span>📍 {formData.city || 'Location'}</span>
                         <span>💼 {formData.employmentType || 'Type'}</span>
                         {formData.salaryMin && formData.salaryMax && <span>💰 £{formData.salaryMin} - £{formData.salaryMax}</span>}
+                        {formData.probationCompletionBonus && <span>🎯 Bonus: {formData.probationCompletionBonus}</span>}
                       </div>
                       <p>{formData.jobSummary ? formData.jobSummary.substring(0, 200) + '...' : 'Job summary will appear here'}</p>
                       <div className="preview-skills">

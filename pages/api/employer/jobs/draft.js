@@ -30,6 +30,7 @@ export default async function handler(req, res) {
         shortDescription: draftData.jobSummary?.substring(0, 200) || null,
         salaryMin: draftData.salaryMin ? parseInt(draftData.salaryMin) : null,
         salaryMax: draftData.salaryMax ? parseInt(draftData.salaryMax) : null,
+        probationCompletionBonus: draftData.probationCompletionBonus?.toString().trim() || null,
         currency: draftData.currency || 'GBP',
         specialism: draftData.department || null,
         seniority: draftData.seniorityLevel || null,

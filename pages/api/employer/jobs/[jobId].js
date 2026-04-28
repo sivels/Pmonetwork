@@ -70,6 +70,7 @@ export default async function handler(req, res) {
           specialism: jobData.department || jobData.specialism || existing.specialism || null,
           salaryMin: jobData.salaryMin ? parseFloat(jobData.salaryMin) : null,
           salaryMax: jobData.salaryMax ? parseFloat(jobData.salaryMax) : null,
+          probationCompletionBonus: jobData.probationCompletionBonus?.toString().trim() || null,
           currency: jobData.currency || existing.currency || 'GBP',
           paused: typeof jobData.status === 'string' ? jobData.status === 'paused' : existing.paused,
         }

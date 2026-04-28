@@ -227,6 +227,12 @@ export default function JobDetailPage({ job, relatedJobs, isCandidate, isOwner, 
                               {formatSalary()}
                             </span>
                           )}
+                          {job.probationCompletionBonus && (
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-indigo-700">
+                              <Award className="h-4 w-4" />
+                              Probation bonus: {job.probationCompletionBonus}
+                            </span>
+                          )}
                           <span className="inline-flex items-center gap-1.5">
                             <Briefcase className="h-4 w-4 text-gray-400" />
                             {job.employmentType || 'Full-time'}
@@ -317,6 +323,17 @@ export default function JobDetailPage({ job, relatedJobs, isCandidate, isOwner, 
                       <div>
                         <p className="text-xs text-gray-500 font-medium">Salary</p>
                         <p className="text-sm font-semibold text-gray-900 mt-0.5">{formatSalary()}</p>
+                      </div>
+                    </div>
+                  )}
+                  {job.probationCompletionBonus && (
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-indigo-100 rounded-lg">
+                        <Award className="h-5 w-5 text-indigo-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium">Probation Bonus</p>
+                        <p className="text-sm font-semibold text-gray-900 mt-0.5">{job.probationCompletionBonus}</p>
                       </div>
                     </div>
                   )}

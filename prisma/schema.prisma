@@ -335,6 +335,7 @@ model Job {
   shortDescription String?
   salaryMin     Int?
   salaryMax     Int?
+  probationCompletionBonus String?
   currency      String?
   isFeatured    Boolean  @default(false)
   isUrgent      Boolean  @default(false)
