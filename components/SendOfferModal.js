@@ -1,7 +1,13 @@
 import { useState } from 'react';
 
-export default function SendOfferModal({ interview, onClose, onSuccess }) {
-  const [title, setTitle] = useState(`Offer for ${interview?.application?.job?.title || 'Role'}`);
+export default function SendOfferModal({ interview, application, onClose, onSuccess }) {
+  const sourceApplication = application || interview?.application || null;
+  const applicationId = application?.id || interview?.applicationId || null;
+  const interviewId = interview?.id || null;
+  const candidateName = application?.candidate?.fullName || interview?.candidate?.user?.fullName || interview?.candidate?.fullName || 'Candidate';
+  const roleTitle = sourceApplication?.job?.title || 'Role';
+
+  const [title, setTitle] = useState(`Offer for ${roleTitle}`);
   const [salary, setSalary] = useState('');
   const [startDate, setStartDate] = useState('');
   const [message, setMessage] = useState('');
@@ -17,8 +23,8 @@ export default function SendOfferModal({ interview, onClose, onSuccess }) {
     event.preventDefault();
     setError('');
 
-    if (!interview?.applicationId) {
-      setError('Missing application context for this interview.');
+    if (!applicationId) {
+      setError('Missing application context for this offer.');
       return;
     }
 
@@ -35,7 +41,7 @@ export default function SendOfferModal({ interview, onClose, onSuccess }) {
       for (const file of files) {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('applicationId', interview.applicationId);
+        formData.append('applicationId', applicationId);
 
         const uploadRes = await fetch('/api/offers/upload', {
           method: 'POST',
@@ -59,8 +65,8 @@ export default function SendOfferModal({ interview, onClose, onSuccess }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          applicationId: interview.applicationId,
-          interviewId: interview.id,
+          applicationId,
+          interviewId,
           title: title.trim(),
           salary: salary.trim() || null,
           startDate: startDate || null,
@@ -96,9 +102,9 @@ export default function SendOfferModal({ interview, onClose, onSuccess }) {
         </div>
 
         <p className="modal-subtitle">
-          Candidate: <strong>{interview?.candidate?.user?.fullName || 'Candidate'}</strong>
+          Candidate: <strong>{candidateName}</strong>
           {' · '}
-          Role: <strong>{interview?.application?.job?.title || 'Job'}</strong>
+          Role: <strong>{roleTitle || 'Job'}</strong>
         </p>
 
         <form onSubmit={handleSubmit} className="offer-form">

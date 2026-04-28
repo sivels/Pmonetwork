@@ -2,7 +2,7 @@ import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ApplicationRow } from "./types";
 import { StatusBadge } from "./StatusBadge";
-import { User, Mail, FileText, Star, ThumbsDown, MessageSquare, Search, Calendar } from "lucide-react";
+import { User, FileText, Star, ThumbsDown, MessageSquare, Search, Calendar } from "lucide-react";
 import { supabaseBrowser } from "../../lib/supabaseBrowser";
 
 function CandidateCell({ row }: { row: ApplicationRow }) {
@@ -20,7 +20,7 @@ function CandidateCell({ row }: { row: ApplicationRow }) {
 
 function ActionsCell({ row, onOpenDetails, onAction }: { row: ApplicationRow; onOpenDetails: (id: string) => void; onAction: (id: string, action: string) => void }) {
   return (
-    <div className="flex flex-wrap items-center gap-1">
+    <div className="grid grid-cols-2 gap-1">
       <button className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-gray-50" onClick={() => onAction(row.id, "INTERVIEW")}>
         <Calendar className="h-3 w-3" /> Interview
       </button>
@@ -29,6 +29,9 @@ function ActionsCell({ row, onOpenDetails, onAction }: { row: ApplicationRow; on
       </button>
       <button className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-gray-50" onClick={() => onAction(row.id, "REJECTED")}>
         <ThumbsDown className="h-3 w-3" /> Reject
+      </button>
+      <button className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-gray-50" onClick={() => onAction(row.id, "OFFER")}>
+        <FileText className="h-3 w-3" /> Send Offer
       </button>
       <button className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-gray-50" onClick={() => onOpenDetails(row.id)}>
         <User className="h-3 w-3" /> View
