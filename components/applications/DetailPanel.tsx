@@ -3,11 +3,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { X, Mail, MessageSquare, FileText, Users, CheckCircle, ChevronLeft, Calendar } from "lucide-react";
 import { useEffect, useState } from "react";
+import SendOfferModal from "../SendOfferModal";
 
 export function DetailPanel({ applicationId, onClose }: { applicationId: string | null; onClose: () => void }) {
   const qc = useQueryClient();
   const [messageText, setMessageText] = useState("");
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [offerModalOpen, setOfferModalOpen] = useState(false);
   const { data, isLoading } = useQuery({
     queryKey: ["application", applicationId],
     queryFn: async () => {
@@ -247,11 +249,29 @@ export function DetailPanel({ applicationId, onClose }: { applicationId: string 
                 <Calendar className="h-4 w-4"/> {hasInterview ? 'Interview Scheduled' : 'Schedule Interview'}
               </button>
               <button onClick={() => changeStatus.mutate("REJECTED")} className="inline-flex items-center gap-1 rounded-md bg-red-600 px-3 py-2 text-sm text-white hover:bg-red-700">Reject</button>
+              <button
+                onClick={() => setOfferModalOpen(true)}
+                className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-3 py-2 text-sm text-white hover:bg-indigo-700"
+              >
+                <FileText className="h-4 w-4"/> Send Offer
+              </button>
               <button className="ml-auto inline-flex items-center gap-1 rounded-md border px-3 py-2 text-sm"><MessageSquare className="h-4 w-4"/> Message</button>
               <button className="inline-flex items-center gap-1 rounded-md border px-3 py-2 text-sm"><Mail className="h-4 w-4"/> Email</button>
             </div>
           </div>
         </div>
+      )}
+
+      {offerModalOpen && data && (
+        <SendOfferModal
+          application={data}
+          onClose={() => setOfferModalOpen(false)}
+          onSuccess={() => {
+            setOfferModalOpen(false);
+            qc.invalidateQueries({ queryKey: ["application", applicationId] });
+            qc.invalidateQueries({ queryKey: ["applications"] });
+          }}
+        />
       )}
     </div>
     </>

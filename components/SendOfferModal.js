@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function SendOfferModal({ interview, application, onClose, onSuccess }) {
+export default function SendOfferModal({ interview = null, application = null, onClose, onSuccess }) {
   const sourceApplication = application || interview?.application || null;
   const applicationId = application?.id || interview?.applicationId || null;
   const interviewId = interview?.id || null;
