@@ -9,6 +9,7 @@ export default function SendOfferModal({ interview = null, application = null, o
 
   const [title, setTitle] = useState(`Offer for ${roleTitle}`);
   const [salary, setSalary] = useState('');
+  const [probationCompletionBonus, setProbationCompletionBonus] = useState('');
   const [startDate, setStartDate] = useState('');
   const [message, setMessage] = useState('');
   const [files, setFiles] = useState([]);
@@ -69,6 +70,7 @@ export default function SendOfferModal({ interview = null, application = null, o
           interviewId,
           title: title.trim(),
           salary: salary.trim() || null,
+          probationCompletionBonus: probationCompletionBonus.trim() || null,
           startDate: startDate || null,
           message: message.trim() || null,
           attachments: uploadedAttachments,
@@ -127,6 +129,17 @@ export default function SendOfferModal({ interview = null, application = null, o
                 placeholder="e.g. £75,000 + benefits"
               />
             </label>
+            <label>
+              Probation completion bonus
+              <input
+                value={probationCompletionBonus}
+                onChange={(e) => setProbationCompletionBonus(e.target.value)}
+                placeholder="e.g. £2,000 after probation"
+              />
+            </label>
+          </div>
+
+          <div className="form-row">
             <label>
               Proposed start date
               <input

@@ -461,6 +461,7 @@ model JobOffer {
   title           String
   message         String?
   salary          String?
+  probationCompletionBonus String?
   startDate       DateTime?
   status          String    @default("SENT") // SENT, ACCEPTED, DECLINED, WITHDRAWN
   attachmentsJson String?   // JSON: [{name, url, type, size}]

@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { applicationId, interviewId, title, message, salary, startDate, attachments } = req.body || {};
+    const { applicationId, interviewId, title, message, salary, probationCompletionBonus, startDate, attachments } = req.body || {};
 
     if (!applicationId || !title?.trim()) {
       return res.status(400).json({ error: 'applicationId and title are required' });
@@ -92,6 +92,7 @@ export default async function handler(req, res) {
           title: title.trim(),
           message: message?.trim() || null,
           salary: salary?.trim() || null,
+          probationCompletionBonus: probationCompletionBonus?.trim() || null,
           startDate: startDate ? new Date(startDate) : null,
           status: 'SENT',
           attachmentsJson: safeAttachments.length ? JSON.stringify(safeAttachments) : null,
@@ -160,7 +161,7 @@ export default async function handler(req, res) {
           conversationId: conversation.id,
           senderUserId: session.user.id,
           receiverUserId: application.candidate.userId,
-          text: `🎉 Job Offer: ${title.trim()}\n\nRole: ${application.job.title}${salary?.trim() ? `\nCompensation: ${salary.trim()}` : ''}${startDate ? `\nProposed start: ${new Date(startDate).toLocaleDateString()}` : ''}${message?.trim() ? `\n\nMessage:\n${message.trim()}` : ''}${attachmentLines}`,
+          text: `🎉 Job Offer: ${title.trim()}\n\nRole: ${application.job.title}${salary?.trim() ? `\nCompensation: ${salary.trim()}` : ''}${probationCompletionBonus?.trim() ? `\nProbation completion bonus: ${probationCompletionBonus.trim()}` : ''}${startDate ? `\nProposed start: ${new Date(startDate).toLocaleDateString()}` : ''}${message?.trim() ? `\n\nMessage:\n${message.trim()}` : ''}${attachmentLines}`,
         },
       });
 

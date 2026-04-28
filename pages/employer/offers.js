@@ -126,6 +126,10 @@ export default function EmployerOffersPage() {
                       <p>{offer.salary || 'Not specified'}</p>
                     </div>
                     <div>
+                      <span className="label">Probation bonus</span>
+                      <p>{offer.probationCompletionBonus || 'Not specified'}</p>
+                    </div>
+                    <div>
                       <span className="label">Proposed start</span>
                       <p>{offer.startDate ? new Date(offer.startDate).toLocaleDateString() : 'Not specified'}</p>
                     </div>

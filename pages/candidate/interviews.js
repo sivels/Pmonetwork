@@ -185,10 +185,12 @@ export default function CandidateInterviews() {
                         <span className={`offer-status ${status.toLowerCase()}`}>{status}</span>
                       </div>
 
-                      {(offer.salary || offer.startDate) && (
+                      {(offer.salary || offer.probationCompletionBonus || offer.startDate) && (
                         <p className="offer-meta">
                           {offer.salary ? `Compensation: ${offer.salary}` : ''}
-                          {offer.salary && offer.startDate ? ' · ' : ''}
+                          {offer.salary && (offer.probationCompletionBonus || offer.startDate) ? ' · ' : ''}
+                          {offer.probationCompletionBonus ? `Probation bonus: ${offer.probationCompletionBonus}` : ''}
+                          {offer.probationCompletionBonus && offer.startDate ? ' · ' : ''}
                           {offer.startDate ? `Start date: ${new Date(offer.startDate).toLocaleDateString()}` : ''}
                         </p>
                       )}
