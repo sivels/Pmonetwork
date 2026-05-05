@@ -285,7 +285,7 @@ export default function CandidateLayout({ children, session }) {
         .candidate-layout{min-height:100vh;background:#f8f9fc}
         .candidate-header{position:sticky;top:0;z-index:1000;background:#fff;border-bottom:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,.05)}
         .candidate-header-container{max-width:1440px;margin:0 auto;padding:0 1.5rem;height:64px;display:flex;align-items:center;justify-content:space-between;gap:2rem}
-        .mobile-menu-trigger{display:none;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer;transition:all .15s}
+        .mobile-menu-trigger{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer;transition:all .15s}
         .mobile-menu-trigger:hover{background:#f3f4f6}
         .candidate-left,.candidate-right{display:flex;align-items:center;gap:.25rem}
         .icon-btn{position:relative;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;color:#6b7280;text-decoration:none;transition:all .15s}
@@ -338,7 +338,6 @@ export default function CandidateLayout({ children, session }) {
         .candidate-content{min-height:calc(100vh - 64px)}
 
         @media (max-width:768px){
-          .mobile-menu-trigger{display:flex}
           .candidate-left{display:none}
           .candidate-header-container{padding:0 1rem;gap:.75rem}
           .profile-name{display:none}
