@@ -10,6 +10,7 @@ export default function EmployerLayout({ children }) {
   const isActive = (p) => path.startsWith(p);
   
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [employerProfileId, setEmployerProfileId] = useState(null);
   const [employerProfile, setEmployerProfile] = useState(null);
@@ -27,6 +28,32 @@ export default function EmployerLayout({ children }) {
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [profileDropdownOpen]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setMobileMenuOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const originalOverflow = document.body.style.overflow;
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = originalOverflow;
+    }
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [router.pathname]);
 
   // Fetch employer profile ID and data
   useEffect(() => {
@@ -123,6 +150,17 @@ export default function EmployerLayout({ children }) {
     <div className="employer-layout">
       <header className="employer-header">
         <div className="employer-header-container">
+          <button
+            type="button"
+            className="mobile-menu-trigger"
+            aria-label="Open sidebar menu"
+            aria-expanded={mobileMenuOpen}
+            onClick={() => setMobileMenuOpen(true)}
+          >
+            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
           {/* Left icons */}
           <nav className="employer-left">
             <Link href="/dashboard/employer" className={`icon-btn ${isActive('/dashboard/employer') ? 'active' : ''}`} aria-label="Dashboard" title="Dashboard">
@@ -270,18 +308,67 @@ export default function EmployerLayout({ children }) {
         </div>
       </header>
 
+      <div
+        className={`mobile-sidebar-overlay ${mobileMenuOpen ? 'open' : ''}`}
+        onClick={() => setMobileMenuOpen(false)}
+      />
+      <aside className={`mobile-sidebar ${mobileMenuOpen ? 'open' : ''}`} aria-hidden={!mobileMenuOpen}>
+        <div className="mobile-sidebar-header">
+          <div className="mobile-sidebar-title">Employer Menu</div>
+          <button
+            type="button"
+            className="mobile-sidebar-close"
+            aria-label="Close sidebar menu"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <nav className="mobile-sidebar-links">
+          <Link href="/dashboard/employer" className={`mobile-link ${isActive('/dashboard/employer') ? 'active' : ''}`}>Dashboard</Link>
+          <Link href="/employer/jobs" className={`mobile-link ${isActive('/employer/jobs') ? 'active' : ''}`}>Jobs</Link>
+          <Link href="/employer/post-job" className={`mobile-link ${isActive('/employer/post-job') ? 'active' : ''}`}>Post Job</Link>
+          <Link href="/employer/search-candidates" className={`mobile-link ${isActive('/employer/search-candidates') ? 'active' : ''}`}>Search Candidates</Link>
+          <Link href="/employer/interviews" className={`mobile-link ${isActive('/employer/interviews') ? 'active' : ''}`}>Interviews</Link>
+          <Link href="/employer/messages" className={`mobile-link ${isActive('/employer/messages') ? 'active' : ''}`}>Messages</Link>
+          <Link href="/employer/offers" className={`mobile-link ${isActive('/employer/offers') ? 'active' : ''}`}>Offers</Link>
+          <Link href="/employer/profile" className={`mobile-link ${isActive('/employer/profile') ? 'active' : ''}`}>Company Profile</Link>
+          <Link href="/employer/settings" className={`mobile-link ${isActive('/employer/settings') ? 'active' : ''}`}>Settings</Link>
+          <Link href="/help" className={`mobile-link ${isActive('/help') ? 'active' : ''}`}>Help</Link>
+          <button type="button" className="mobile-link mobile-signout" onClick={handleSignOut}>Sign Out</button>
+        </nav>
+      </aside>
+
       <main className="employer-content">{children}</main>
 
       <style jsx>{`
         .employer-layout{min-height:100vh;background:#f8f9fc}
         .employer-header{position:sticky;top:0;z-index:1000;background:#fff;border-bottom:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,.05)}
         .employer-header-container{max-width:1440px;margin:0 auto;padding:0 1.5rem;height:64px;display:flex;align-items:center;justify-content:space-between;gap:2rem}
+        .mobile-menu-trigger{display:none;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer;transition:all .15s}
+        .mobile-menu-trigger:hover{background:#f3f4f6}
         .employer-left,.employer-right{display:flex;align-items:center;gap:.25rem}
         .icon-btn{position:relative;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;color:#6b7280;text-decoration:none;transition:all .15s}
         .icon-btn:hover{background:#f3f4f6;color:#374151}
         .icon-btn.active{background:#eef2ff;color:#4f46e5}
         .icon-wrap{position:relative;display:inline-flex}
         .icon-dot{position:absolute;top:4px;right:4px;width:8px;height:8px;background:#ef4444;border-radius:50%;box-shadow:0 0 0 2px #fff}
+
+        .mobile-sidebar-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);opacity:0;pointer-events:none;transition:opacity .2s;z-index:1200}
+        .mobile-sidebar-overlay.open{opacity:1;pointer-events:auto}
+        .mobile-sidebar{position:fixed;top:0;left:0;height:100vh;width:300px;max-width:86vw;background:#fff;box-shadow:0 24px 60px rgba(15,23,42,.2);transform:translateX(-100%);transition:transform .22s ease;z-index:1201;display:flex;flex-direction:column}
+        .mobile-sidebar.open{transform:translateX(0)}
+        .mobile-sidebar-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1rem .8rem;border-bottom:1px solid #e5e7eb}
+        .mobile-sidebar-title{font-size:1rem;font-weight:700;color:#111827}
+        .mobile-sidebar-close{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer}
+        .mobile-sidebar-links{display:flex;flex-direction:column;gap:.35rem;padding:.85rem;overflow-y:auto}
+        .mobile-link{display:flex;align-items:center;padding:.75rem .85rem;border-radius:10px;text-decoration:none;color:#374151;font-weight:600;font-size:.95rem;background:transparent;border:none;cursor:pointer;text-align:left}
+        .mobile-link:hover{background:#f3f4f6;color:#111827}
+        .mobile-link.active{background:#eef2ff;color:#4f46e5}
+        .mobile-signout{color:#dc2626}
+        .mobile-signout:hover{background:#fee2e2;color:#dc2626}
         
         .employer-profile-section{position:relative}
         .profile-dropdown-trigger{display:flex;align-items:center;gap:.75rem;padding:.5rem .75rem;border:1px solid #e5e7eb;border-radius:12px;background:#fff;cursor:pointer;transition:all .2s;color:#374151}
@@ -313,6 +400,9 @@ export default function EmployerLayout({ children }) {
         .employer-content{min-height:calc(100vh - 64px)}
         
         @media (max-width:768px){
+          .mobile-menu-trigger{display:flex}
+          .employer-left{display:none}
+          .employer-header-container{padding:0 1rem;gap:.75rem}
           .profile-name{display:none}
           .profile-dropdown{right:auto;left:50%;transform:translateX(-50%);width:calc(100vw - 2rem);max-width:320px}
         }
