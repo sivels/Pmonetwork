@@ -251,15 +251,14 @@ export default function CandidateLayout({ children, session }) {
         </div>
       </header>
       <div
-        className={`mobile-sidebar-overlay ${mobileMenuOpen ? 'open' : ''}`}
+        className={`sidebar-overlay ${mobileMenuOpen ? 'open' : ''}`}
         onClick={() => setMobileMenuOpen(false)}
       />
-      <aside className={`mobile-sidebar ${mobileMenuOpen ? 'open' : ''}`} aria-hidden={!mobileMenuOpen}>
-        <div className="mobile-sidebar-header">
-          <div className="mobile-sidebar-title">Menu</div>
+      <aside className={`dashboard-sidebar ${mobileMenuOpen ? 'open' : 'closed'}`} aria-hidden={!mobileMenuOpen}>
+        <div className="sidebar-header">
           <button
             type="button"
-            className="mobile-sidebar-close"
+            className="sidebar-close-btn"
             aria-label="Close sidebar menu"
             onClick={() => setMobileMenuOpen(false)}
           >
@@ -268,16 +267,64 @@ export default function CandidateLayout({ children, session }) {
             </svg>
           </button>
         </div>
-        <nav className="mobile-sidebar-links">
-          <Link href="/dashboard/candidate" className={`mobile-link ${isActive('/dashboard/candidate') ? 'active' : ''}`}>Dashboard</Link>
-          <Link href="/jobs" className={`mobile-link ${isActive('/jobs') ? 'active' : ''}`}>Jobs</Link>
-          <Link href="/dashboard/applications" className={`mobile-link ${isActive('/dashboard/applications') ? 'active' : ''}`}>Applications</Link>
-          <Link href="/dashboard/interviews" className={`mobile-link ${isActive('/dashboard/interviews') ? 'active' : ''}`}>Interviews</Link>
-          <Link href="/dashboard/messages" className={`mobile-link ${isActive('/dashboard/messages') ? 'active' : ''}`}>Messages</Link>
-          <Link href="/dashboard/profile" className={`mobile-link ${isActive('/dashboard/profile') ? 'active' : ''}`}>My Profile</Link>
-          <Link href="/dashboard/settings" className={`mobile-link ${isActive('/dashboard/settings') ? 'active' : ''}`}>Account Settings</Link>
-          <Link href="/help" className={`mobile-link ${isActive('/help') ? 'active' : ''}`}>Help</Link>
-          <button type="button" className="mobile-link mobile-signout" onClick={handleSignOut}>Sign Out</button>
+        <nav className="sidebar-nav">
+          <Link href="/dashboard/candidate" className={`sidebar-item ${isActive('/dashboard/candidate') ? 'active' : ''}`}>
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span>Dashboard</span>
+          </Link>
+          <Link href="/jobs" className={`sidebar-item ${isActive('/jobs') ? 'active' : ''}`}>
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <span>Jobs</span>
+          </Link>
+          <Link href="/dashboard/applications" className={`sidebar-item ${isActive('/dashboard/applications') ? 'active' : ''}`}>
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V9m-6-4l4 4m0 0l-4 4m4-4H10" />
+            </svg>
+            <span>Applications</span>
+          </Link>
+          <Link href="/dashboard/interviews" className={`sidebar-item ${isActive('/dashboard/interviews') ? 'active' : ''}`}>
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>Interviews</span>
+          </Link>
+          <Link href="/dashboard/messages" className={`sidebar-item ${isActive('/dashboard/messages') ? 'active' : ''}`}>
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            <span>Messages</span>
+            {unreadMessages > 0 && <span className="sidebar-badge">{unreadMessages}</span>}
+          </Link>
+          <div className="sidebar-divider"></div>
+          <Link href="/dashboard/profile" className={`sidebar-item ${isActive('/dashboard/profile') ? 'active' : ''}`}>
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span>My Profile</span>
+          </Link>
+          <Link href="/dashboard/settings" className={`sidebar-item ${isActive('/dashboard/settings') ? 'active' : ''}`}>
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span>Account Settings</span>
+          </Link>
+          <Link href="/help" className={`sidebar-item ${isActive('/help') ? 'active' : ''}`}>
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Help</span>
+          </Link>
+          <button type="button" className="sidebar-item sign-out" onClick={handleSignOut}>
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span>Sign Out</span>
+          </button>
         </nav>
       </aside>
       {children}
@@ -294,19 +341,22 @@ export default function CandidateLayout({ children, session }) {
         .icon-wrap{position:relative;display:inline-flex}
         .icon-dot{position:absolute;top:4px;right:4px;width:8px;height:8px;background:#ef4444;border-radius:50%;box-shadow:0 0 0 2px #fff}
 
-        .mobile-sidebar-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);opacity:0;pointer-events:none;transition:opacity .2s;z-index:1200}
-        .mobile-sidebar-overlay.open{opacity:1;pointer-events:auto}
-        .mobile-sidebar{position:fixed;top:0;left:0;height:100vh;width:290px;max-width:85vw;background:#fff;box-shadow:0 24px 60px rgba(15,23,42,.2);transform:translateX(-100%);transition:transform .22s ease;z-index:1201;display:flex;flex-direction:column}
-        .mobile-sidebar.open{transform:translateX(0)}
-        .mobile-sidebar-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1rem .8rem;border-bottom:1px solid #e5e7eb}
-        .mobile-sidebar-title{font-size:1rem;font-weight:700;color:#111827}
-        .mobile-sidebar-close{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer}
-        .mobile-sidebar-links{display:flex;flex-direction:column;gap:.35rem;padding:.85rem}
-        .mobile-link{display:flex;align-items:center;padding:.75rem .85rem;border-radius:10px;text-decoration:none;color:#374151;font-weight:600;font-size:.95rem;background:transparent;border:none;cursor:pointer;text-align:left}
-        .mobile-link:hover{background:#f3f4f6;color:#111827}
-        .mobile-link.active{background:#eef2ff;color:#4f46e5}
-        .mobile-signout{color:#dc2626}
-        .mobile-signout:hover{background:#fee2e2;color:#dc2626}
+        .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);opacity:0;pointer-events:none;transition:opacity .2s;z-index:1200}
+        .sidebar-overlay.open{opacity:1;pointer-events:auto}
+        .dashboard-sidebar{position:fixed;top:0;left:0;height:100vh;width:260px;max-width:90vw;background:#fff;border-right:1px solid #e5e7eb;display:flex;flex-direction:column;overflow-y:auto;transform:translateX(-100%);transition:transform .22s ease;z-index:1201}
+        .dashboard-sidebar.open{transform:translateX(0)}
+        .dashboard-sidebar.closed{transform:translateX(-100%)}
+        .sidebar-header{display:flex;padding:1rem;border-bottom:1px solid #e5e7eb;justify-content:flex-end}
+        .sidebar-close-btn{background:none;border:none;cursor:pointer;color:#6b7280;padding:.5rem;display:block}
+        .sidebar-nav{padding:1.5rem 0;display:flex;flex-direction:column;gap:.25rem}
+        .sidebar-item{display:flex;align-items:center;gap:.75rem;padding:.75rem 1.5rem;color:#6b7280;text-decoration:none;transition:all .15s;border:none;background:transparent;width:100%;text-align:left;cursor:pointer;position:relative;font-size:1rem}
+        .sidebar-item:hover{background:#f3f4f6;color:#374151}
+        .sidebar-item.active{background:#eef2ff;color:#4f46e5;font-weight:600}
+        .sidebar-item svg{flex-shrink:0}
+        .sidebar-badge{margin-left:auto;background:#7c3aed;color:#fff;font-size:.7rem;font-weight:600;padding:.125rem .5rem;border-radius:9999px;min-width:20px;text-align:center}
+        .sidebar-divider{height:1px;background:#e5e7eb;margin:.5rem 1.5rem}
+        .sidebar-item.sign-out{color:#dc2626}
+        .sidebar-item.sign-out:hover{background:#fee2e2;color:#b91c1c}
 
         .candidate-profile-section{position:relative}
         .profile-dropdown-trigger{display:flex;align-items:center;gap:.75rem;padding:.5rem .75rem;border:1px solid #e5e7eb;border-radius:12px;background:#fff;cursor:pointer;transition:all .2s;color:#374151}
@@ -342,6 +392,7 @@ export default function CandidateLayout({ children, session }) {
           .candidate-header-container{padding:0 1rem;gap:.75rem}
           .profile-name{display:none}
           .profile-dropdown{right:auto;left:50%;transform:translateX(-50%);width:calc(100vw - 2rem);max-width:320px}
+          .dashboard-sidebar{box-shadow:2px 0 8px rgba(0,0,0,.1)}
         }
       `}</style>
     </div>
