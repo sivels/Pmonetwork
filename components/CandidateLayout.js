@@ -44,19 +44,6 @@ export default function CandidateLayout({ children, session }) {
   }, [mobileMenuOpen]);
 
   useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const originalOverflow = document.body.style.overflow;
-    if (mobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = originalOverflow;
-    }
-    return () => {
-      document.body.style.overflow = originalOverflow;
-    };
-  }, [mobileMenuOpen]);
-
-  useEffect(() => {
     setMobileMenuOpen(false);
   }, [router.pathname]);
 
@@ -260,6 +247,10 @@ export default function CandidateLayout({ children, session }) {
       />
       <aside className={`dashboard-sidebar ${mobileMenuOpen ? 'open' : 'closed'}`} aria-hidden={!mobileMenuOpen}>
         <div className="sidebar-header">
+          <Link href="/" className="sidebar-logo" aria-label="PMO Network home">
+            <img src="/logo.svg" alt="PMO Network" width="30" height="30" />
+            <span>PMO Network</span>
+          </Link>
           <button
             type="button"
             className="sidebar-close-btn"
@@ -300,7 +291,9 @@ export default function CandidateLayout({ children, session }) {
         .dashboard-sidebar{position:fixed;top:0;left:0;height:100vh;width:260px;max-width:90vw;background:#fff;border-right:1px solid #e5e7eb;display:flex;flex-direction:column;overflow-y:auto;transform:translateX(-100%);transition:transform .22s ease;z-index:1201}
         .dashboard-sidebar.open{transform:translateX(0)}
         .dashboard-sidebar.closed{transform:translateX(-100%)}
-        .sidebar-header{display:flex;padding:1rem;border-bottom:1px solid #e5e7eb;justify-content:flex-end}
+        .sidebar-header{display:flex;align-items:center;padding:1rem;border-bottom:1px solid #e5e7eb;justify-content:space-between;gap:.75rem}
+        .sidebar-logo{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:#111827;font-weight:700;font-size:.95rem;min-width:0}
+        .sidebar-logo img{display:block;object-fit:contain;flex-shrink:0}
         .sidebar-close-btn{background:none;border:none;cursor:pointer;color:#6b7280;padding:.5rem;display:block}
         .sidebar-nav{padding:1.5rem 0;display:flex;flex-direction:column;gap:.25rem}
         .sidebar-item{display:flex;align-items:center;gap:.75rem;padding:.75rem 1.5rem;color:#6b7280;text-decoration:none;transition:all .15s;border:none;background:transparent;width:100%;text-align:left;cursor:pointer;position:relative;font-size:1rem}
