@@ -97,7 +97,7 @@ export default function CandidateLayout({ children, session }) {
   };
 
   return (
-    <div className="candidate-layout">
+    <div className={`candidate-layout ${mobileMenuOpen ? 'menu-open' : ''}`}>
       <header className="candidate-header">
         <div className="candidate-header-container">
           <button
@@ -269,11 +269,11 @@ export default function CandidateLayout({ children, session }) {
           onSignOut={handleSignOut}
         />
       </aside>
-      {children}
+      <main className="candidate-content">{children}</main>
       <style jsx>{`
-        .candidate-layout{min-height:100vh;background:#f8f9fc}
+        .candidate-layout{min-height:100vh;background:#f8f9fc;transition:padding-left .22s ease}
         .candidate-header{position:sticky;top:0;z-index:1000;background:#fff;border-bottom:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-        .candidate-header-container{position:relative;max-width:1440px;margin:0 auto;padding:0 1.5rem;height:64px;display:flex;align-items:center;justify-content:space-between;gap:2rem}
+        .candidate-header-container{position:relative;max-width:1440px;margin:0 auto;padding:0 1.5rem;height:64px;display:flex;align-items:center;justify-content:space-between;gap:2rem;transition:max-width .22s ease}
         .header-logo-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px}
         .header-logo-center img{display:block;object-fit:contain}
         .mobile-menu-trigger{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer;transition:all .15s}
@@ -333,6 +333,13 @@ export default function CandidateLayout({ children, session }) {
         .dropdown-item svg{flex-shrink:0}
 
         .candidate-content{min-height:calc(100vh - 64px)}
+
+        @media (min-width:769px){
+          .candidate-layout.menu-open{padding-left:260px}
+          .candidate-layout.menu-open .candidate-header-container{max-width:calc(1440px - 260px)}
+          .sidebar-overlay{display:none}
+          .sidebar-overlay.open{display:none;pointer-events:none;opacity:0}
+        }
 
         @media (max-width:768px){
           .candidate-left{display:none}
