@@ -162,6 +162,9 @@ export default function EmployerLayout({ children }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
+          <Link href="/" className="header-logo-center" aria-label="PMO Network home">
+            <img src="/logo.svg" alt="PMO Network" width="32" height="32" />
+          </Link>
           {/* Left icons */}
           <nav className="employer-left">
             <Link href="/dashboard/employer" className={`icon-btn ${isActive('/dashboard/employer') ? 'active' : ''}`} aria-label="Dashboard" title="Dashboard">
@@ -339,7 +342,9 @@ export default function EmployerLayout({ children }) {
       <style jsx>{`
         .employer-layout{min-height:100vh;background:#f8f9fc}
         .employer-header{position:sticky;top:0;z-index:1000;background:#fff;border-bottom:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-        .employer-header-container{max-width:1440px;margin:0 auto;padding:0 1.5rem;height:64px;display:flex;align-items:center;justify-content:space-between;gap:2rem}
+        .employer-header-container{position:relative;max-width:1440px;margin:0 auto;padding:0 1.5rem;height:64px;display:flex;align-items:center;justify-content:space-between;gap:2rem}
+        .header-logo-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px}
+        .header-logo-center img{display:block;object-fit:contain}
         .mobile-menu-trigger{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer;transition:all .15s}
         .mobile-menu-trigger:hover{background:#f3f4f6}
         .employer-left{display:none}
