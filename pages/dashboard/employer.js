@@ -393,8 +393,8 @@ export default function EmployerDashboard({ profile, jobCount, latestJobs }) {
         .sidebar-badge{margin-left:auto;background:#7c3aed;color:#fff;font-size:0.7rem;font-weight:600;padding:0.125rem 0.5rem;border-radius:9999px;min-width:20px;text-align:center}
         .sidebar-divider{height:1px;background:#e5e7eb;margin:0.5rem 1.5rem}
 
-        .dashboard-main{flex:1;overflow-y:auto;padding:2rem;min-width:0;display:flex;justify-content:flex-start;margin-left:0}
-        .dashboard-content{width:100%;max-width:1200px;margin:0}
+        .dashboard-main{flex:1;overflow-y:auto;padding:2rem;min-width:0;display:flex;justify-content:center;margin-left:0}
+        .dashboard-content{width:100%;max-width:1200px;margin:0 auto}
         .content-header{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #e5e7eb}
         .content-title{font-size:1.75rem;font-weight:700;color:#111827;margin:0 0 0.25rem}
         .content-subtitle{font-size:1rem;color:#6b7280;margin:0}
