@@ -380,8 +380,8 @@ export default function EmployerDashboard({ profile, jobCount, latestJobs }) {
 
       <style jsx>{`
         .modern-dashboard{display:flex;min-height:100vh;background:#f8f9fc}
-        .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999}
-        .dashboard-sidebar{width:260px;background:#fff;border-right:1px solid #e5e7eb;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;transition:all 0.3s;z-index:1000}
+        .sidebar-overlay{display:none}
+        .dashboard-sidebar{display:none}
         .dashboard-sidebar.closed{width:0;overflow:hidden}
         .sidebar-header{display:none}
         .sidebar-close-btn{background:none;border:none;cursor:pointer;color:#6b7280;padding:0.5rem;display:none}
