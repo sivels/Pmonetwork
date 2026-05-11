@@ -114,12 +114,11 @@ function getItems(role) {
       { type: 'link', href: '/employer/post-job', label: 'Post Job', icon: PlusIcon },
       { type: 'link', href: '/employer/search-candidates', label: 'Search Candidates', icon: SearchIcon },
       { type: 'link', href: '/employer/interviews', label: 'Interviews', icon: InterviewsIcon },
-      { type: 'link', href: '/employer/messages', label: 'Messages', icon: MessagesIcon, badge: 'messages' },
       { type: 'link', href: '/employer/offers', label: 'Offers', icon: OffersIcon },
+      { type: 'link', href: '/help', label: 'Help', icon: HelpIcon },
       { type: 'divider' },
       { type: 'link', href: '/employer/profile', label: 'Company Profile', icon: CompanyIcon },
       { type: 'link', href: '/employer/settings', label: 'Settings', icon: SettingsIcon },
-      { type: 'link', href: '/help', label: 'Help', icon: HelpIcon },
       { type: 'button', label: 'Sign Out', icon: SignOutIcon, variant: 'sign-out' },
     ];
   }
