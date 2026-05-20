@@ -106,6 +106,14 @@ function OffersIcon() {
   );
 }
 
+function InsightsIcon() {
+  return (
+    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 3L4 14h7l-1 7 9-11h-7l1-7z" />
+    </svg>
+  );
+}
+
 function getItems(role) {
   if (role === 'employer') {
     return [
@@ -129,6 +137,7 @@ function getItems(role) {
     { type: 'link', href: '/jobs', label: 'Jobs', icon: JobsIcon },
     { type: 'link', href: '/dashboard/applications', label: 'Applications', icon: ApplicationsIcon },
     { type: 'link', href: '/dashboard/interviews', label: 'Interviews', icon: InterviewsIcon },
+    { type: 'link', href: '/dashboard/professional-insights', label: 'Professional Insights', icon: InsightsIcon },
     { type: 'link', href: '/dashboard/messages', label: 'Messages', icon: MessagesIcon, badge: 'messages' },
     { type: 'divider' },
     { type: 'link', href: '/dashboard/profile', label: 'My Profile', icon: ProfileIcon },
