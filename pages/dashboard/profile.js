@@ -16,6 +16,7 @@ import DocumentsSection from '../../components/profile/DocumentsSection';
 import SocialLinksSection from '../../components/profile/SocialLinksSection';
 import ProfessionalSummarySection from '../../components/profile/ProfessionalSummarySection';
 import PrivacyVisibilitySection from '../../components/profile/PrivacyVisibilitySection';
+import MBTIInsightsSection from '../../components/profile/MBTIInsightsSection';
 import AutosaveStatus from '../../components/profile/AutosaveStatus';
 
 export async function getServerSideProps(ctx) {
@@ -67,6 +68,7 @@ export default function ProfileEditor({ profile, userEmail }) {
     { id: 'education', label: 'Education', icon: 'book' },
     { id: 'documents', label: 'Document Repository', icon: 'folder' },
     { id: 'social', label: 'Social Links', icon: 'link' },
+    { id: 'insights', label: 'Professional Insights', icon: 'insights' },
     { id: 'privacy', label: 'Privacy & Visibility', icon: 'shield' }
   ];
 
@@ -76,7 +78,7 @@ export default function ProfileEditor({ profile, userEmail }) {
 
   useEffect(() => {
     const q = router?.query?.section;
-    const ids = ['personal','photo','video','summary','skills','certifications','experience','education','documents','social','privacy','settings'];
+    const ids = ['personal','photo','video','summary','skills','certifications','experience','education','documents','social','insights','privacy','settings'];
     if (typeof q === 'string' && ids.includes(q)) {
       setActiveSection(q);
       return;
@@ -227,6 +229,9 @@ export default function ProfileEditor({ profile, userEmail }) {
             {activeSection === 'social' && (
               <SocialLinksSection profile={profileData} onUpdate={updateProfile} />
             )}
+            {activeSection === 'insights' && (
+              <MBTIInsightsSection />
+            )}
             {activeSection === 'privacy' && (
               <PrivacyVisibilitySection profile={profileData} onUpdate={updateProfile} />
             )}
@@ -253,6 +258,7 @@ function getSectionIcon(icon) {
     book: <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>,
     folder: <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>,
     link: <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>,
+    insights: <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 3L4 14h7l-1 7 9-11h-7l1-7z" /></svg>,
     shield: <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>,
     settings: <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317a1 1 0 01.894-.553h1.562a1 1 0 01.894.553l.41.82a1 1 0 00.746.546l.905.151a1 1 0 01.708.59l.62 1.45a1 1 0 01-.217 1.08l-.651.652a1 1 0 000 1.414l.651.652a1 1 0 01.217 1.08l-.62 1.45a1 1 0 01-.708.59l-.905.151a1 1 0 00-.746.546l-.41.82a1 1 0 01-.894.553h-1.562a1 1 0 01-.894-.553l-.41-.82a1 1 0 00-.746-.546l-.905-.151a1 1 0 01-.708-.59l-.62-1.45a1 1 0 01.217-1.08l.651-.652a1 1 0 000-1.414l-.651-.652a1 1 0 01-.217-1.08l.62-1.45a1 1 0 01.708-.59l.905-.151a1 1 0 00.746-.546l.41-.82zM12 15a3 3 0 100-6 3 3 0 000 6z" /></svg>
   };

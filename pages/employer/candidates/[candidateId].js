@@ -303,6 +303,24 @@ Best regards`;
                     <p className="text-gray-500">Completed {new Date(mbtiInsight.completedAt).toLocaleDateString()}</p>
                   )}
                 </div>
+
+                {mbtiInsight.pairScores?.length > 0 && (
+                  <div className="mt-4 space-y-3">
+                    {mbtiInsight.pairScores.map((pair) => (
+                      <div key={pair.title}>
+                        <div className="mb-1 flex items-center justify-between text-xs text-gray-600">
+                          <span>{pair.title}</span>
+                          <span>
+                            {pair.left?.toUpperCase()} {pair.leftPct}% · {pair.right?.toUpperCase()} {pair.rightPct}%
+                          </span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-gray-200">
+                          <div className="h-full rounded-full bg-indigo-500" style={{ width: `${pair.leftPct}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
