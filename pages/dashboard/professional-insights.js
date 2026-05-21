@@ -182,9 +182,31 @@ export default function ProfessionalInsightsPage() {
       setVisibleToEmployers((prev) => ({ ...prev, mbti: Boolean(detail.visibleToEmployers) }));
     }
 
+    function loadBigFiveCompletion() {
+      try {
+        const raw = window.localStorage.getItem('bigFiveAssessmentResult');
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (parsed?.scores) {
+          setCompleted((prev) => ({ ...prev, 'big-five': true }));
+        }
+      } catch {
+        // no-op
+      }
+    }
+
+    function onBigFiveUpdate() {
+      setCompleted((prev) => ({ ...prev, 'big-five': true }));
+    }
+
     loadMBTIInsight();
+    loadBigFiveCompletion();
     window.addEventListener('mbtiInsightUpdated', onMBTIUpdate);
-    return () => window.removeEventListener('mbtiInsightUpdated', onMBTIUpdate);
+    window.addEventListener('bigFiveInsightUpdated', onBigFiveUpdate);
+    return () => {
+      window.removeEventListener('mbtiInsightUpdated', onMBTIUpdate);
+      window.removeEventListener('bigFiveInsightUpdated', onBigFiveUpdate);
+    };
   }, []);
 
   async function persistMBTIVisibility(visible) {
@@ -320,6 +342,15 @@ export default function ProfessionalInsightsPage() {
                           Start Assessment
                         </Link>
                         <Link href="/dashboard/assessments/mbti?retake=1" className="btn-secondary">
+                          Retake Assessment
+                        </Link>
+                      </>
+                    ) : assessment.id === 'big-five' ? (
+                      <>
+                        <Link href="/dashboard/assessments/big-five" className="btn-primary">
+                          Start Assessment
+                        </Link>
+                        <Link href="/dashboard/assessments/big-five" className="btn-secondary">
                           Retake Assessment
                         </Link>
                       </>
