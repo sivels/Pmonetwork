@@ -290,6 +290,15 @@ export default function MBTIAssessmentPage() {
           ))}
         </ol>
 
+        <section className="calculate-panel">
+          <p>
+            {answeredCount === QUESTIONS.length
+              ? 'All questions complete. You can calculate your results now.'
+              : `Complete all questions to calculate results (${answeredCount}/${QUESTIONS.length}).`}
+          </p>
+          <button type="button" className="btn-primary" onClick={handleSubmit}>Calculate Results</button>
+        </section>
+
         {result && (
           <section className="results">
             <h2>Your MBTI-style profile: <span>{result.type}</span></h2>
@@ -329,6 +338,7 @@ export default function MBTIAssessmentPage() {
         .hero,
         .progress-panel,
         .question-card,
+        .calculate-panel,
         .results {
           background: #fff;
           border: 1px solid #e2e8f0;
@@ -447,11 +457,14 @@ export default function MBTIAssessmentPage() {
 
         .question-card {
           padding: 14px;
+          background: #ffffff;
         }
 
         .question-card h2 {
           margin: 0;
           font-size: 15px;
+          color: #0f172a;
+          line-height: 1.45;
         }
 
         .option-grid {
@@ -462,27 +475,59 @@ export default function MBTIAssessmentPage() {
         }
 
         .option {
-          border: 1px solid #cbd5e1;
+          border: 1px solid #94a3b8;
           border-radius: 10px;
-          padding: 10px;
+          padding: 12px;
           display: flex;
-          gap: 8px;
+          gap: 10px;
           align-items: flex-start;
-          font-size: 13px;
-          color: #334155;
-          transition: border-color 0.2s ease, background-color 0.2s ease;
+          font-size: 14px;
+          color: #0f172a;
+          background: #ffffff;
+          transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+          cursor: pointer;
         }
 
         .option.selected {
           border-color: #6366f1;
           background: #eef2ff;
           color: #1e1b4b;
+          box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
         }
 
         .option input {
-          margin-top: 2px;
+          margin-top: 1px;
           accent-color: #6366f1;
           cursor: pointer;
+          width: 16px;
+          height: 16px;
+          min-width: 16px;
+          min-height: 16px;
+          appearance: auto !important;
+          opacity: 1 !important;
+          position: static !important;
+        }
+
+        .option span {
+          display: block;
+          color: inherit;
+          line-height: 1.4;
+          font-weight: 500;
+        }
+
+        .calculate-panel {
+          margin-top: 14px;
+          padding: 14px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .calculate-panel p {
+          margin: 0;
+          color: #334155;
+          font-size: 14px;
         }
 
         .results {
@@ -585,6 +630,7 @@ export default function MBTIAssessmentPage() {
           .hero,
           .progress-panel,
           .question-card,
+          .calculate-panel,
           .results,
           .score-card {
             background: #0b1220;
@@ -611,15 +657,28 @@ export default function MBTIAssessmentPage() {
           }
 
           .option {
-            border-color: #334155;
-            color: #cbd5e1;
-            background: #0f172a;
+            border-color: #475569;
+            color: #e2e8f0;
+            background: #111827;
           }
 
           .option.selected {
             background: #1e1b4b;
             border-color: #6366f1;
             color: #e0e7ff;
+          }
+
+          .question-card h2,
+          .option span,
+          .calculate-panel p {
+            color: #e2e8f0;
+          }
+        }
+
+        @media (max-width: 700px) {
+          .calculate-panel {
+            flex-direction: column;
+            align-items: stretch;
           }
         }
       `}</style>
