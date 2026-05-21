@@ -153,40 +153,83 @@ export default function MBTIAssessmentPage() {
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [visibleToEmployers, setVisibleToEmployers] = useState(false);
+  const [saveState, setSaveState] = useState('');
 
   const answeredCount = useMemo(() => Object.keys(answers).length, [answers]);
   const progress = Math.round((answeredCount / QUESTIONS.length) * 100);
 
   useEffect(() => {
-    if (router.query.retake === '1') {
+    const isRetake = router.query.retake === '1';
+
+    async function loadAssessmentState() {
+      if (isRetake) {
+        try {
+          window.localStorage.removeItem('mbtiAssessmentAnswers');
+          window.localStorage.removeItem('mbtiAssessmentResult');
+        } catch {
+          // no-op
+        }
+        setAnswers({});
+        setResult(null);
+        setError('');
+        return;
+      }
+
       try {
-        window.localStorage.removeItem('mbtiAssessmentAnswers');
-        window.localStorage.removeItem('mbtiAssessmentResult');
+        const savedAnswers = window.localStorage.getItem('mbtiAssessmentAnswers');
+        const savedResult = window.localStorage.getItem('mbtiAssessmentResult');
+
+        if (savedAnswers) {
+          setAnswers(JSON.parse(savedAnswers));
+        }
+
+        if (savedResult) {
+          setResult(JSON.parse(savedResult));
+        }
       } catch {
         // no-op
       }
-      setAnswers({});
-      setResult(null);
-      setError('');
+
+      try {
+        const response = await fetch('/api/candidate/insights/mbti');
+        if (!response.ok) return;
+        const payload = await response.json();
+        if (payload?.mbti?.type) {
+          setResult(payload.mbti);
+          setVisibleToEmployers(Boolean(payload.mbti.visibleToEmployers));
+          window.localStorage.setItem('mbtiAssessmentResult', JSON.stringify(payload.mbti));
+        }
+      } catch {
+        // no-op
+      }
     }
+
+    loadAssessmentState();
   }, [router.query.retake]);
 
-  useEffect(() => {
+  async function persistMBTI(nextResult, visibility) {
+    setSaveState('Saving...');
     try {
-      const savedAnswers = window.localStorage.getItem('mbtiAssessmentAnswers');
-      const savedResult = window.localStorage.getItem('mbtiAssessmentResult');
-
-      if (savedAnswers) {
-        setAnswers(JSON.parse(savedAnswers));
+      const response = await fetch('/api/candidate/insights/mbti', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ result: nextResult, visibleToEmployers: visibility }),
+      });
+      if (!response.ok) throw new Error('Failed to save MBTI insight');
+      const payload = await response.json();
+      if (payload?.mbti) {
+        setResult(payload.mbti);
+        window.localStorage.setItem('mbtiAssessmentResult', JSON.stringify(payload.mbti));
+        window.dispatchEvent(new CustomEvent('mbtiInsightUpdated', { detail: payload.mbti }));
       }
-
-      if (savedResult) {
-        setResult(JSON.parse(savedResult));
-      }
+      setSaveState('Saved');
+      setTimeout(() => setSaveState(''), 1800);
     } catch {
-      // no-op
+      setSaveState('Could not save');
+      setTimeout(() => setSaveState(''), 2200);
     }
-  }, []);
+  }
 
   const handleSelect = (questionId, value) => {
     setError('');
@@ -201,7 +244,7 @@ export default function MBTIAssessmentPage() {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (answeredCount < QUESTIONS.length) {
       setError(`Please answer all questions before calculating results (${answeredCount}/${QUESTIONS.length} complete).`);
       return;
@@ -215,6 +258,8 @@ export default function MBTIAssessmentPage() {
     } catch {
       // no-op
     }
+
+    await persistMBTI(computed, visibleToEmployers);
   };
 
   const handleReset = () => {
@@ -265,6 +310,24 @@ export default function MBTIAssessmentPage() {
             <div className="progress-fill" style={{ width: `${progress}%` }} />
           </div>
           <button type="button" className="btn-primary" onClick={handleSubmit}>Calculate Results</button>
+        </section>
+
+        <section className="visibility-panel">
+          <label className="visibility-toggle">
+            <input
+              type="checkbox"
+              checked={visibleToEmployers}
+              onChange={async (event) => {
+                const checked = event.target.checked;
+                setVisibleToEmployers(checked);
+                if (result) {
+                  await persistMBTI(result, checked);
+                }
+              }}
+            />
+            <span>Visible to employers on your candidate profile</span>
+          </label>
+          {saveState && <small className="save-state">{saveState}</small>}
         </section>
 
         {error && <p className="error">{error}</p>}
@@ -337,6 +400,7 @@ export default function MBTIAssessmentPage() {
 
         .hero,
         .progress-panel,
+        .visibility-panel,
         .question-card,
         .calculate-panel,
         .results {
@@ -389,6 +453,35 @@ export default function MBTIAssessmentPage() {
           grid-template-columns: auto 1fr auto;
           align-items: center;
           gap: 14px;
+        }
+
+        .visibility-panel {
+          margin-top: 10px;
+          padding: 12px 14px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .visibility-toggle {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          color: #334155;
+          font-size: 13px;
+          font-weight: 600;
+        }
+
+        .visibility-toggle input {
+          width: 16px;
+          height: 16px;
+          accent-color: #6366f1;
+        }
+
+        .save-state {
+          color: #475569;
+          font-size: 12px;
         }
 
         .progress-panel span {
@@ -629,6 +722,7 @@ export default function MBTIAssessmentPage() {
 
           .hero,
           .progress-panel,
+          .visibility-panel,
           .question-card,
           .calculate-panel,
           .results,
@@ -643,6 +737,11 @@ export default function MBTIAssessmentPage() {
           .score-card small,
           .progress-panel span {
             color: #94a3b8;
+          }
+
+          .visibility-toggle,
+          .save-state {
+            color: #cbd5e1;
           }
 
           .progress-track,

@@ -5,6 +5,22 @@ import Link from 'next/link';
 import { ChevronLeft, Loader2, MapPin, Briefcase, Calendar, Award, X, Send } from 'lucide-react';
 import { prisma } from '../../../lib/prisma';
 
+function parseMbtiInsight(candidate) {
+  if (!candidate?.personalityType || !candidate?.personalityDesc) return null;
+  try {
+    const parsed = JSON.parse(candidate.personalityDesc);
+    if (!parsed || typeof parsed !== 'object') return null;
+    if (!parsed.visibleToEmployers) return null;
+    return {
+      type: candidate.personalityType,
+      completedAt: parsed.completedAt || null,
+      pairScores: Array.isArray(parsed.pairScores) ? parsed.pairScores : [],
+    };
+  } catch {
+    return null;
+  }
+}
+
 export default function CandidateDetailPage({ candidate }) {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -12,6 +28,7 @@ export default function CandidateDetailPage({ candidate }) {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const mbtiInsight = parseMbtiInsight(candidate);
 
   const defaultMessage = `Hi ${candidate?.fullName?.split(' ')[0] || 'there'},
 
@@ -273,6 +290,21 @@ Best regards`;
                 )}
               </div>
             </div>
+
+            {mbtiInsight && (
+              <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 className="mb-3 text-lg font-semibold text-gray-900">Professional Insights</h2>
+                <div className="space-y-2 text-sm">
+                  <p className="text-gray-700">
+                    <span className="font-medium">Myers-Briggs result:</span>{' '}
+                    <span className="rounded-full bg-indigo-50 px-2 py-0.5 font-semibold text-indigo-700">{mbtiInsight.type}</span>
+                  </p>
+                  {mbtiInsight.completedAt && (
+                    <p className="text-gray-500">Completed {new Date(mbtiInsight.completedAt).toLocaleDateString()}</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -382,6 +414,21 @@ export async function getServerSideProps(context) {
 
   if (!candidate) {
     return { notFound: true };
+  }
+
+  let visibleToEmployers = false;
+  if (candidate.personalityDesc) {
+    try {
+      const parsed = JSON.parse(candidate.personalityDesc);
+      visibleToEmployers = Boolean(parsed?.visibleToEmployers);
+    } catch {
+      visibleToEmployers = false;
+    }
+  }
+
+  if (!visibleToEmployers) {
+    candidate.personalityType = null;
+    candidate.personalityDesc = null;
   }
 
   return {

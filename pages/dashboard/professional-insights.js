@@ -153,17 +153,58 @@ export default function ProfessionalInsightsPage() {
   );
   const [highlightStrengths, setHighlightStrengths] = useState(true);
   const [enableEmployerViewing, setEnableEmployerViewing] = useState(true);
+  const [mbtiInsight, setMbtiInsight] = useState(null);
 
   useEffect(() => {
-    try {
-      const savedResult = window.localStorage.getItem('mbtiAssessmentResult');
-      if (savedResult) {
+    async function loadMBTIInsight() {
+      try {
+        const response = await fetch('/api/candidate/insights/mbti');
+        if (!response.ok) return;
+        const payload = await response.json();
+        if (!payload?.mbti?.type) return;
+
+        setMbtiInsight(payload.mbti);
         setCompleted((prev) => ({ ...prev, mbti: true }));
+        setVisibleToEmployers((prev) => ({
+          ...prev,
+          mbti: Boolean(payload.mbti.visibleToEmployers),
+        }));
+      } catch {
+        // no-op
+      }
+    }
+
+    function onMBTIUpdate(event) {
+      const detail = event?.detail;
+      if (!detail?.type) return;
+      setMbtiInsight(detail);
+      setCompleted((prev) => ({ ...prev, mbti: true }));
+      setVisibleToEmployers((prev) => ({ ...prev, mbti: Boolean(detail.visibleToEmployers) }));
+    }
+
+    loadMBTIInsight();
+    window.addEventListener('mbtiInsightUpdated', onMBTIUpdate);
+    return () => window.removeEventListener('mbtiInsightUpdated', onMBTIUpdate);
+  }, []);
+
+  async function persistMBTIVisibility(visible) {
+    if (!mbtiInsight?.type) return;
+    try {
+      const response = await fetch('/api/candidate/insights/mbti', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ result: mbtiInsight, visibleToEmployers: visible }),
+      });
+      if (!response.ok) return;
+      const payload = await response.json();
+      if (payload?.mbti) {
+        setMbtiInsight(payload.mbti);
+        window.dispatchEvent(new CustomEvent('mbtiInsightUpdated', { detail: payload.mbti }));
       }
     } catch {
       // no-op
     }
-  }, []);
+  }
 
   const completedCount = useMemo(
     () => Object.values(completed).filter(Boolean).length,
@@ -261,6 +302,13 @@ export default function ProfessionalInsightsPage() {
                     </span>
                   </div>
 
+                  {assessment.id === 'mbti' && mbtiInsight?.type && (
+                    <div className="assessment-result-note">
+                      Latest result: <strong>{mbtiInsight.type}</strong>
+                      {mbtiInsight.completedAt ? ` · saved ${new Date(mbtiInsight.completedAt).toLocaleDateString()}` : ''}
+                    </div>
+                  )}
+
                   <div className="progress-track" aria-hidden="true">
                     <div className="progress-fill" style={{ width: `${percent}%` }} />
                   </div>
@@ -300,12 +348,17 @@ export default function ProfessionalInsightsPage() {
                     <input
                       type="checkbox"
                       checked={Boolean(visibleToEmployers[assessment.id])}
-                      onChange={(event) =>
+                      onChange={async (event) => {
+                        const checked = event.target.checked;
                         setVisibleToEmployers((prev) => ({
                           ...prev,
-                          [assessment.id]: event.target.checked,
-                        }))
-                      }
+                          [assessment.id]: checked,
+                        }));
+
+                        if (assessment.id === 'mbti') {
+                          await persistMBTIVisibility(checked);
+                        }
+                      }}
                     />
                   </label>
                 </article>
@@ -646,6 +699,14 @@ export default function ProfessionalInsightsPage() {
           gap: 12px;
           font-size: 12px;
           color: var(--muted);
+        }
+
+        .assessment-result-note {
+          margin-top: 8px;
+          font-size: 12px;
+          color: #4338ca;
+          font-weight: 600;
+          position: relative;
         }
 
         .status {

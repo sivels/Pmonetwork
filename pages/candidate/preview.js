@@ -94,6 +94,20 @@ export default function Preview({ profile, isOwnProfile, isHiringManager, userEm
   const anon = profile.anonymousMode;
   const completion = calculateCompletion(profile);
   const strength = getProfileStrength(completion);
+  const mbtiInsight = (() => {
+    if (!profile.personalityType || !profile.personalityDesc) return null;
+    try {
+      const parsed = JSON.parse(profile.personalityDesc);
+      if (!parsed?.visibleToEmployers) return null;
+      return {
+        type: profile.personalityType,
+        completedAt: parsed.completedAt || null,
+      };
+    } catch {
+      return null;
+    }
+  })();
+
   return (
     <>
       <Head>
@@ -166,6 +180,17 @@ export default function Preview({ profile, isOwnProfile, isHiringManager, userEm
                   <p>{profile.summary}</p>
                 </div>
               </div>
+            </section>
+          )}
+
+          {/* 4️⃣ Skills & Expertise */}
+          {mbtiInsight && (
+            <section className="preview-card skills-card">
+              <h2 className="card-title">Professional Insights</h2>
+              <p>
+                Myers-Briggs result: <strong>{mbtiInsight.type}</strong>
+                {mbtiInsight.completedAt ? ` · completed ${new Date(mbtiInsight.completedAt).toLocaleDateString()}` : ''}
+              </p>
             </section>
           )}
 

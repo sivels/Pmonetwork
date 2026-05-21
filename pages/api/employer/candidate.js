@@ -11,5 +11,21 @@ export default async function handler(req, res) {
     include: { skills: true, certifications: true, documents: true },
   });
   if (!profile) return res.status(404).json({ error: 'Not found' });
+
+  let visibleToEmployers = false;
+  if (profile.personalityDesc) {
+    try {
+      const parsed = JSON.parse(profile.personalityDesc);
+      visibleToEmployers = Boolean(parsed?.visibleToEmployers);
+    } catch {
+      visibleToEmployers = false;
+    }
+  }
+
+  if (!visibleToEmployers) {
+    profile.personalityType = null;
+    profile.personalityDesc = null;
+  }
+
   res.json(profile);
 }

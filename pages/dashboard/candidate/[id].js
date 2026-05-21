@@ -10,6 +10,16 @@ export default function CandidateProfileView() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const mbtiVisible = (() => {
+    if (!profile?.personalityType || !profile?.personalityDesc) return false;
+    try {
+      const parsed = JSON.parse(profile.personalityDesc);
+      return Boolean(parsed?.visibleToEmployers);
+    } catch {
+      return false;
+    }
+  })();
+
   useEffect(() => {
     if (status === 'loading') return;
     if (!session) router.replace('/auth/login');
@@ -57,7 +67,7 @@ export default function CandidateProfileView() {
       <p><b>Certifications:</b> {profile.certifications?.map(c => c.name).join(', ')}</p>
       <p><b>Experience:</b> {profile.yearsExperience} years</p>
       <p><b>Sector:</b> {profile.sector}</p>
-      <p><b>Personality:</b> {profile.personalityType} {profile.personalityDesc && `- ${profile.personalityDesc}`}</p>
+      {mbtiVisible && <p><b>Personality:</b> {profile.personalityType}</p>}
       <p><b>Availability:</b> {profile.availability}</p>
       <p><b>Day Rate:</b> {profile.dayRate}</p>
       <p><b>Location:</b> {profile.location}</p>
