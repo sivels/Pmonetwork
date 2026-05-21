@@ -1,5 +1,7 @@
 import Head from 'next/head';
 import { useMemo, useState } from 'react';
+import { useEffect } from 'react';
+import Link from 'next/link';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../api/auth/[...nextauth]';
 
@@ -152,6 +154,17 @@ export default function ProfessionalInsightsPage() {
   const [highlightStrengths, setHighlightStrengths] = useState(true);
   const [enableEmployerViewing, setEnableEmployerViewing] = useState(true);
 
+  useEffect(() => {
+    try {
+      const savedResult = window.localStorage.getItem('mbtiAssessmentResult');
+      if (savedResult) {
+        setCompleted((prev) => ({ ...prev, mbti: true }));
+      }
+    } catch {
+      // no-op
+    }
+  }, []);
+
   const completedCount = useMemo(
     () => Object.values(completed).filter(Boolean).length,
     [completed]
@@ -253,20 +266,33 @@ export default function ProfessionalInsightsPage() {
                   </div>
 
                   <div className="assessment-actions">
-                    <button
-                      type="button"
-                      className="btn-primary"
-                      onClick={() => setCompleted((prev) => ({ ...prev, [assessment.id]: true }))}
-                    >
-                      Start Assessment
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      onClick={() => setCompleted((prev) => ({ ...prev, [assessment.id]: false }))}
-                    >
-                      Retake Assessment
-                    </button>
+                    {assessment.id === 'mbti' ? (
+                      <>
+                        <Link href="/dashboard/assessments/mbti" className="btn-primary">
+                          Start Assessment
+                        </Link>
+                        <Link href="/dashboard/assessments/mbti?retake=1" className="btn-secondary">
+                          Retake Assessment
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="btn-primary"
+                          onClick={() => setCompleted((prev) => ({ ...prev, [assessment.id]: true }))}
+                        >
+                          Start Assessment
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={() => setCompleted((prev) => ({ ...prev, [assessment.id]: false }))}
+                        >
+                          Retake Assessment
+                        </button>
+                      </>
+                    )}
                   </div>
 
                   <label className="toggle-row">
