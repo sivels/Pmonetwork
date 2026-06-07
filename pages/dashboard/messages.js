@@ -69,6 +69,7 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [moreOptionsOpen, setMoreOptionsOpen] = useState(false);
+  const [isResolvingRouteConversation, setIsResolvingRouteConversation] = useState(false);
 
   // Conversations data from database
   const [conversations, setConversations] = useState(initialConversations || []);
@@ -121,10 +122,11 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
   }, [conversations]);
 
   useEffect(() => {
+    if (isResolvingRouteConversation) return;
     if (!activeConversationId && conversations.length > 0) {
       setActiveConversationId(conversations[0].id);
     }
-  }, [activeConversationId, conversations]);
+  }, [activeConversationId, conversations, isResolvingRouteConversation]);
 
   useEffect(() => {
     if (!router.isReady || !profile) return;
@@ -133,11 +135,31 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
     const queryEmployerId = typeof router.query.employerId === 'string' ? router.query.employerId : null;
     const queryJobId = typeof router.query.jobId === 'string' ? router.query.jobId : null;
 
+    if (!queryConversationId && !queryEmployerId) return;
+
     let cancelled = false;
 
     async function ensureAndSelectConversation() {
+      setIsResolvingRouteConversation(true);
+
+      const refreshConversationsNow = async () => {
+        const refreshRes = await fetch(`/api/conversations?candidateId=${profile.id}`);
+        if (!refreshRes.ok) return;
+
+        const refreshData = await refreshRes.json();
+        if (cancelled) return;
+
+        setConversations(refreshData.items || []);
+      };
+
       if (queryConversationId) {
         if (!cancelled) setActiveConversationId(queryConversationId);
+        try {
+          await refreshConversationsNow();
+        } catch (error) {
+          console.error('Failed to refresh conversations for route selection:', error);
+        }
+        if (!cancelled) setIsResolvingRouteConversation(false);
         return;
       }
 
@@ -160,8 +182,11 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
         if (!conversation?.id || cancelled) return;
 
         setActiveConversationId(conversation.id);
+        await refreshConversationsNow();
       } catch (error) {
         console.error('Failed to auto-open conversation:', error);
+      } finally {
+        if (!cancelled) setIsResolvingRouteConversation(false);
       }
     }
 
