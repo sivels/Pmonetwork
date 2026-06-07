@@ -3,7 +3,7 @@ import { authOptions } from '../auth/[...nextauth]';
 import { prisma } from '../../../lib/prisma';
 
 // GET /api/candidate/applications
-// Returns list of applications for the logged-in candidate with job summary.
+// Returns list of applications for the logged-in candidate including progress data.
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
@@ -23,21 +23,19 @@ export default async function handler(req, res) {
     const applications = await prisma.application.findMany({
       where: { candidateId: profile.id },
       orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        status: true,
-        createdAt: true,
+      include: {
         job: {
-          select: {
-            id: true,
-            title: true,
-            employmentType: true,
-            location: true,
-            isRemote: true,
-            employer: { select: { companyName: true } }
-          }
-        }
-      }
+          include: {
+            employer: true,
+          },
+        },
+        statusHistory: {
+          orderBy: { createdAt: 'asc' },
+        },
+        interviews: {
+          orderBy: { startTime: 'asc' },
+        },
+      },
     });
     return res.json({ applications });
   } catch (e) {

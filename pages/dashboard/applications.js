@@ -483,6 +483,53 @@ export default function CandidateApplicationsPage({ applications: initialApplica
     setTab('closed');
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const refreshApplications = async () => {
+      try {
+        const response = await fetch('/api/candidate/applications', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store',
+        });
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (cancelled || !Array.isArray(data.applications)) return;
+
+        setApplications(data.applications);
+      } catch (error) {
+        console.error('Failed to refresh applications:', error);
+      }
+    };
+
+    const intervalId = setInterval(() => {
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+        refreshApplications();
+      }
+    }, 10000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshApplications();
+      }
+    };
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+    };
+  }, []);
+
   return (
     <>
       <Head>
