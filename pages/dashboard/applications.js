@@ -105,8 +105,10 @@ function getStatusMeta(status) {
 function getPipelineStep(status) {
   const key = (status || '').toUpperCase();
   if (key === 'REJECTED' || key === 'WITHDRAWN') return -1;
+  if (key === 'PENDING' || key === 'SUBMITTED') return 0;
   if (key === 'FEEDBACK_GIVEN') return PIPELINE.findIndex((step) => step.key === 'INTERVIEW');
-  return PIPELINE.findIndex(s => s.key === key);
+  const pipelineIndex = PIPELINE.findIndex(s => s.key === key);
+  return pipelineIndex >= 0 ? pipelineIndex : 0;
 }
 
 function formatDate(dateStr, opts = {}) {
