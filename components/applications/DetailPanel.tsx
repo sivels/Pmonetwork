@@ -4,12 +4,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { X, Mail, MessageSquare, FileText, Users, CheckCircle, ChevronLeft, Calendar } from "lucide-react";
 import { useEffect, useState } from "react";
 import SendOfferModal from "../SendOfferModal";
+import InviteToInterviewModal from "../InviteToInterviewModal";
 
 export function DetailPanel({ applicationId, onClose }: { applicationId: string | null; onClose: () => void }) {
   const qc = useQueryClient();
   const [messageText, setMessageText] = useState("");
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [offerModalOpen, setOfferModalOpen] = useState(false);
+  const [interviewModalOpen, setInterviewModalOpen] = useState(false);
   const { data, isLoading } = useQuery({
     queryKey: ["application", applicationId],
     queryFn: async () => {
@@ -242,7 +244,7 @@ export function DetailPanel({ applicationId, onClose }: { applicationId: string 
             <div className="flex flex-wrap items-center gap-2">
               <button onClick={() => changeStatus.mutate("SHORTLISTED")} className="inline-flex items-center gap-1 rounded-md bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700"><CheckCircle className="h-4 w-4"/> Shortlist</button>
               <button 
-                onClick={() => changeStatus.mutate("INTERVIEW")} 
+                onClick={() => setInterviewModalOpen(true)} 
                 className={`inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm text-white ${hasInterview ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                 disabled={hasInterview}
               >
@@ -269,6 +271,19 @@ export function DetailPanel({ applicationId, onClose }: { applicationId: string 
           onSuccess={() => {
             setOfferModalOpen(false);
             qc.invalidateQueries({ queryKey: ["application", applicationId] });
+            qc.invalidateQueries({ queryKey: ["applications"] });
+          }}
+        />
+      )}
+
+      {interviewModalOpen && data && (
+        <InviteToInterviewModal
+          application={data}
+          onClose={() => setInterviewModalOpen(false)}
+          onSuccess={() => {
+            setInterviewModalOpen(false);
+            qc.invalidateQueries({ queryKey: ["application", applicationId] });
+            qc.invalidateQueries({ queryKey: ["interview", applicationId] });
             qc.invalidateQueries({ queryKey: ["applications"] });
           }}
         />
