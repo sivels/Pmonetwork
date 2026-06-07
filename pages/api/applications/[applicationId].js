@@ -53,6 +53,16 @@ export default async function handler(req, res) {
       if (markViewed) updates.viewedByEmployerAt = new Date();
       if (toStatus) updates.status = toStatus.toUpperCase();
 
+      const currentStatus = (application.status || '').toUpperCase();
+      const shouldAutoReview =
+        !!markViewed &&
+        !toStatus &&
+        ['APPLIED', 'PENDING', 'SUBMITTED'].includes(currentStatus);
+
+      if (shouldAutoReview) {
+        updates.status = 'REVIEWED';
+      }
+
       const updated = await prisma.$transaction(async (tx) => {
         const up = await tx.application.update({ 
           where: { id: applicationId }, 
@@ -93,6 +103,32 @@ export default async function handler(req, res) {
               applicationId: up.id,
               type: 'APPLICATION_STATUS_CHANGED',
               details: JSON.stringify({ toStatus, note }),
+            },
+          });
+        }
+
+        if (shouldAutoReview) {
+          await tx.applicationStatusHistory.create({
+            data: {
+              applicationId: up.id,
+              fromStatus: application.status,
+              toStatus: 'REVIEWED',
+              note: 'Application reviewed by employer.',
+              changedByUserId: actorUserId,
+            },
+          });
+
+          const job = await tx.job.findUnique({ where: { id: up.jobId } });
+
+          await tx.activityLog.create({
+            data: {
+              actorUserId,
+              employerId: job?.employerId,
+              candidateId: up.candidateId,
+              jobId: up.jobId,
+              applicationId: up.id,
+              type: 'APPLICATION_STATUS_CHANGED',
+              details: JSON.stringify({ toStatus: 'REVIEWED', note: 'Auto-updated when employer viewed application.' }),
             },
           });
         }
