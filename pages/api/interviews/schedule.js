@@ -94,7 +94,7 @@ export default async function handler(req, res) {
         duration,
         provider: 'google_meet',
         meetingUrl,
-        message,
+        notes: message,
         status: 'SCHEDULED',
       },
     });

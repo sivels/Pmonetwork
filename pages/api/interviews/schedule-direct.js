@@ -50,7 +50,7 @@ export default async function handler(req, res) {
         meetingUrl: meetingUrl || null,
         provider: 'google_meet',
         status: 'SCHEDULED',
-        message: message || null
+        notes: message || null
       }
     });
 
