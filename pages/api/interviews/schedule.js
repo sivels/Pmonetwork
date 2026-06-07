@@ -2,6 +2,18 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { prisma } from '../../../lib/prisma';
 
+function isMissingInterviewTableError(error) {
+  const message = String(error?.message || '');
+  const code = error?.code;
+  const tableMeta = String(error?.meta?.table || '');
+
+  if (code === 'P2021') {
+    return tableMeta.includes('Interview') || message.includes('Interview');
+  }
+
+  return /relation\s+"?Interview"?\s+does\s+not\s+exist/i.test(message);
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -152,7 +164,7 @@ export default async function handler(req, res) {
     console.error('Error scheduling interview:', error);
     
     // Check if it's a database table not found error
-    if (error.message?.includes('Interview') || error.code === 'P2021') {
+    if (isMissingInterviewTableError(error)) {
       return res.status(500).json({ 
         error: 'Database migration required. Please run the Interview table migration in your Supabase SQL Editor.',
         details: 'The Interview table does not exist. Run: prisma/migrations/add_interviews.sql'
@@ -161,7 +173,8 @@ export default async function handler(req, res) {
     
     return res.status(500).json({ 
       error: 'Failed to schedule interview',
-      details: error.message 
+      details: error?.message || 'Unknown error',
+      code: error?.code || null,
     });
   }
 }

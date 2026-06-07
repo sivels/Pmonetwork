@@ -2,6 +2,18 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { prisma } from '../../../lib/prisma';
 
+function isMissingInterviewTableError(error) {
+  const message = String(error?.message || '');
+  const code = error?.code;
+  const tableMeta = String(error?.meta?.table || '');
+
+  if (code === 'P2021') {
+    return tableMeta.includes('Interview') || message.includes('Interview');
+  }
+
+  return /relation\s+"?Interview"?\s+does\s+not\s+exist/i.test(message);
+}
+
 export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
   
@@ -74,14 +86,14 @@ export default async function handler(req, res) {
       console.error('Error updating interview:', error);
       
       // Check if it's a database table not found error
-      if (error.message?.includes('Interview') || error.code === 'P2021') {
+      if (isMissingInterviewTableError(error)) {
         return res.status(500).json({ 
           error: 'Database migration required. Please run the Interview table migration in your Supabase SQL Editor.',
           details: 'The Interview table does not exist. See RUN_INTERVIEW_MIGRATION.md'
         });
       }
       
-      return res.status(500).json({ error: 'Failed to update interview', details: error.message });
+      return res.status(500).json({ error: 'Failed to update interview', details: error?.message || 'Unknown error', code: error?.code || null });
     }
   }
 
@@ -149,14 +161,14 @@ export default async function handler(req, res) {
       console.error('Error cancelling interview:', error);
       
       // Check if it's a database table not found error
-      if (error.message?.includes('Interview') || error.code === 'P2021') {
+      if (isMissingInterviewTableError(error)) {
         return res.status(500).json({ 
           error: 'Database migration required. Please run the Interview table migration in your Supabase SQL Editor.',
           details: 'The Interview table does not exist. See RUN_INTERVIEW_MIGRATION.md'
         });
       }
       
-      return res.status(500).json({ error: 'Failed to cancel interview', details: error.message });
+      return res.status(500).json({ error: 'Failed to cancel interview', details: error?.message || 'Unknown error', code: error?.code || null });
     }
   }
 
