@@ -26,7 +26,7 @@ export default async function handler(req, res) {
   }
 
   // Only employers can schedule interviews
-  if (session.user.role !== 'EMPLOYER') {
+  if ((session.user.role || '').toLowerCase() !== 'employer') {
     return res.status(403).json({ error: 'Only employers can schedule interviews' });
   }
 
