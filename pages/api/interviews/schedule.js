@@ -92,10 +92,10 @@ export default async function handler(req, res) {
         startTime: start,
         endTime: end,
         duration,
-        provider: 'video',
+        provider: 'google_meet',
         meetingUrl,
         message,
-        status: 'scheduled',
+        status: 'SCHEDULED',
       },
     });
 

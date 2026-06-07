@@ -45,10 +45,12 @@ export default async function handler(req, res) {
         employerId,
         jobId: conversation.jobId || null,
         startTime: new Date(startTime),
+        endTime: new Date(new Date(startTime).getTime() + (duration || 60) * 60000),
         duration: duration || 60,
         meetingUrl: meetingUrl || null,
+        provider: 'google_meet',
         status: 'SCHEDULED',
-        notes: message || null
+        message: message || null
       }
     });
 
