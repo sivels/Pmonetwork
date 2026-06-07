@@ -445,7 +445,7 @@ model Interview {
   duration      Int      // minutes
   provider      String   @default("google_meet") // google_meet, phone
   status        String   @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED, RESCHEDULED
-  notes         String?  // Optional message from employer to candidate
+  notes         String?  @map("message") // Optional message from employer to candidate
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
