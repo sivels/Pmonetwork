@@ -26,11 +26,13 @@ export default function ApplyModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState(null);
+  const [submissionResult, setSubmissionResult] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
       setStep(1);
       setShowSuccess(false);
+      setSubmissionResult(null);
       setError(null);
       setFormData({
         cvFile: null,
@@ -96,7 +98,8 @@ ${candidateProfile?.fullName || 'Candidate'}`;
         noteToEmployer: formData.noteToEmployer
       };
 
-      await onSubmit(submitData);
+      const result = await onSubmit(submitData);
+      setSubmissionResult(result || null);
       setShowSuccess(true);
     } catch (err) {
       setError(err.message || 'Failed to submit application');
@@ -156,7 +159,23 @@ ${candidateProfile?.fullName || 'Candidate'}`;
                 View Application
               </button>
               <button
-                onClick={() => window.location.href = '/dashboard/messages'}
+                onClick={() => {
+                  const conversationId = submissionResult?.conversationId;
+                  const employerId = submissionResult?.employerId || job?.employerId;
+                  const jobId = submissionResult?.jobId || job?.id;
+
+                  if (conversationId) {
+                    window.location.href = `/dashboard/messages?conversationId=${encodeURIComponent(conversationId)}`;
+                    return;
+                  }
+
+                  if (employerId && jobId) {
+                    window.location.href = `/dashboard/messages?employerId=${encodeURIComponent(employerId)}&jobId=${encodeURIComponent(jobId)}`;
+                    return;
+                  }
+
+                  window.location.href = '/dashboard/messages';
+                }}
                 className="flex-1 px-6 py-3 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
               >
                 <MessageSquare className="h-4 w-4" />

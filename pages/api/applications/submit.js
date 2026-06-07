@@ -71,8 +71,24 @@ export default async function handler(req, res) {
       }
     });
 
-    // TODO: Send email notification to employer
-    // TODO: Create message thread
+    // Create or fetch conversation thread for candidate <-> employer on this job
+    let conversation = await prisma.conversation.findFirst({
+      where: {
+        employerId: job.employerId,
+        candidateId,
+        jobId
+      }
+    });
+
+    if (!conversation) {
+      conversation = await prisma.conversation.create({
+        data: {
+          employerId: job.employerId,
+          candidateId,
+          jobId
+        }
+      });
+    }
 
     return res.status(200).json({ 
       success: true,
@@ -80,7 +96,10 @@ export default async function handler(req, res) {
         id: application.id,
         status: application.status,
         createdAt: application.createdAt
-      }
+      },
+      conversationId: conversation.id,
+      employerId: job.employerId,
+      jobId: job.id
     });
 
   } catch (error) {

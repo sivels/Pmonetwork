@@ -4,6 +4,7 @@ import { authOptions } from '../api/auth/[...nextauth]';
 import { prisma } from '../../lib/prisma';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/router';
 
 export async function getServerSideProps(ctx) {
   const session = await getServerSession(ctx.req, ctx.res, authOptions);
@@ -64,6 +65,7 @@ export async function getServerSideProps(ctx) {
 }
 
 export default function CandidateMessages({ profile, userEmail, initialConversations }) {
+  const router = useRouter();
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [moreOptionsOpen, setMoreOptionsOpen] = useState(false);
@@ -123,6 +125,52 @@ export default function CandidateMessages({ profile, userEmail, initialConversat
       setActiveConversationId(conversations[0].id);
     }
   }, [activeConversationId, conversations]);
+
+  useEffect(() => {
+    if (!router.isReady || !profile) return;
+
+    const queryConversationId = typeof router.query.conversationId === 'string' ? router.query.conversationId : null;
+    const queryEmployerId = typeof router.query.employerId === 'string' ? router.query.employerId : null;
+    const queryJobId = typeof router.query.jobId === 'string' ? router.query.jobId : null;
+
+    let cancelled = false;
+
+    async function ensureAndSelectConversation() {
+      if (queryConversationId) {
+        if (!cancelled) setActiveConversationId(queryConversationId);
+        return;
+      }
+
+      if (!queryEmployerId) return;
+
+      try {
+        const res = await fetch('/api/conversations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            employerId: queryEmployerId,
+            candidateId: profile.id,
+            jobId: queryJobId || undefined,
+          })
+        });
+
+        if (!res.ok) return;
+
+        const conversation = await res.json();
+        if (!conversation?.id || cancelled) return;
+
+        setActiveConversationId(conversation.id);
+      } catch (error) {
+        console.error('Failed to auto-open conversation:', error);
+      }
+    }
+
+    ensureAndSelectConversation();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router.isReady, router.query.conversationId, router.query.employerId, router.query.jobId, profile]);
 
   // Mark conversation as read when opened
   useEffect(() => {
