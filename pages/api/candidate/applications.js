@@ -35,6 +35,9 @@ export default async function handler(req, res) {
         interviews: {
           orderBy: { startTime: 'asc' },
         },
+        jobOffers: {
+          orderBy: { sentAt: 'desc' },
+        },
       },
     });
     return res.json({ applications });

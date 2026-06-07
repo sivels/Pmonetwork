@@ -43,6 +43,9 @@ export async function getServerSideProps(ctx) {
           interviews: {
             orderBy: { startTime: 'asc' },
           },
+          jobOffers: {
+            orderBy: { sentAt: 'desc' },
+          },
         },
       });
     } else if (session?.user?.id) {
@@ -62,6 +65,9 @@ export async function getServerSideProps(ctx) {
           },
           interviews: {
             orderBy: { startTime: 'asc' },
+          },
+          jobOffers: {
+            orderBy: { sentAt: 'desc' },
           },
         },
       });
@@ -126,7 +132,17 @@ function formatDateTime(dateStr) {
   });
 }
 
-function ApplicationCard({ application, onWithdraw }) {
+function parseOfferAttachments(value) {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function ApplicationCard({ application, onWithdraw, onRefresh }) {
   const [expanded, setExpanded] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
@@ -135,6 +151,9 @@ function ApplicationCard({ application, onWithdraw }) {
   const [withdrawError, setWithdrawError] = useState(null);
   const [showWithdrawForm, setShowWithdrawForm] = useState(false);
   const [withdrawReason, setWithdrawReason] = useState('');
+  const [showOffer, setShowOffer] = useState(false);
+  const [offerActionLoading, setOfferActionLoading] = useState(false);
+  const [offerActionError, setOfferActionError] = useState(null);
 
   const now = new Date();
   const meta = getStatusMeta(application.status);
@@ -143,6 +162,8 @@ function ApplicationCard({ application, onWithdraw }) {
   const isWithdrawn = (application.status || '').toUpperCase() === 'WITHDRAWN';
   const isFeedbackGiven = (application.status || '').toUpperCase() === 'FEEDBACK_GIVEN';
   const canWithdraw = !['REJECTED', 'HIRED', 'WITHDRAWN'].includes((application.status || '').toUpperCase());
+  const pendingOffer = (application.jobOffers || []).find((offer) => (offer.status || '').toUpperCase() === 'SENT') || null;
+  const pendingOfferAttachments = parseOfferAttachments(pendingOffer?.attachmentsJson);
 
   // Split interviews: truly upcoming (in future), expired scheduled (past but still 'scheduled'), and past (completed/cancelled)
   const upcomingInterview = application.interviews?.find(
@@ -198,6 +219,32 @@ function ApplicationCard({ application, onWithdraw }) {
       setWithdrawLoading(false);
     }
   }, [application.id, onWithdraw, withdrawReason]);
+
+  const handleOfferDecision = useCallback(async (decision) => {
+    if (!pendingOffer?.id) return;
+    setOfferActionLoading(true);
+    setOfferActionError(null);
+
+    try {
+      const response = await fetch(`/api/offers/${pendingOffer.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to update offer');
+      }
+
+      await onRefresh?.();
+      setShowOffer(false);
+    } catch (error) {
+      setOfferActionError(error.message || 'Failed to update offer');
+    } finally {
+      setOfferActionLoading(false);
+    }
+  }, [onRefresh, pendingOffer?.id]);
 
   return (
     <article className={`app-card ${expanded ? 'expanded' : ''}`}>
@@ -400,12 +447,72 @@ function ApplicationCard({ application, onWithdraw }) {
             </div>
           )}
 
+          {pendingOffer && showOffer && (
+            <div className="offer-section">
+              <h3 className="section-label">Job Offer</h3>
+              <div className="offer-card">
+                <h4 className="offer-title">{pendingOffer.title}</h4>
+                {pendingOffer.salary && <p className="offer-meta"><strong>Compensation:</strong> {pendingOffer.salary}</p>}
+                {pendingOffer.probationCompletionBonus && <p className="offer-meta"><strong>Probation bonus:</strong> {pendingOffer.probationCompletionBonus}</p>}
+                {pendingOffer.startDate && <p className="offer-meta"><strong>Proposed start:</strong> {formatDate(pendingOffer.startDate)}</p>}
+                {pendingOffer.message && <p className="offer-message">{pendingOffer.message}</p>}
+                {pendingOfferAttachments.length > 0 && (
+                  <div className="offer-attachments">
+                    <strong>Attachments</strong>
+                    <ul>
+                      {pendingOfferAttachments.map((attachment, index) => (
+                        <li key={`${attachment.url || 'attachment'}-${index}`}>
+                          <a href={attachment.url} target="_blank" rel="noreferrer">
+                            {attachment.name || attachment.filename || `Attachment ${index + 1}`}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <div className="offer-actions-row">
+                  <button
+                    type="button"
+                    className="action-btn primary"
+                    onClick={() => handleOfferDecision('ACCEPTED')}
+                    disabled={offerActionLoading}
+                  >
+                    {offerActionLoading ? 'Processing…' : 'Accept Offer'}
+                  </button>
+                </div>
+                {offerActionError && <p className="action-error">{offerActionError}</p>}
+              </div>
+            </div>
+          )}
+
           {/* Footer actions */}
           <div className="card-actions">
             {application.job?.id && (
               <Link href={`/jobs/${application.job.id}`} className="action-btn outline">View Job</Link>
             )}
             <Link href="/dashboard/messages" className="action-btn outline">Messages</Link>
+            {pendingOffer && (
+              <button
+                type="button"
+                className="action-btn outline"
+                onClick={() => {
+                  setShowOffer((value) => !value);
+                  setOfferActionError(null);
+                }}
+              >
+                {showOffer ? 'Hide Offer' : 'View Offer'}
+              </button>
+            )}
+            {pendingOffer && !showOffer && (
+              <button
+                type="button"
+                className="action-btn primary"
+                onClick={() => handleOfferDecision('ACCEPTED')}
+                disabled={offerActionLoading}
+              >
+                {offerActionLoading ? 'Processing…' : 'Accept Offer'}
+              </button>
+            )}
             {canWithdraw && (
               <button
                 type="button"
@@ -485,27 +592,27 @@ export default function CandidateApplicationsPage({ applications: initialApplica
     setTab('closed');
   }, []);
 
+  const refreshApplications = useCallback(async () => {
+    try {
+      const response = await fetch('/api/candidate/applications', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+      });
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+      if (!Array.isArray(data.applications)) return;
+
+      setApplications(data.applications);
+    } catch (error) {
+      console.error('Failed to refresh applications:', error);
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
-
-    const refreshApplications = async () => {
-      try {
-        const response = await fetch('/api/candidate/applications', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          cache: 'no-store',
-        });
-
-        if (!response.ok) return;
-
-        const data = await response.json();
-        if (cancelled || !Array.isArray(data.applications)) return;
-
-        setApplications(data.applications);
-      } catch (error) {
-        console.error('Failed to refresh applications:', error);
-      }
-    };
 
     const intervalId = setInterval(() => {
       if (typeof document === 'undefined' || document.visibilityState === 'visible') {
@@ -530,7 +637,7 @@ export default function CandidateApplicationsPage({ applications: initialApplica
         document.removeEventListener('visibilitychange', handleVisibilityChange);
       }
     };
-  }, []);
+  }, [refreshApplications]);
 
   return (
     <>
@@ -570,7 +677,7 @@ export default function CandidateApplicationsPage({ applications: initialApplica
               <p className="empty-tab">No {tab} applications.</p>
             ) : (
               <section className="applications-list">
-                {shown.map(app => <ApplicationCard key={app.id} application={app} onWithdraw={handleWithdrawUpdate} />)}
+                {shown.map(app => <ApplicationCard key={app.id} application={app} onWithdraw={handleWithdrawUpdate} onRefresh={refreshApplications} />)}
               </section>
             )}
           </>
@@ -693,9 +800,21 @@ export default function CandidateApplicationsPage({ applications: initialApplica
         .action-btn { display: inline-flex; align-items: center; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.875rem; font-weight: 600; text-decoration: none; transition: all 0.15s; }
         .action-btn.outline { border: 1px solid #d1d5db; color: #374151; background: #fff; }
         .action-btn.outline:hover { border-color: #4f46e5; color: #4f46e5; background: #f0f4ff; }
+        .action-btn.primary { border: 1px solid #4338ca; color: #fff; background: #4f46e5; cursor: pointer; }
+        .action-btn.primary:hover:not(:disabled) { background: #4338ca; }
         .action-btn.danger { border: 1px solid #fecaca; background: #fff5f5; color: #b91c1c; cursor: pointer; }
         .action-btn.danger:hover:not(:disabled) { border-color: #f87171; background: #fee2e2; }
         .action-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .offer-section { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 0.9rem 1rem; }
+        .offer-card { display: flex; flex-direction: column; gap: 0.5rem; }
+        .offer-title { margin: 0; font-size: 1rem; color: #1e3a8a; }
+        .offer-meta { margin: 0; color: #1f2937; font-size: 0.875rem; }
+        .offer-message { margin: 0.25rem 0 0; color: #374151; font-size: 0.875rem; white-space: pre-wrap; }
+        .offer-attachments strong { display: block; margin-bottom: 0.2rem; color: #1e3a8a; font-size: 0.85rem; }
+        .offer-attachments ul { margin: 0; padding-left: 1rem; }
+        .offer-attachments a { color: #1d4ed8; text-decoration: none; }
+        .offer-attachments a:hover { text-decoration: underline; }
+        .offer-actions-row { margin-top: 0.35rem; display: flex; gap: 0.6rem; flex-wrap: wrap; }
         .withdraw-form { border: 1px solid #fecaca; background: #fffaf9; border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
         .withdraw-label { font-size: 0.875rem; font-weight: 600; color: #7f1d1d; }
         .withdraw-textarea { width: 100%; min-height: 110px; border: 1px solid #fca5a5; border-radius: 10px; padding: 0.8rem 0.9rem; font: inherit; resize: vertical; color: #374151; background: #fff; }
