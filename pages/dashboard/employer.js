@@ -252,7 +252,7 @@ export default function EmployerDashboard({ profile, jobCount, latestJobs }) {
 
               {/* Quick Stats */}
               <div className="stats-grid">
-                <div className="stat-card">
+                <Link href="/employer/jobs" className="stat-card stat-link">
                   <div className="stat-icon blue">
                     <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -262,8 +262,8 @@ export default function EmployerDashboard({ profile, jobCount, latestJobs }) {
                     <span className="stat-label">Active Jobs</span>
                     <span className="stat-value">{jobCount}</span>
                   </div>
-                </div>
-                <div className="stat-card">
+                </Link>
+                <Link href="/employer/applicants" className="stat-card stat-link">
                   <div className="stat-icon green">
                     <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -273,8 +273,8 @@ export default function EmployerDashboard({ profile, jobCount, latestJobs }) {
                     <span className="stat-label">Total Applications</span>
                     <span className="stat-value">{jobs.reduce((sum, j) => sum + (j.applicationsCount || 0), 0)}</span>
                   </div>
-                </div>
-                <div className="stat-card">
+                </Link>
+                <Link href="/employer/messages" className="stat-card stat-link">
                   <div className="stat-icon purple">
                     <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -284,7 +284,7 @@ export default function EmployerDashboard({ profile, jobCount, latestJobs }) {
                     <span className="stat-label">Unread Messages</span>
                     <span className="stat-value">{unreadMessages}</span>
                   </div>
-                </div>
+                </Link>
               </div>
 
               {/* Company Profile Card */}
@@ -331,7 +331,9 @@ export default function EmployerDashboard({ profile, jobCount, latestJobs }) {
                               {j.employmentType || 'n/a'}{j.isRemote ? ' • Remote' : ''}{j.paused ? ' • Paused' : ''}
                             </p>
                           </div>
-                          <span className="job-applicants">{j.applicationsCount} applicant{j.applicationsCount !== 1 ? 's' : ''}</span>
+                          <Link href={`/employer/jobs/${j.id}/applications`} className="job-applicants">
+                            {j.applicationsCount} applicant{j.applicationsCount !== 1 ? 's' : ''}
+                          </Link>
                         </div>
                         <div className="job-actions">
                           <button onClick={()=>handleEdit(j)} className="job-btn secondary">Edit</button>
@@ -401,6 +403,9 @@ export default function EmployerDashboard({ profile, jobCount, latestJobs }) {
 
         .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem}
         .stat-card{background:#fff;border-radius:12px;padding:1.25rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);display:flex;align-items:center;gap:0.875rem}
+        .stat-link{text-decoration:none;color:inherit;transition:all 0.15s ease;cursor:pointer}
+        .stat-link:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(0,0,0,0.08)}
+        .stat-link:focus-visible{outline:2px solid #4f46e5;outline-offset:2px}
         .stat-icon{width:42px;height:42px;min-width:42px;border-radius:10px;display:flex;align-items:center;justify-content:center}
         .stat-icon.blue{background:#dbeafe;color:#1e40af}
         .stat-icon.green{background:#d1fae5;color:#065f46}
