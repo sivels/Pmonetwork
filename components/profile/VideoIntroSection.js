@@ -18,7 +18,6 @@ export default function VideoIntroSection({ profile, onUpdate }) {
   const cameraVideoRef = useRef(null);
   const recordingTimeoutRef = useRef(null);
   const recordingIntervalRef = useRef(null);
-  const recordingStartedAtRef = useRef(null);
 
   useEffect(() => {
     if (cameraVideoRef.current && cameraStream) {
@@ -166,7 +165,6 @@ export default function VideoIntroSection({ profile, onUpdate }) {
         stream.getTracks().forEach((track) => track.stop());
         setCameraStream(null);
         setRecording(false);
-        recordingStartedAtRef.current = null;
         setRecordingTimeLeft(MAX_RECORDING_SECONDS);
         clearRecordingTimers();
       };
@@ -174,20 +172,17 @@ export default function VideoIntroSection({ profile, onUpdate }) {
       mediaRecorder.start();
       setRecording(true);
       setRecordingTimeLeft(MAX_RECORDING_SECONDS);
-      recordingStartedAtRef.current = Date.now();
       setMessage({ type: 'info', text: 'Recording... Click Stop when finished (max 2 minutes)' });
 
       recordingIntervalRef.current = setInterval(() => {
-        if (!recordingStartedAtRef.current) return;
-
-        const elapsed = Math.floor((Date.now() - recordingStartedAtRef.current) / 1000);
-        const remaining = Math.max(0, MAX_RECORDING_SECONDS - elapsed);
-        setRecordingTimeLeft(remaining);
-
-        if (remaining <= 0) {
-          stopRecording();
-        }
-      }, 250);
+        setRecordingTimeLeft((current) => {
+          if (current <= 1) {
+            stopRecording();
+            return 0;
+          }
+          return current - 1;
+        });
+      }, 1000);
 
       recordingTimeoutRef.current = setTimeout(() => {
         if (mediaRecorderRef.current?.state === 'recording') {
