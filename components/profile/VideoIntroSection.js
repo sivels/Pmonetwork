@@ -96,6 +96,7 @@ export default function VideoIntroSection({ profile, onUpdate }) {
   const [recording, setRecording] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState(null);
+  const [cameraStream, setCameraStream] = useState(null);
 
   const [recordedBlob, setRecordedBlob] = useState(null);
   const [recordedUrl, setRecordedUrl] = useState(null);
@@ -125,6 +126,18 @@ export default function VideoIntroSection({ profile, onUpdate }) {
     };
   }, [recordedUrl]);
 
+  useEffect(() => {
+    if (step !== STEPS.RECORDING || !cameraStream || !cameraVideoRef.current) return;
+
+    const previewEl = cameraVideoRef.current;
+    previewEl.srcObject = cameraStream;
+
+    const playPromise = previewEl.play();
+    if (playPromise?.catch) {
+      playPromise.catch(() => {});
+    }
+  }, [cameraStream, step]);
+
   const clearCountdown = () => {
     if (countdownIntervalRef.current) {
       clearInterval(countdownIntervalRef.current);
@@ -137,6 +150,7 @@ export default function VideoIntroSection({ profile, onUpdate }) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
+    setCameraStream(null);
     if (cameraVideoRef.current) {
       cameraVideoRef.current.srcObject = null;
     }
@@ -174,15 +188,7 @@ export default function VideoIntroSection({ profile, onUpdate }) {
       });
 
       streamRef.current = stream;
-
-      if (cameraVideoRef.current) {
-        cameraVideoRef.current.srcObject = stream;
-        try {
-          await cameraVideoRef.current.play();
-        } catch {
-          // autoplay may be delayed until browser is ready
-        }
-      }
+      setCameraStream(stream);
 
       const mimeType = selectRecorderMimeType();
       const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
