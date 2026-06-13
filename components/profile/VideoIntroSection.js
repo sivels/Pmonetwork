@@ -12,6 +12,7 @@ export default function VideoIntroSection({ profile, onUpdate }) {
   const [cameraStream, setCameraStream] = useState(null);
   const [recordingTimeLeft, setRecordingTimeLeft] = useState(MAX_RECORDING_SECONDS);
   const [thumbnailUrl, setThumbnailUrl] = useState(null);
+  const [thumbnailLoading, setThumbnailLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
 
@@ -110,10 +111,15 @@ export default function VideoIntroSection({ profile, onUpdate }) {
     setRecordedBlob(null);
     setVideoPreview(url);
     setThumbnailUrl(null);
+    setThumbnailLoading(true);
     setMessage({ type: 'info', text: 'Video selected — preview it or upload.' });
 
-    const thumb = await generateThumbnail(url);
-    setThumbnailUrl(thumb);
+    try {
+      const thumb = await generateThumbnail(url);
+      setThumbnailUrl(thumb);
+    } finally {
+      setThumbnailLoading(false);
+    }
   };
 
   const uploadVideo = async (file) => {
@@ -148,6 +154,7 @@ export default function VideoIntroSection({ profile, onUpdate }) {
         setRecordedBlob(null);
         setPendingFile(null);
         setThumbnailUrl(null);
+        setThumbnailLoading(false);
         setShowPreview(false);
       } else {
         const error = await res.json();
@@ -180,6 +187,7 @@ export default function VideoIntroSection({ profile, onUpdate }) {
         const url = URL.createObjectURL(blob);
         setVideoPreview(url);
         setThumbnailUrl(null);
+        setThumbnailLoading(true);
 
         stream.getTracks().forEach((t) => t.stop());
         setCameraStream(null);
@@ -188,8 +196,12 @@ export default function VideoIntroSection({ profile, onUpdate }) {
         setRecordingTimeLeft(MAX_RECORDING_SECONDS);
         clearRecordingTimers();
 
-        const thumb = await generateThumbnail(url);
-        setThumbnailUrl(thumb);
+        try {
+          const thumb = await generateThumbnail(url);
+          setThumbnailUrl(thumb);
+        } finally {
+          setThumbnailLoading(false);
+        }
       };
 
       mediaRecorder.start();
@@ -245,7 +257,7 @@ export default function VideoIntroSection({ profile, onUpdate }) {
         body: JSON.stringify({ videoIntroUrl: null }),
       });
       if (res.ok) {
-        setVideoPreview(null); setRecordedBlob(null); setPendingFile(null); setThumbnailUrl(null); setShowPreview(false);
+        setVideoPreview(null); setRecordedBlob(null); setPendingFile(null); setThumbnailUrl(null); setThumbnailLoading(false); setShowPreview(false);
         onUpdate({ ...profile, videoIntroUrl: null });
         setMessage({ type: 'success', text: 'Video removed' });
       } else {
@@ -284,12 +296,17 @@ export default function VideoIntroSection({ profile, onUpdate }) {
             ) : hasPending ? (
               /* Thumbnail / pending */
               <div className="camera-preview-wrap">
-                {thumbnailUrl ? (
-                  <img src={thumbnailUrl} className="video-thumbnail" alt="Video preview thumbnail" />
-                ) : (
+                {thumbnailLoading ? (
                   <div className="thumbnail-loading-wrap">
                     <div className="thumbnail-spinner" />
                     <p>Generating preview…</p>
+                  </div>
+                ) : thumbnailUrl ? (
+                  <img src={thumbnailUrl} className="video-thumbnail" alt="Video preview thumbnail" />
+                ) : (
+                  <div className="thumbnail-fallback-wrap">
+                    <p>Preview image unavailable</p>
+                    <small>Use Preview Video to watch before upload.</small>
                   </div>
                 )}
                 {/* Play button always visible so user can preview even while thumbnail loads */}
@@ -448,6 +465,17 @@ export default function VideoIntroSection({ profile, onUpdate }) {
           align-items: center; justify-content: center;
           min-height: 280px; background: #111827;
           border-radius: 14px; color: #9ca3af; gap: 0.75rem;
+        }
+        .thumbnail-fallback-wrap {
+          display: flex; flex-direction: column;
+          align-items: center; justify-content: center;
+          min-height: 280px; background: #111827;
+          border-radius: 14px; color: #d1d5db; gap: 0.5rem;
+          text-align: center;
+          padding: 1rem;
+        }
+        .thumbnail-fallback-wrap small {
+          color: #9ca3af;
         }
         .thumbnail-spinner {
           width: 36px; height: 36px;
