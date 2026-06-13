@@ -214,7 +214,7 @@ export default function VideoIntroSection({ profile, onUpdate }) {
         <button
           type="button"
           onClick={startRecording}
-          className="overlay-btn overlay-btn-start"
+          className="btn-primary overlay-btn"
           disabled={uploading}
         >
           <span className="dot" /> Start Recording
@@ -223,7 +223,7 @@ export default function VideoIntroSection({ profile, onUpdate }) {
         <button
           type="button"
           onClick={stopRecording}
-          className="overlay-btn overlay-btn-stop"
+          className="btn-danger overlay-btn"
         >
           <span className="square" /> Stop Recording
         </button>
@@ -434,38 +434,10 @@ export default function VideoIntroSection({ profile, onUpdate }) {
 
         .overlay-btn {
           pointer-events: auto;
-          border: none;
-          border-radius: 999px;
-          padding: 0.6rem 1rem;
-          color: #fff;
-          font-weight: 700;
-          font-size: 0.85rem;
           display: inline-flex;
           align-items: center;
           gap: 0.45rem;
-          cursor: pointer;
           box-shadow: 0 8px 25px rgba(0, 0, 0, 0.22);
-        }
-
-        .overlay-btn-start {
-          background: rgba(22, 163, 74, 0.92);
-        }
-
-        .overlay-btn-start:hover:not(:disabled) {
-          background: rgba(22, 163, 74, 1);
-        }
-
-        .overlay-btn-stop {
-          background: rgba(220, 38, 38, 0.92);
-        }
-
-        .overlay-btn-stop:hover {
-          background: rgba(220, 38, 38, 1);
-        }
-
-        .overlay-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
         }
 
         .dot {
