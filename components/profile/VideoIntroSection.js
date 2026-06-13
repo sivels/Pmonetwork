@@ -57,6 +57,23 @@ export default function VideoIntroSection({ profile, onUpdate }) {
     if (recordingIntervalRef.current) { clearInterval(recordingIntervalRef.current); recordingIntervalRef.current = null; }
   };
 
+  const captureCurrentCameraFrame = () => {
+    const cameraVideo = cameraVideoRef.current;
+    if (!cameraVideo || !cameraVideo.videoWidth || !cameraVideo.videoHeight) return null;
+
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = cameraVideo.videoWidth;
+      canvas.height = cameraVideo.videoHeight;
+      const context = canvas.getContext('2d');
+      if (!context) return null;
+      context.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL('image/jpeg', 0.82);
+    } catch {
+      return null;
+    }
+  };
+
   // Generate a JPEG thumbnail from any video URL.
   // Handles webm blobs from MediaRecorder which report Infinity duration.
   const generateThumbnail = (videoUrl) =>
@@ -186,8 +203,16 @@ export default function VideoIntroSection({ profile, onUpdate }) {
         setRecordedBlob(blob);
         const url = URL.createObjectURL(blob);
         setVideoPreview(url);
-        setThumbnailUrl(null);
-        setThumbnailLoading(true);
+        setShowPreview(true);
+
+        const instantThumbnail = captureCurrentCameraFrame();
+        if (instantThumbnail) {
+          setThumbnailUrl(instantThumbnail);
+          setThumbnailLoading(false);
+        } else {
+          setThumbnailUrl(null);
+          setThumbnailLoading(true);
+        }
 
         stream.getTracks().forEach((t) => t.stop());
         setCameraStream(null);
@@ -196,12 +221,18 @@ export default function VideoIntroSection({ profile, onUpdate }) {
         setRecordingTimeLeft(MAX_RECORDING_SECONDS);
         clearRecordingTimers();
 
-        try {
-          const thumb = await generateThumbnail(url);
-          setThumbnailUrl(thumb);
-        } finally {
-          setThumbnailLoading(false);
+        if (!instantThumbnail) {
+          try {
+            const thumb = await generateThumbnail(url);
+            if (thumb) {
+              setThumbnailUrl(thumb);
+            }
+          } finally {
+            setThumbnailLoading(false);
+          }
         }
+
+        setMessage({ type: 'success', text: 'Recording complete! Preview opened. Upload when ready.' });
       };
 
       mediaRecorder.start();
@@ -222,8 +253,13 @@ export default function VideoIntroSection({ profile, onUpdate }) {
     clearRecordingTimers();
     setRecording(false);
     if (mediaRecorderRef.current?.state === 'recording') {
+      const preStopThumbnail = captureCurrentCameraFrame();
+      if (preStopThumbnail) {
+        setThumbnailUrl(preStopThumbnail);
+        setThumbnailLoading(false);
+      }
       mediaRecorderRef.current.stop();
-      setMessage({ type: 'success', text: 'Recording complete! Click "Upload Recording" to save.' });
+      setMessage({ type: 'info', text: 'Finalizing recording… preparing instant preview.' });
     }
   };
 
