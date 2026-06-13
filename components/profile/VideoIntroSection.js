@@ -14,7 +14,7 @@ export default function VideoIntroSection({ profile, onUpdate }) {
   const [thumbnailUrl, setThumbnailUrl] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
-  
+
   const fileInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const videoChunksRef = useRef([]);
@@ -31,94 +31,80 @@ export default function VideoIntroSection({ profile, onUpdate }) {
 
   useEffect(() => {
     return () => {
-      if (recordingTimeoutRef.current) {
-        clearTimeout(recordingTimeoutRef.current);
-      }
-      if (recordingIntervalRef.current) {
-        clearInterval(recordingIntervalRef.current);
-      }
-      if (cameraStream) {
-        cameraStream.getTracks().forEach((track) => track.stop());
-      }
+      if (recordingTimeoutRef.current) clearTimeout(recordingTimeoutRef.current);
+      if (recordingIntervalRef.current) clearInterval(recordingIntervalRef.current);
+      if (cameraStream) cameraStream.getTracks().forEach((t) => t.stop());
     };
   }, [cameraStream]);
 
   useEffect(() => {
     if (!recording) return;
-
     recordingIntervalRef.current = setInterval(() => {
       if (!recordingStartedAtRef.current) return;
-
       const elapsed = Math.floor((Date.now() - recordingStartedAtRef.current) / 1000);
       const remaining = Math.max(0, MAX_RECORDING_SECONDS - elapsed);
       setRecordingTimeLeft(remaining);
-
-      if (remaining <= 0 && mediaRecorderRef.current?.state === 'recording') {
-        stopRecording();
-      }
+      if (remaining <= 0 && mediaRecorderRef.current?.state === 'recording') stopRecording();
     }, 250);
-
     return () => {
-      if (recordingIntervalRef.current) {
-        clearInterval(recordingIntervalRef.current);
-        recordingIntervalRef.current = null;
-      }
+      if (recordingIntervalRef.current) { clearInterval(recordingIntervalRef.current); recordingIntervalRef.current = null; }
     };
   }, [recording]);
 
   const clearRecordingTimers = () => {
-    if (recordingTimeoutRef.current) {
-      clearTimeout(recordingTimeoutRef.current);
-      recordingTimeoutRef.current = null;
-    }
-    if (recordingIntervalRef.current) {
-      clearInterval(recordingIntervalRef.current);
-      recordingIntervalRef.current = null;
-    }
+    if (recordingTimeoutRef.current) { clearTimeout(recordingTimeoutRef.current); recordingTimeoutRef.current = null; }
+    if (recordingIntervalRef.current) { clearInterval(recordingIntervalRef.current); recordingIntervalRef.current = null; }
   };
 
-  const generateThumbnail = (videoUrl) => {
-    return new Promise((resolve) => {
+  // Generate a JPEG thumbnail from any video URL.
+  // Handles webm blobs from MediaRecorder which report Infinity duration.
+  const generateThumbnail = (videoUrl) =>
+    new Promise((resolve) => {
       const video = document.createElement('video');
       video.muted = true;
       video.playsInline = true;
-      video.onseeked = () => {
+
+      let settled = false;
+      const done = (val) => {
+        if (!settled) { settled = true; clearTimeout(timer); resolve(val); }
+      };
+
+      // Never hang forever
+      const timer = setTimeout(() => done(null), 8000);
+
+      const captureFrame = () => {
+        if (!video.videoWidth) { done(null); return; }
         try {
           const canvas = document.createElement('canvas');
-          canvas.width = video.videoWidth || 640;
-          canvas.height = video.videoHeight || 360;
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
           canvas.getContext('2d').drawImage(video, 0, 0);
-          resolve(canvas.toDataURL('image/jpeg', 0.8));
-        } catch {
-          resolve(null);
+          done(canvas.toDataURL('image/jpeg', 0.8));
+        } catch { done(null); }
+      };
+
+      video.onseeked = captureFrame;
+
+      video.onloadeddata = () => {
+        if (isFinite(video.duration) && video.duration > 0) {
+          video.currentTime = Math.min(1, video.duration / 2);
+        } else {
+          // webm from MediaRecorder has Infinity duration — grab first decoded frame
+          captureFrame();
         }
       };
-      video.onloadedmetadata = () => {
-        video.currentTime = Math.min(1, video.duration / 2);
-      };
-      video.onerror = () => resolve(null);
+
+      video.onerror = () => done(null);
       video.src = videoUrl;
       video.load();
     });
-  };
 
   const handleFileSelect = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!file.type.startsWith('video/')) { setMessage({ type: 'error', text: 'Please select a video file' }); return; }
+    if (file.size > 100 * 1024 * 1024) { setMessage({ type: 'error', text: 'Video must be smaller than 100MB.' }); return; }
 
-    // Validate file type
-    if (!file.type.startsWith('video/')) {
-      setMessage({ type: 'error', text: 'Please select a video file' });
-      return;
-    }
-
-    // Validate file size (100MB max with Supabase Storage)
-    if (file.size > 100 * 1024 * 1024) {
-      setMessage({ type: 'error', text: 'Video must be smaller than 100MB.' });
-      return;
-    }
-
-    // Stage the file for preview instead of auto-uploading
     const url = URL.createObjectURL(file);
     setPendingFile(file);
     setRecordedBlob(null);
@@ -133,49 +119,26 @@ export default function VideoIntroSection({ profile, onUpdate }) {
   const uploadVideo = async (file) => {
     setUploading(true);
     setMessage(null);
-
     try {
-      // Debug: Check if Supabase is configured
-      console.log('Supabase client:', supabase);
-      console.log('Supabase URL:', supabase.supabaseUrl);
-      console.log('Storage client:', supabase.storage);
-      
-      // Test: List all buckets first
-      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-      console.log('Available buckets:', buckets);
-      if (bucketsError) console.error('Buckets error:', bucketsError);
-      
-      // Generate unique file name
       const fileExt = file.name.split('.').pop();
       const fileName = `${profile.id}/${Date.now()}.${fileExt}`;
 
-      console.log('Uploading to bucket: Videos, file:', fileName);
-
-      // Upload directly to Supabase Storage from client
-      const { data, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('Videos')
-        .upload(fileName, file, {
-          contentType: file.type,
-          upsert: false
-        });
+        .upload(fileName, file, { contentType: file.type, upsert: false });
 
       if (uploadError) {
-        console.error('Upload error:', uploadError);
         setMessage({ type: 'error', text: uploadError.message || 'Upload failed' });
         setUploading(false);
         return;
       }
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('Videos')
-        .getPublicUrl(fileName);
+      const { data: { publicUrl } } = supabase.storage.from('Videos').getPublicUrl(fileName);
 
-      // Update profile via API
       const res = await fetch('/api/candidate/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ videoIntroUrl: publicUrl })
+        body: JSON.stringify({ videoIntroUrl: publicUrl }),
       });
 
       if (res.ok) {
@@ -201,24 +164,15 @@ export default function VideoIntroSection({ profile, onUpdate }) {
 
   const startRecording = async () => {
     if (recording) return;
-
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 1280, height: 720 },
-        audio: true,
-      });
-
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 }, audio: true });
       setCameraStream(stream);
       videoChunksRef.current = [];
 
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          videoChunksRef.current.push(event.data);
-        }
-      };
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) videoChunksRef.current.push(e.data); };
 
       mediaRecorder.onstop = async () => {
         const blob = new Blob(videoChunksRef.current, { type: 'video/webm' });
@@ -227,7 +181,7 @@ export default function VideoIntroSection({ profile, onUpdate }) {
         setVideoPreview(url);
         setThumbnailUrl(null);
 
-        stream.getTracks().forEach((track) => track.stop());
+        stream.getTracks().forEach((t) => t.stop());
         setCameraStream(null);
         setRecording(false);
         recordingStartedAtRef.current = null;
@@ -245,9 +199,7 @@ export default function VideoIntroSection({ profile, onUpdate }) {
       setMessage({ type: 'info', text: 'Recording... Click Stop when finished (max 2 minutes)' });
 
       recordingTimeoutRef.current = setTimeout(() => {
-        if (mediaRecorderRef.current?.state === 'recording') {
-          stopRecording();
-        }
+        if (mediaRecorderRef.current?.state === 'recording') stopRecording();
       }, MAX_RECORDING_SECONDS * 1000);
     } catch (err) {
       setMessage({ type: 'error', text: 'Camera access denied or unavailable' });
@@ -257,7 +209,6 @@ export default function VideoIntroSection({ profile, onUpdate }) {
   const stopRecording = () => {
     clearRecordingTimers();
     setRecording(false);
-
     if (mediaRecorderRef.current?.state === 'recording') {
       mediaRecorderRef.current.stop();
       setMessage({ type: 'success', text: 'Recording complete! Click "Upload Recording" to save.' });
@@ -267,20 +218,11 @@ export default function VideoIntroSection({ profile, onUpdate }) {
   const renderOverlayControls = () => (
     <div className="video-overlay-controls">
       {!recording ? (
-        <button
-          type="button"
-          onClick={startRecording}
-          className="btn-primary overlay-btn"
-          disabled={uploading}
-        >
+        <button type="button" onClick={startRecording} className="btn-primary overlay-btn" disabled={uploading}>
           <span className="dot" /> Start Recording
         </button>
       ) : (
-        <button
-          type="button"
-          onClick={stopRecording}
-          className="btn-danger overlay-btn"
-        >
+        <button type="button" onClick={stopRecording} className="btn-danger overlay-btn">
           <span className="square" /> Stop Recording
         </button>
       )}
@@ -288,44 +230,32 @@ export default function VideoIntroSection({ profile, onUpdate }) {
   );
 
   const handleUploadPending = async () => {
-    if (recordedBlob) {
-      const file = new File([recordedBlob], 'video-intro.webm', { type: 'video/webm' });
-      await uploadVideo(file);
-    } else if (pendingFile) {
-      await uploadVideo(pendingFile);
-    }
+    if (recordedBlob) await uploadVideo(new File([recordedBlob], 'video-intro.webm', { type: 'video/webm' }));
+    else if (pendingFile) await uploadVideo(pendingFile);
   };
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to remove your video introduction?')) return;
-
     setUploading(true);
     setMessage(null);
-
     try {
       const res = await fetch('/api/candidate/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ videoIntroUrl: null })
+        body: JSON.stringify({ videoIntroUrl: null }),
       });
-
       if (res.ok) {
-        setVideoPreview(null);
-        setRecordedBlob(null);
-        setPendingFile(null);
-        setThumbnailUrl(null);
-        setShowPreview(false);
+        setVideoPreview(null); setRecordedBlob(null); setPendingFile(null); setThumbnailUrl(null); setShowPreview(false);
         onUpdate({ ...profile, videoIntroUrl: null });
         setMessage({ type: 'success', text: 'Video removed' });
       } else {
         setMessage({ type: 'error', text: 'Failed to remove video' });
       }
-    } catch (err) {
-      setMessage({ type: 'error', text: 'Network error. Please try again.' });
-    } finally {
-      setUploading(false);
-    }
+    } catch { setMessage({ type: 'error', text: 'Network error. Please try again.' }); }
+    finally { setUploading(false); }
   };
+
+  const hasPending = !!(recordedBlob || pendingFile);
 
   return (
     <div className="profile-section">
@@ -337,53 +267,42 @@ export default function VideoIntroSection({ profile, onUpdate }) {
       </div>
 
       <div className="section-content">
-        {message && (
-          <div className={`alert alert-${message.type}`}>
-            {message.text}
-          </div>
-        )}
+        {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}
 
         <div className="video-upload-container">
           <div className="video-preview-area">
             {recording && cameraStream ? (
+              /* Live camera */
               <div className="camera-preview-wrap">
-                <video
-                  ref={cameraVideoRef}
-                  autoPlay
-                  muted
-                  playsInline
-                  className="video-preview camera-preview"
-                />
+                <video ref={cameraVideoRef} autoPlay muted playsInline className="video-preview camera-preview" />
                 <div className={`camera-countdown-badge ${recordingTimeLeft <= 30 ? 'warning' : ''}`}>
                   {Math.floor(recordingTimeLeft / 60)}:{String(recordingTimeLeft % 60).padStart(2, '0')}
                 </div>
                 <div className="camera-live-badge">Live camera preview</div>
                 {renderOverlayControls()}
               </div>
-            ) : (recordedBlob || pendingFile) ? (
+            ) : hasPending ? (
+              /* Thumbnail / pending */
               <div className="camera-preview-wrap">
                 {thumbnailUrl ? (
-                  <>
-                    <img src={thumbnailUrl} className="video-thumbnail" alt="Video preview thumbnail" />
-                    <button
-                      className="thumbnail-play-btn"
-                      onClick={() => setShowPreview(true)}
-                      aria-label="Preview video"
-                    >
-                      <svg viewBox="0 0 24 24" fill="white" width="40" height="40">
-                        <polygon points="5 3 19 12 5 21 5 3" />
-                      </svg>
-                    </button>
-                    <div className="thumbnail-ready-badge">Ready to upload</div>
-                  </>
+                  <img src={thumbnailUrl} className="video-thumbnail" alt="Video preview thumbnail" />
                 ) : (
                   <div className="thumbnail-loading-wrap">
+                    <div className="thumbnail-spinner" />
                     <p>Generating preview…</p>
                   </div>
                 )}
+                {/* Play button always visible so user can preview even while thumbnail loads */}
+                <button className="thumbnail-play-btn" onClick={() => setShowPreview(true)} aria-label="Preview video">
+                  <svg viewBox="0 0 24 24" fill="white" width="40" height="40">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                </button>
+                <div className="thumbnail-ready-badge">Ready to upload</div>
                 {renderOverlayControls()}
               </div>
             ) : videoPreview ? (
+              /* Already uploaded */
               <div className="camera-preview-wrap">
                 <video controls className="video-preview" src={videoPreview}>
                   Your browser does not support video playback.
@@ -391,6 +310,7 @@ export default function VideoIntroSection({ profile, onUpdate }) {
                 {renderOverlayControls()}
               </div>
             ) : (
+              /* Empty */
               <div className="camera-preview-wrap">
                 <div className="video-placeholder">
                   <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -405,52 +325,35 @@ export default function VideoIntroSection({ profile, onUpdate }) {
 
           <div className="video-upload-actions">
             {!recording && (
-              <>
-                <div className="file-upload-option">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="video/*"
-                    onChange={handleFileSelect}
-                    className="file-input-hidden"
-                    id="video-upload-input"
-                    disabled={uploading}
-                  />
-                  <label htmlFor="video-upload-input" className={`btn-secondary ${uploading ? 'btn-disabled' : ''}`}>
-                    {uploading ? 'Uploading...' : 'Upload Video File'}
-                  </label>
-                </div>
-              </>
+              <div className="file-upload-option">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="video/*"
+                  onChange={handleFileSelect}
+                  className="file-input-hidden"
+                  id="video-upload-input"
+                  disabled={uploading}
+                />
+                <label htmlFor="video-upload-input" className={`btn-secondary ${uploading ? 'btn-disabled' : ''}`}>
+                  {uploading ? 'Uploading...' : 'Upload Video File'}
+                </label>
+              </div>
             )}
 
-            {(recordedBlob || pendingFile) && (
+            {hasPending && (
               <>
-                <button
-                  type="button"
-                  onClick={() => setShowPreview(true)}
-                  className="btn-secondary"
-                  disabled={uploading}
-                >
+                <button type="button" onClick={() => setShowPreview(true)} className="btn-secondary" disabled={uploading}>
                   ▶ Preview Video
                 </button>
-                <button
-                  type="button"
-                  onClick={handleUploadPending}
-                  className="btn-primary"
-                  disabled={uploading}
-                >
+                <button type="button" onClick={handleUploadPending} className="btn-primary" disabled={uploading}>
                   {uploading ? 'Uploading...' : recordedBlob ? 'Upload Recording' : 'Upload Video'}
                 </button>
               </>
             )}
 
             {videoPreview && profile?.videoIntroUrl && (
-              <button
-                type="button"
-                onClick={handleDelete}
-                className="btn-danger-outline"
-                disabled={uploading}
-              >
+              <button type="button" onClick={handleDelete} className="btn-danger-outline" disabled={uploading}>
                 Remove Video
               </button>
             )}
@@ -461,7 +364,7 @@ export default function VideoIntroSection({ profile, onUpdate }) {
             <ul>
               <li>✓ Keep it between 60-120 seconds</li>
               <li>✓ Introduce yourself and your PMO experience</li>
-              <li>✓ Mention key skills and what you're looking for</li>
+              <li>✓ Mention key skills and what you&apos;re looking for</li>
               <li>✓ Good lighting and clear audio</li>
               <li>✓ Professional background</li>
               <li>✓ Dress professionally</li>
@@ -471,16 +374,12 @@ export default function VideoIntroSection({ profile, onUpdate }) {
         </div>
       </div>
 
+      {/* Preview modal */}
       {showPreview && videoPreview && (
         <div className="video-modal-overlay" onClick={() => setShowPreview(false)}>
           <div className="video-modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="video-modal-close" onClick={() => setShowPreview(false)}>✕</button>
-            <video
-              controls
-              autoPlay
-              className="video-modal-player"
-              src={videoPreview}
-            />
+            <video controls autoPlay className="video-modal-player" src={videoPreview} />
           </div>
         </div>
       )}
@@ -494,168 +393,87 @@ export default function VideoIntroSection({ profile, onUpdate }) {
           overflow: hidden;
           border-radius: 14px;
         }
-
-        .camera-preview {
-          background: #111827;
-        }
-
+        .camera-preview { background: #111827; }
         .camera-live-badge {
-          position: absolute;
-          top: 12px;
-          left: 12px;
-          padding: 0.35rem 0.6rem;
-          border-radius: 999px;
-          background: rgba(17, 24, 39, 0.82);
-          color: #fff;
-          font-size: 0.75rem;
-          font-weight: 700;
-          letter-spacing: 0.02em;
+          position: absolute; top: 12px; left: 12px;
+          padding: 0.35rem 0.6rem; border-radius: 999px;
+          background: rgba(17,24,39,0.82); color: #fff;
+          font-size: 0.75rem; font-weight: 700; letter-spacing: 0.02em;
         }
-
         .camera-countdown-badge {
-          position: absolute;
-          top: 12px;
-          right: 12px;
-          padding: 0.35rem 0.6rem;
-          border-radius: 999px;
-          background: rgba(220, 38, 38, 0.88);
-          color: #fff;
-          font-size: 0.75rem;
-          font-weight: 800;
-          letter-spacing: 0.02em;
-          min-width: 3.6rem;
-          text-align: center;
+          position: absolute; top: 12px; right: 12px;
+          padding: 0.35rem 0.6rem; border-radius: 999px;
+          background: rgba(220,38,38,0.88); color: #fff;
+          font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em;
+          min-width: 3.6rem; text-align: center;
         }
-
-        .camera-countdown-badge.warning {
-          background: rgba(249, 115, 22, 0.92);
-        }
-
+        .camera-countdown-badge.warning { background: rgba(249,115,22,0.92); }
         .video-overlay-controls {
-          position: absolute;
-          left: 0;
-          right: 0;
-          bottom: 14px;
-          display: flex;
-          justify-content: center;
-          pointer-events: none;
+          position: absolute; left: 0; right: 0; bottom: 14px;
+          display: flex; justify-content: center; pointer-events: none;
         }
-
         .overlay-btn {
           pointer-events: auto;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.45rem;
-          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.22);
+          display: inline-flex; align-items: center; gap: 0.45rem;
+          box-shadow: 0 8px 25px rgba(0,0,0,0.22);
         }
-
-        .dot {
-          width: 10px;
-          height: 10px;
-          border-radius: 999px;
-          background: #fff;
-        }
-
-        .square {
-          width: 10px;
-          height: 10px;
-          background: #fff;
-          border-radius: 2px;
-        }
+        .dot { width: 10px; height: 10px; border-radius: 999px; background: #fff; }
+        .square { width: 10px; height: 10px; background: #fff; border-radius: 2px; }
 
         .video-thumbnail {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-          border-radius: 14px;
-          min-height: 280px;
+          width: 100%; height: 100%; min-height: 280px;
+          object-fit: cover; display: block; border-radius: 14px;
         }
-
         .thumbnail-play-btn {
-          position: absolute;
-          top: 50%;
-          left: 50%;
+          position: absolute; top: 50%; left: 50%;
           transform: translate(-50%, -50%);
-          background: rgba(0, 0, 0, 0.6);
-          border: 3px solid rgba(255, 255, 255, 0.8);
-          border-radius: 50%;
-          width: 72px;
-          height: 72px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.2s;
-          padding-left: 5px;
+          background: rgba(0,0,0,0.6);
+          border: 3px solid rgba(255,255,255,0.8);
+          border-radius: 50%; width: 72px; height: 72px;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; transition: all 0.2s; padding-left: 5px;
         }
-
         .thumbnail-play-btn:hover {
-          background: rgba(0, 0, 0, 0.8);
-          transform: translate(-50%, -50%) scale(1.05);
+          background: rgba(0,0,0,0.85);
+          transform: translate(-50%, -50%) scale(1.06);
         }
-
         .thumbnail-ready-badge {
-          position: absolute;
-          top: 12px;
-          left: 12px;
-          padding: 0.35rem 0.6rem;
-          border-radius: 999px;
-          background: rgba(34, 197, 94, 0.88);
-          color: #fff;
-          font-size: 0.75rem;
-          font-weight: 700;
+          position: absolute; top: 12px; left: 12px;
+          padding: 0.35rem 0.6rem; border-radius: 999px;
+          background: rgba(34,197,94,0.88); color: #fff;
+          font-size: 0.75rem; font-weight: 700;
         }
-
         .thumbnail-loading-wrap {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 280px;
-          background: #111827;
-          border-radius: 14px;
-          color: #9ca3af;
+          display: flex; flex-direction: column;
+          align-items: center; justify-content: center;
+          min-height: 280px; background: #111827;
+          border-radius: 14px; color: #9ca3af; gap: 0.75rem;
         }
+        .thumbnail-spinner {
+          width: 36px; height: 36px;
+          border: 3px solid rgba(255,255,255,0.15);
+          border-top-color: #fff; border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .video-modal-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.88);
-          z-index: 9999;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          position: fixed; inset: 0;
+          background: rgba(0,0,0,0.88); z-index: 9999;
+          display: flex; align-items: center; justify-content: center;
           padding: 1rem;
         }
-
-        .video-modal-content {
-          position: relative;
-          width: 100%;
-          max-width: 820px;
-        }
-
+        .video-modal-content { position: relative; width: 100%; max-width: 820px; }
         .video-modal-close {
-          position: absolute;
-          top: -44px;
-          right: 0;
-          background: none;
-          border: none;
-          color: white;
-          font-size: 1.6rem;
-          cursor: pointer;
-          line-height: 1;
+          position: absolute; top: -44px; right: 0;
+          background: none; border: none; color: white;
+          font-size: 1.6rem; cursor: pointer; line-height: 1;
           padding: 0.25rem 0.5rem;
         }
-
-        .video-modal-close:hover {
-          opacity: 0.7;
-        }
-
+        .video-modal-close:hover { opacity: 0.7; }
         .video-modal-player {
-          width: 100%;
-          border-radius: 12px;
-          max-height: 80vh;
-          background: #000;
+          width: 100%; border-radius: 12px;
+          max-height: 80vh; background: #000;
         }
       `}</style>
     </div>
