@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { supabase } from '../../lib/supabaseClient';
 
 const MAX_RECORDING_SECONDS = 120;
 
@@ -263,6 +264,46 @@ export default function VideoIntroSection({ profile, onUpdate }) {
     stopCameraStream();
   };
 
+  const persistVideoUrl = async (videoUrl) => {
+    const profileResponse = await fetch('/api/candidate/profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ videoIntroUrl: videoUrl }),
+    });
+
+    if (!profileResponse.ok) {
+      const body = await profileResponse.json().catch(() => ({}));
+      throw new Error(body?.error || 'Failed to save video URL to profile');
+    }
+
+    setUploadedVideoUrl(videoUrl);
+    onUpdate({ ...profile, videoIntroUrl: videoUrl });
+  };
+
+  const uploadDirectToSupabase = async (file) => {
+    const extension = file.name.split('.').pop() || 'webm';
+    const ownerKey = profile?.userId || profile?.id || 'candidate';
+    const objectPath = `${ownerKey}/${Date.now()}.${extension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('videos')
+      .upload(objectPath, file, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      throw new Error(uploadError.message || 'Direct upload failed');
+    }
+
+    const { data: publicData } = supabase.storage.from('videos').getPublicUrl(objectPath);
+    if (!publicData?.publicUrl) {
+      throw new Error('Could not resolve uploaded video URL');
+    }
+
+    await persistVideoUrl(publicData.publicUrl);
+  };
+
   const handleUpload = async () => {
     if (!recordedBlob || !recordedUrl) return;
 
@@ -283,18 +324,25 @@ export default function VideoIntroSection({ profile, onUpdate }) {
         body: formData,
       });
 
-      const responseBody = await response.json();
+      const responseBody = await response.json().catch(() => ({}));
 
-      if (!response.ok) {
-        setMessage({ type: 'error', text: responseBody?.error || 'Upload failed. Please try again.' });
-        setUploading(false);
-        return;
-      }
+      if (response.status === 413) {
+        await uploadDirectToSupabase(file);
+      } else {
+        if (!response.ok) {
+          setMessage({ type: 'error', text: responseBody?.error || 'Upload failed. Please try again.' });
+          setUploading(false);
+          return;
+        }
 
-      const persistedUrl = responseBody?.videoUrl || responseBody?.url || null;
-      if (persistedUrl) {
-        setUploadedVideoUrl(persistedUrl);
-        onUpdate({ ...profile, videoIntroUrl: persistedUrl });
+        const persistedUrl = responseBody?.videoUrl || responseBody?.url || null;
+        if (!persistedUrl) {
+          setMessage({ type: 'error', text: 'Upload succeeded but no video URL was returned.' });
+          setUploading(false);
+          return;
+        }
+
+        await persistVideoUrl(persistedUrl);
       }
 
       const thumbnail = await generateThumbnailFromVideo(recordedUrl);
