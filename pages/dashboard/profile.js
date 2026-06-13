@@ -272,6 +272,7 @@ function getSectionCompletionBadge(sectionId, profile) {
     personal: profile.fullName && profile.jobTitle && profile.location && profile.dayRate,
     photo: profile.profilePhotoUrl,
     video: profile.videoUrl,
+    summary: (profile.summary || '').trim().length > 0,
     skills: profile.skills && profile.skills.length > 0,
     certifications: profile.certifications && profile.certifications.length > 0,
     experience: profile.experiences && profile.experiences.length > 0,
@@ -320,7 +321,7 @@ function calculateCompletion(profile) {
   if (profile.fullName && profile.jobTitle && profile.location) score++;
   if (profile.profilePhotoUrl) score++;
   if (profile.videoUrl || profile.videoIntroUrl) score++;
-  if (profile.summary && profile.summary.length > 120) score++;
+  if ((profile.summary || '').trim().length > 0) score++;
   if (profile.skills && profile.skills.length > 4) score++;
   if (profile.certifications && profile.certifications.length > 0) score++;
   if (profile.experiences && profile.experiences.length > 0) score++;

@@ -4,6 +4,7 @@ import { useAutosave } from '../../utils/useAutosave';
 export default function ProfessionalSummarySection({ profile, onUpdate }) {
   const [text, setText] = useState(profile?.summary || '');
   const [toast, setToast] = useState('');
+  const isComplete = text.trim().length > 0;
   const count = useMemo(() => ({
     chars: text.length,
     words: (text.trim().match(/\S+/g) || []).length
@@ -54,7 +55,17 @@ export default function ProfessionalSummarySection({ profile, onUpdate }) {
   return (
     <section className="card xl">
       <header className="card-header">
-        <h2>Professional Summary</h2>
+        <h2 className="summary-title">
+          Professional Summary
+          {isComplete && (
+            <span className="summary-complete-badge" aria-label="Professional summary complete">
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              Complete
+            </span>
+          )}
+        </h2>
         <div className="summary-tools">
           <button className="btn subtle" onClick={() => aiRewrite('professional')}>Rewrite for professionalism</button>
           <button className="btn subtle" onClick={aiOneLiner}>Summarise into one-liner</button>
@@ -73,6 +84,25 @@ export default function ProfessionalSummarySection({ profile, onUpdate }) {
           <span className="muted">{count.words} words • {count.chars} chars</span>
         </div>
       </div>
+
+      <style jsx>{`
+        .summary-title {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.6rem;
+        }
+        .summary-complete-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+          padding: 0.2rem 0.55rem;
+          border-radius: 999px;
+          background: #dcfce7;
+          color: #166534;
+          font-size: 0.78rem;
+          font-weight: 700;
+        }
+      `}</style>
     </section>
   );
 }
