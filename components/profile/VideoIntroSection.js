@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
 export default function VideoIntroSection({ profile, onUpdate }) {
@@ -7,10 +7,35 @@ export default function VideoIntroSection({ profile, onUpdate }) {
   const [message, setMessage] = useState(null);
   const [videoPreview, setVideoPreview] = useState(profile?.videoIntroUrl || null);
   const [recordedBlob, setRecordedBlob] = useState(null);
+  const [cameraStream, setCameraStream] = useState(null);
+  const [recordingTimeLeft, setRecordingTimeLeft] = useState(0);
   
   const fileInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const videoChunksRef = useRef([]);
+  const cameraVideoRef = useRef(null);
+  const recordingTimeoutRef = useRef(null);
+  const recordingIntervalRef = useRef(null);
+
+  useEffect(() => {
+    if (cameraVideoRef.current && cameraStream) {
+      cameraVideoRef.current.srcObject = cameraStream;
+    }
+  }, [cameraStream]);
+
+  useEffect(() => {
+    return () => {
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+      }
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+      }
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [cameraStream]);
 
   const handleFileSelect = async (e) => {
     const file = e.target.files?.[0];
@@ -103,6 +128,8 @@ export default function VideoIntroSection({ profile, onUpdate }) {
         video: { width: 1280, height: 720 }, 
         audio: true 
       });
+
+      setCameraStream(stream);
       
       videoChunksRef.current = [];
       const mediaRecorder = new MediaRecorder(stream);
@@ -120,14 +147,37 @@ export default function VideoIntroSection({ profile, onUpdate }) {
         const url = URL.createObjectURL(blob);
         setVideoPreview(url);
         stream.getTracks().forEach(track => track.stop());
+        setCameraStream(null);
+        setRecordingTimeLeft(0);
+        if (recordingTimeoutRef.current) {
+          clearTimeout(recordingTimeoutRef.current);
+          recordingTimeoutRef.current = null;
+        }
+        if (recordingIntervalRef.current) {
+          clearInterval(recordingIntervalRef.current);
+          recordingIntervalRef.current = null;
+        }
       };
 
       mediaRecorder.start();
       setRecording(true);
+      setRecordingTimeLeft(120);
       setMessage({ type: 'info', text: 'Recording... Click Stop when finished (max 2 minutes)' });
 
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingTimeLeft((currentValue) => {
+          if (currentValue <= 1) {
+            if (mediaRecorderRef.current?.state === 'recording') {
+              stopRecording();
+            }
+            return 0;
+          }
+          return currentValue - 1;
+        });
+      }, 1000);
+
       // Auto-stop after 2 minutes
-      setTimeout(() => {
+      recordingTimeoutRef.current = setTimeout(() => {
         if (mediaRecorderRef.current?.state === 'recording') {
           stopRecording();
         }
@@ -143,6 +193,14 @@ export default function VideoIntroSection({ profile, onUpdate }) {
       mediaRecorderRef.current.stop();
       setRecording(false);
       setMessage({ type: 'success', text: 'Recording complete! Click "Upload Recording" to save.' });
+    }
+    if (recordingTimeoutRef.current) {
+      clearTimeout(recordingTimeoutRef.current);
+      recordingTimeoutRef.current = null;
+    }
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+      recordingIntervalRef.current = null;
     }
   };
 
@@ -198,7 +256,21 @@ export default function VideoIntroSection({ profile, onUpdate }) {
 
         <div className="video-upload-container">
           <div className="video-preview-area">
-            {videoPreview ? (
+            {recording && cameraStream ? (
+              <div className="camera-preview-wrap">
+                <video
+                  ref={cameraVideoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="video-preview camera-preview"
+                />
+                <div className={`camera-countdown-badge ${recordingTimeLeft <= 30 ? 'warning' : ''}`}>
+                  {Math.floor(recordingTimeLeft / 60)}:{String(recordingTimeLeft % 60).padStart(2, '0')}
+                </div>
+                <div className="camera-live-badge">Live camera preview</div>
+              </div>
+            ) : videoPreview ? (
               <video controls className="video-preview" src={videoPreview}>
                 Your browser does not support video playback.
               </video>
@@ -295,6 +367,51 @@ export default function VideoIntroSection({ profile, onUpdate }) {
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .camera-preview-wrap {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          min-height: 280px;
+        }
+
+        .camera-preview {
+          background: #111827;
+        }
+
+        .camera-live-badge {
+          position: absolute;
+          top: 12px;
+          left: 12px;
+          padding: 0.35rem 0.6rem;
+          border-radius: 999px;
+          background: rgba(17, 24, 39, 0.82);
+          color: #fff;
+          font-size: 0.75rem;
+          font-weight: 700;
+          letter-spacing: 0.02em;
+        }
+
+        .camera-countdown-badge {
+          position: absolute;
+          top: 12px;
+          right: 12px;
+          padding: 0.35rem 0.6rem;
+          border-radius: 999px;
+          background: rgba(220, 38, 38, 0.88);
+          color: #fff;
+          font-size: 0.75rem;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+          min-width: 3.6rem;
+          text-align: center;
+        }
+
+        .camera-countdown-badge.warning {
+          background: rgba(249, 115, 22, 0.92);
+        }
+      `}</style>
     </div>
   );
 }
