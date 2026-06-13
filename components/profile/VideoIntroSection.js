@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
+const MAX_RECORDING_SECONDS = 120;
+
 export default function VideoIntroSection({ profile, onUpdate }) {
   const [uploading, setUploading] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -16,6 +18,7 @@ export default function VideoIntroSection({ profile, onUpdate }) {
   const cameraVideoRef = useRef(null);
   const recordingTimeoutRef = useRef(null);
   const recordingIntervalRef = useRef(null);
+  const recordingStartedAtRef = useRef(null);
 
   useEffect(() => {
     if (cameraVideoRef.current && cameraStream) {
@@ -36,6 +39,17 @@ export default function VideoIntroSection({ profile, onUpdate }) {
       }
     };
   }, [cameraStream]);
+
+  const clearRecordingTimers = () => {
+    if (recordingTimeoutRef.current) {
+      clearTimeout(recordingTimeoutRef.current);
+      recordingTimeoutRef.current = null;
+    }
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+      recordingIntervalRef.current = null;
+    }
+  };
 
   const handleFileSelect = async (e) => {
     const file = e.target.files?.[0];
@@ -123,15 +137,17 @@ export default function VideoIntroSection({ profile, onUpdate }) {
   };
 
   const startRecording = async () => {
+    if (recording) return;
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { width: 1280, height: 720 }, 
-        audio: true 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 1280, height: 720 },
+        audio: true,
       });
 
       setCameraStream(stream);
-      
       videoChunksRef.current = [];
+
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
 
@@ -146,63 +162,74 @@ export default function VideoIntroSection({ profile, onUpdate }) {
         setRecordedBlob(blob);
         const url = URL.createObjectURL(blob);
         setVideoPreview(url);
-        stream.getTracks().forEach(track => track.stop());
+
+        stream.getTracks().forEach((track) => track.stop());
         setCameraStream(null);
-        setRecordingTimeLeft(0);
-        if (recordingTimeoutRef.current) {
-          clearTimeout(recordingTimeoutRef.current);
-          recordingTimeoutRef.current = null;
-        }
-        if (recordingIntervalRef.current) {
-          clearInterval(recordingIntervalRef.current);
-          recordingIntervalRef.current = null;
-        }
+        setRecording(false);
+        recordingStartedAtRef.current = null;
+        setRecordingTimeLeft(MAX_RECORDING_SECONDS);
+        clearRecordingTimers();
       };
 
       mediaRecorder.start();
       setRecording(true);
-      setRecordingTimeLeft(120);
+      setRecordingTimeLeft(MAX_RECORDING_SECONDS);
+      recordingStartedAtRef.current = Date.now();
       setMessage({ type: 'info', text: 'Recording... Click Stop when finished (max 2 minutes)' });
 
       recordingIntervalRef.current = setInterval(() => {
-        setRecordingTimeLeft((currentValue) => {
-          if (currentValue <= 1) {
-            if (mediaRecorderRef.current?.state === 'recording') {
-              stopRecording();
-            }
-            return 0;
-          }
-          return currentValue - 1;
-        });
-      }, 1000);
+        if (!recordingStartedAtRef.current) return;
 
-      // Auto-stop after 2 minutes
+        const elapsed = Math.floor((Date.now() - recordingStartedAtRef.current) / 1000);
+        const remaining = Math.max(0, MAX_RECORDING_SECONDS - elapsed);
+        setRecordingTimeLeft(remaining);
+
+        if (remaining <= 0) {
+          stopRecording();
+        }
+      }, 250);
+
       recordingTimeoutRef.current = setTimeout(() => {
         if (mediaRecorderRef.current?.state === 'recording') {
           stopRecording();
         }
-      }, 120000);
-
+      }, MAX_RECORDING_SECONDS * 1000);
     } catch (err) {
       setMessage({ type: 'error', text: 'Camera access denied or unavailable' });
     }
   };
 
   const stopRecording = () => {
+    clearRecordingTimers();
+
     if (mediaRecorderRef.current?.state === 'recording') {
       mediaRecorderRef.current.stop();
-      setRecording(false);
       setMessage({ type: 'success', text: 'Recording complete! Click "Upload Recording" to save.' });
     }
-    if (recordingTimeoutRef.current) {
-      clearTimeout(recordingTimeoutRef.current);
-      recordingTimeoutRef.current = null;
-    }
-    if (recordingIntervalRef.current) {
-      clearInterval(recordingIntervalRef.current);
-      recordingIntervalRef.current = null;
-    }
   };
+
+  const renderOverlayControls = () => (
+    <div className="video-overlay-controls">
+      {!recording ? (
+        <button
+          type="button"
+          onClick={startRecording}
+          className="overlay-btn overlay-btn-start"
+          disabled={uploading}
+        >
+          <span className="dot" /> Start Recording
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={stopRecording}
+          className="overlay-btn overlay-btn-stop"
+        >
+          <span className="square" /> Stop Recording
+        </button>
+      )}
+    </div>
+  );
 
   const handleUploadRecording = async () => {
     if (!recordedBlob) return;
@@ -269,17 +296,24 @@ export default function VideoIntroSection({ profile, onUpdate }) {
                   {Math.floor(recordingTimeLeft / 60)}:{String(recordingTimeLeft % 60).padStart(2, '0')}
                 </div>
                 <div className="camera-live-badge">Live camera preview</div>
+                {renderOverlayControls()}
               </div>
             ) : videoPreview ? (
-              <video controls className="video-preview" src={videoPreview}>
-                Your browser does not support video playback.
-              </video>
+              <div className="camera-preview-wrap">
+                <video controls className="video-preview" src={videoPreview}>
+                  Your browser does not support video playback.
+                </video>
+                {renderOverlayControls()}
+              </div>
             ) : (
-              <div className="video-placeholder">
-                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" />
-                </svg>
-                <p>No video uploaded</p>
+              <div className="camera-preview-wrap">
+                <div className="video-placeholder">
+                  <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" />
+                  </svg>
+                  <p>No video uploaded</p>
+                </div>
+                {renderOverlayControls()}
               </div>
             )}
           </div>
@@ -287,19 +321,6 @@ export default function VideoIntroSection({ profile, onUpdate }) {
           <div className="video-upload-actions">
             {!recording && (
               <>
-                <button
-                  type="button"
-                  onClick={startRecording}
-                  className="btn-primary"
-                  disabled={uploading}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ marginRight: '8px' }}>
-                    <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                    <circle cx="12" cy="12" r="3" fill="currentColor" />
-                  </svg>
-                  Record Video
-                </button>
-
                 <div className="file-upload-option">
                   <input
                     ref={fileInputRef}
@@ -315,19 +336,6 @@ export default function VideoIntroSection({ profile, onUpdate }) {
                   </label>
                 </div>
               </>
-            )}
-
-            {recording && (
-              <button
-                type="button"
-                onClick={stopRecording}
-                className="btn-danger"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '8px' }}>
-                  <rect x="6" y="6" width="12" height="12" />
-                </svg>
-                Stop Recording
-              </button>
             )}
 
             {recordedBlob && !profile?.videoIntroUrl && (
@@ -374,6 +382,8 @@ export default function VideoIntroSection({ profile, onUpdate }) {
           width: 100%;
           height: 100%;
           min-height: 280px;
+          overflow: hidden;
+          border-radius: 14px;
         }
 
         .camera-preview {
@@ -410,6 +420,66 @@ export default function VideoIntroSection({ profile, onUpdate }) {
 
         .camera-countdown-badge.warning {
           background: rgba(249, 115, 22, 0.92);
+        }
+
+        .video-overlay-controls {
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 14px;
+          display: flex;
+          justify-content: center;
+          pointer-events: none;
+        }
+
+        .overlay-btn {
+          pointer-events: auto;
+          border: none;
+          border-radius: 999px;
+          padding: 0.6rem 1rem;
+          color: #fff;
+          font-weight: 700;
+          font-size: 0.85rem;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          cursor: pointer;
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.22);
+        }
+
+        .overlay-btn-start {
+          background: rgba(22, 163, 74, 0.92);
+        }
+
+        .overlay-btn-start:hover:not(:disabled) {
+          background: rgba(22, 163, 74, 1);
+        }
+
+        .overlay-btn-stop {
+          background: rgba(220, 38, 38, 0.92);
+        }
+
+        .overlay-btn-stop:hover {
+          background: rgba(220, 38, 38, 1);
+        }
+
+        .overlay-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 999px;
+          background: #fff;
+        }
+
+        .square {
+          width: 10px;
+          height: 10px;
+          background: #fff;
+          border-radius: 2px;
         }
       `}</style>
     </div>
