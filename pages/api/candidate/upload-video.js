@@ -41,9 +41,9 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Upload failed' });
       }
 
-      const videoFile = files.video?.[0] || files.video;
+      const videoFile = files.video_intro?.[0] || files.video_intro || files.video?.[0] || files.video;
       if (!videoFile) {
-        return res.status(400).json({ error: 'No video file provided' });
+        return res.status(400).json({ error: 'No video file provided. Please upload using field name video_intro.' });
       }
 
       // Read file buffer
@@ -73,10 +73,25 @@ export default async function handler(req, res) {
         .getPublicUrl(fileName);
 
       // Update profile with video URL
-      await prisma.candidateProfile.update({
+      const existingProfile = await prisma.candidateProfile.findUnique({
         where: { userId: candidateId },
-        data: { videoIntroUrl: publicUrl }
       });
+
+      if (existingProfile) {
+        await prisma.candidateProfile.update({
+          where: { userId: candidateId },
+          data: { videoIntroUrl: publicUrl },
+        });
+      } else {
+        await prisma.candidateProfile.create({
+          data: {
+            userId: candidateId,
+            fullName: user.name || '',
+            email: user.email || '',
+            videoIntroUrl: publicUrl,
+          },
+        });
+      }
 
       return res.status(200).json({ videoUrl: publicUrl });
     });
