@@ -316,34 +316,8 @@ export default function VideoIntroSection({ profile, onUpdate }) {
         type: recordedBlob.type || `video/${extension}`,
       });
 
-      const formData = new FormData();
-      formData.append('video_intro', file);
-
-      const response = await fetch('/api/candidate/upload-video', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const responseBody = await response.json().catch(() => ({}));
-
-      if (response.status === 413) {
-        await uploadDirectToSupabase(file);
-      } else {
-        if (!response.ok) {
-          setMessage({ type: 'error', text: responseBody?.error || 'Upload failed. Please try again.' });
-          setUploading(false);
-          return;
-        }
-
-        const persistedUrl = responseBody?.videoUrl || responseBody?.url || null;
-        if (!persistedUrl) {
-          setMessage({ type: 'error', text: 'Upload succeeded but no video URL was returned.' });
-          setUploading(false);
-          return;
-        }
-
-        await persistVideoUrl(persistedUrl);
-      }
+      // Upload directly to storage to avoid Vercel serverless payload limits.
+      await uploadDirectToSupabase(file);
 
       const thumbnail = await generateThumbnailFromVideo(recordedUrl);
       setSuccessThumbnail(thumbnail);
