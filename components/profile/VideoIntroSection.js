@@ -285,20 +285,45 @@ export default function VideoIntroSection({ profile, onUpdate }) {
     const ownerKey = profile?.userId || profile?.id || 'candidate';
     const objectPath = `${ownerKey}/${Date.now()}.${extension}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from('videos')
-      .upload(objectPath, file, {
-        contentType: file.type,
-        upsert: false,
-      });
+    const bucketCandidates = ['videos', 'Videos'];
+    let chosenBucket = null;
+    let lastUploadError = null;
 
-    if (uploadError) {
-      throw new Error(uploadError.message || 'Direct upload failed');
+    for (const bucket of bucketCandidates) {
+      const { error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(objectPath, file, {
+          contentType: file.type,
+          upsert: false,
+        });
+
+      if (!uploadError) {
+        chosenBucket = bucket;
+        break;
+      }
+
+      lastUploadError = uploadError;
     }
 
-    const { data: publicData } = supabase.storage.from('videos').getPublicUrl(objectPath);
+    if (!chosenBucket) {
+      throw new Error(lastUploadError?.message || 'Direct upload failed');
+    }
+
+    const { data: publicData } = supabase.storage.from(chosenBucket).getPublicUrl(objectPath);
     if (!publicData?.publicUrl) {
       throw new Error('Could not resolve uploaded video URL');
+    }
+
+    try {
+      const readCheck = await fetch(publicData.publicUrl, { method: 'HEAD' });
+      if (!readCheck.ok) {
+        throw new Error('Uploaded video is not publicly readable. Check your Supabase bucket visibility/policies for SELECT on storage.objects.');
+      }
+    } catch (readErr) {
+      if (readErr?.message?.includes('not publicly readable')) {
+        throw readErr;
+      }
+      // Ignore transient network/CORS issues for this validation step.
     }
 
     await persistVideoUrl(publicData.publicUrl);
@@ -323,8 +348,11 @@ export default function VideoIntroSection({ profile, onUpdate }) {
       setSuccessThumbnail(thumbnail);
       setStep(STEPS.SUCCESS);
       setMessage({ type: 'success', text: 'Your video introduction has been saved and is now visible on your profile.' });
-    } catch {
-      setMessage({ type: 'error', text: 'Upload failed due to a network issue. Please try again.' });
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: err?.message || 'Upload failed due to a network issue. Please try again.',
+      });
     } finally {
       setUploading(false);
     }
@@ -434,7 +462,7 @@ export default function VideoIntroSection({ profile, onUpdate }) {
         <div className="video-modal-overlay" onClick={() => setPreviewOpen(false)}>
           <div className="video-modal-content" onClick={(e) => e.stopPropagation()}>
             <button type="button" className="video-modal-close" onClick={() => setPreviewOpen(false)}>✕</button>
-            <video controls autoPlay className="video-modal-player" src={uploadedVideoUrl || recordedUrl || ''} />
+            <video controls autoPlay className="video-modal-player" src={recordedUrl || uploadedVideoUrl || ''} />
           </div>
         </div>
       )}
