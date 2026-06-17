@@ -29,6 +29,7 @@ export default function CandidateDetailPage({ candidate }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const mbtiInsight = parseMbtiInsight(candidate);
+  const candidateVideoUrl = candidate?.videoIntroUrl || candidate?.videoUrl || null;
 
   const defaultMessage = `Hi ${candidate?.fullName?.split(' ')[0] || 'there'},
 
@@ -164,6 +165,18 @@ Best regards`;
         <div className="mt-6 grid gap-6 lg:grid-cols-3">
           {/* Main Content - Left */}
           <div className="space-y-6 lg:col-span-2">
+            {/* Video Introduction */}
+            {candidateVideoUrl && (
+              <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 className="mb-3 text-lg font-semibold text-gray-900">Video Introduction</h2>
+                <div className="overflow-hidden rounded-lg border border-gray-200 bg-black">
+                  <video controls className="h-auto w-full" src={candidateVideoUrl}>
+                    Your browser does not support video playback.
+                  </video>
+                </div>
+              </div>
+            )}
+
             {/* Summary */}
             {candidate.summary && (
               <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
