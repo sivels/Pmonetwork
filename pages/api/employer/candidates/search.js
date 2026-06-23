@@ -105,6 +105,12 @@ export default async function handler(req, res) {
     let candidates = await prisma.candidateProfile.findMany({
       where,
       include: {
+        user: {
+          select: {
+            lastLoginAt: true,
+            updatedAt: true,
+          },
+        },
         skills: {
           take: 10,
           select: { name: true, proficiency: true, category: true }
@@ -150,24 +156,34 @@ export default async function handler(req, res) {
     const savedCandidateIds = new Set(savedCandidates.map((item) => item.candidateId));
 
     // Format results
-    const results = candidates.map(c => ({
-      id: c.id,
-      fullName: c.fullName,
-      jobTitle: c.jobTitle,
-      location: c.location,
-      yearsExperience: c.yearsExperience,
-      profilePhotoUrl: c.profilePhotoUrl,
-      summary: c.summary?.substring(0, 150) + (c.summary?.length > 150 ? '...' : ''),
-      skills: c.skills.slice(0, 5).map(s => s.name),
-      totalSkills: c.skills.length,
-      availability: c.availability,
-      employmentType: c.employmentType,
-      remotePreference: c.remotePreference,
-      salaryExpectation: c.salaryExpectation,
-      dayRate: c.dayRate,
-      isSaved: savedCandidateIds.has(c.id),
-      recentExperience: c.experiences[0] || null,
-    }));
+    const results = candidates.map(c => {
+      const lastActiveAt = c.user?.lastLoginAt || c.updatedAt || c.user?.updatedAt || null;
+      const inactivityThresholdMs = 30 * 24 * 60 * 60 * 1000;
+      const isInactiveProfile = lastActiveAt
+        ? (Date.now() - new Date(lastActiveAt).getTime()) > inactivityThresholdMs
+        : true;
+
+      return {
+        id: c.id,
+        fullName: c.fullName,
+        jobTitle: c.jobTitle,
+        location: c.location,
+        yearsExperience: c.yearsExperience,
+        profilePhotoUrl: c.profilePhotoUrl,
+        summary: c.summary?.substring(0, 150) + (c.summary?.length > 150 ? '...' : ''),
+        skills: c.skills.slice(0, 5).map(s => s.name),
+        totalSkills: c.skills.length,
+        availability: c.availability,
+        employmentType: c.employmentType,
+        remotePreference: c.remotePreference,
+        salaryExpectation: c.salaryExpectation,
+        dayRate: c.dayRate,
+        isSaved: savedCandidateIds.has(c.id),
+        recentExperience: c.experiences[0] || null,
+        lastActiveAt,
+        isInactiveProfile,
+      };
+    });
 
     return res.status(200).json({
       candidates: results,

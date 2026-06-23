@@ -27,6 +27,21 @@ export default function CandidateCard({ candidate, onBookmarkToggle }) {
     return 'bg-gray-100 text-gray-700';
   };
 
+  const formatLastActive = (timestamp) => {
+    if (!timestamp) return 'Last active unknown';
+
+    const lastActiveDate = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - lastActiveDate.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 0) return 'Last active today';
+    if (diffDays === 1) return 'Last active yesterday';
+    if (diffDays < 30) return `Last active ${diffDays} days ago`;
+
+    return `Last active ${lastActiveDate.toLocaleDateString()}`;
+  };
+
   return (
     <div className="group relative rounded-lg border border-gray-200 bg-white p-6 transition-all hover:border-blue-500 hover:shadow-lg">
       <Link href={`/employer/candidates/${candidate.id}`} className="block">
@@ -46,6 +61,18 @@ export default function CandidateCard({ candidate, onBookmarkToggle }) {
                   {candidate.fullName}
                 </h3>
                 <p className="text-sm text-gray-600 truncate">{candidate.jobTitle}</p>
+                <div className="mt-1 flex items-center gap-2">
+                  {candidate.isInactiveProfile ? (
+                    <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">
+                      Inactive profile
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-800">
+                      Active
+                    </span>
+                  )}
+                  <span className="text-[11px] text-gray-500">{formatLastActive(candidate.lastActiveAt)}</span>
+                </div>
               </div>
 
               {/* Bookmark Button */}
