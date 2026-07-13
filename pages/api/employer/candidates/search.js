@@ -27,6 +27,7 @@ export default async function handler(req, res) {
       minDayRate,
       maxDayRate,
       rightToWork,
+      hideInactive,
       remoteOnly,
       page = 1,
       pageSize = 20,
@@ -99,6 +100,21 @@ export default async function handler(req, res) {
     // Right to work
     if (rightToWork) {
       where.rightToWork = rightToWork;
+    }
+
+    // Hide inactive profiles (no activity in the last 30 days)
+    if (hideInactive === 'true') {
+      const activityThreshold = new Date(Date.now() - (30 * 24 * 60 * 60 * 1000));
+      where.AND = [
+        ...(where.AND || []),
+        {
+          OR: [
+            { updatedAt: { gte: activityThreshold } },
+            { user: { is: { lastLoginAt: { gte: activityThreshold } } } },
+            { user: { is: { updatedAt: { gte: activityThreshold } } } },
+          ],
+        },
+      ];
     }
 
     // Skills filter (if provided as comma-separated)

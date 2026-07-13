@@ -10,6 +10,7 @@ export default function FilterPanel({ filters, onFiltersChange, onClear }) {
     employment: true,
     compensation: true,
     remote: true,
+    activity: true,
     rightToWork: true,
   });
 
@@ -323,6 +324,34 @@ export default function FilterPanel({ filters, onFiltersChange, onClear }) {
                 className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
               />
               <span className="text-sm text-gray-700">Remote only</span>
+            </label>
+          </div>
+        )}
+      </div>
+
+      {/* Activity */}
+      <div className="border-b border-gray-100 pb-3">
+        <button
+          onClick={() => toggleSection('activity')}
+          className="flex w-full items-center justify-between text-left"
+        >
+          <span className="font-medium text-gray-900">Activity</span>
+          {expanded.activity ? (
+            <ChevronUp className="h-5 w-5 text-gray-500" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-gray-500" />
+          )}
+        </button>
+        {expanded.activity && (
+          <div className="mt-3">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={filters.hideInactive || false}
+                onChange={(e) => handleFilterChange('hideInactive', e.target.checked)}
+                className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">Hide inactive profiles</span>
             </label>
           </div>
         )}
