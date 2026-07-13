@@ -30,6 +30,7 @@ function SearchCandidatesContent() {
     minDayRate: '',
     maxDayRate: '',
     remoteOnly: false,
+    hideInactive: false,
     rightToWork: '',
   });
   const [page, setPage] = useState(1);
@@ -59,6 +60,7 @@ function SearchCandidatesContent() {
     if (filters.minDayRate) params.append('minDayRate', filters.minDayRate);
     if (filters.maxDayRate) params.append('maxDayRate', filters.maxDayRate);
     if (filters.remoteOnly) params.append('remoteOnly', 'true');
+    if (filters.hideInactive) params.append('hideInactive', 'true');
     if (filters.rightToWork) params.append('rightToWork', filters.rightToWork);
     params.append('page', page);
     params.append('limit', limit);
@@ -121,6 +123,7 @@ function SearchCandidatesContent() {
       minDayRate: '',
       maxDayRate: '',
       remoteOnly: false,
+      hideInactive: false,
       rightToWork: '',
     });
     setSearchQuery('');

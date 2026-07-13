@@ -33,8 +33,10 @@ export default async function handler(req, res) {
       pageSize = 20,
     } = req.query;
 
-    const skip = (parseInt(page) - 1) * parseInt(pageSize);
-    const take = parseInt(pageSize);
+    const parsedPage = Number.parseInt(page, 10) || 1;
+    const parsedPageSize = Number.parseInt(req.query.limit || pageSize, 10) || 20;
+    const skip = (parsedPage - 1) * parsedPageSize;
+    const take = parsedPageSize;
 
     // Build where clause
     const where = {
@@ -137,12 +139,7 @@ export default async function handler(req, res) {
           select: { jobTitle: true, company: true }
         }
       },
-      skip,
-      take,
-      orderBy: [
-        { yearsExperience: 'desc' },
-        { createdAt: 'desc' }
-      ]
+      orderBy: { createdAt: 'desc' }
     });
 
     // Post-filter by skills if specified
@@ -157,8 +154,20 @@ export default async function handler(req, res) {
       );
     }
 
-    // Get total count for pagination
-    const total = await prisma.candidateProfile.count({ where });
+    // Always sort by most recent activity (most active first)
+    const sortedCandidates = [...candidates].sort((a, b) => {
+      const aLastActive = new Date(a.user?.lastLoginAt || a.updatedAt || a.user?.updatedAt || 0).getTime();
+      const bLastActive = new Date(b.user?.lastLoginAt || b.updatedAt || b.user?.updatedAt || 0).getTime();
+
+      if (bLastActive !== aLastActive) {
+        return bLastActive - aLastActive;
+      }
+
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    const total = sortedCandidates.length;
+    const paginatedCandidates = sortedCandidates.slice(skip, skip + take);
 
     // Check which candidates are bookmarked by this employer/company
     const context = await resolveEmployerContext({ userId: session.user.id });
@@ -172,7 +181,7 @@ export default async function handler(req, res) {
     const savedCandidateIds = new Set(savedCandidates.map((item) => item.candidateId));
 
     // Format results
-    const results = candidates.map(c => {
+    const results = paginatedCandidates.map(c => {
       const lastActiveAt = c.user?.lastLoginAt || c.updatedAt || c.user?.updatedAt || null;
       const inactivityThresholdMs = 30 * 24 * 60 * 60 * 1000;
       const isInactiveProfile = lastActiveAt
@@ -204,10 +213,10 @@ export default async function handler(req, res) {
     return res.status(200).json({
       candidates: results,
       pagination: {
-        page: parseInt(page),
-        pageSize: parseInt(pageSize),
+        page: parsedPage,
+        pageSize: parsedPageSize,
         total,
-        totalPages: Math.ceil(total / parseInt(pageSize))
+        totalPages: Math.ceil(total / parsedPageSize)
       }
     });
 
