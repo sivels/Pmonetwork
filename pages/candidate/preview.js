@@ -183,6 +183,20 @@ export default function Preview({ profile, isOwnProfile, isHiringManager, userEm
             </section>
           )}
 
+          {(profile.biggestStrength || profile.biggestWeakness) && (
+            <section className="preview-card skills-card">
+              <h2 className="card-title">Strengths & Growth Areas</h2>
+              <div className="space-y-3 text-sm text-gray-700">
+                {profile.biggestStrength && (
+                  <p><strong>Biggest Strength:</strong> {profile.biggestStrength}</p>
+                )}
+                {profile.biggestWeakness && (
+                  <p><strong>Biggest Weakness:</strong> {profile.biggestWeakness}</p>
+                )}
+              </div>
+            </section>
+          )}
+
           {/* 4️⃣ Skills & Expertise */}
           {mbtiInsight && (
             <section className="preview-card skills-card">

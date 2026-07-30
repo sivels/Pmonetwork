@@ -185,6 +185,20 @@ Best regards`;
               </div>
             )}
 
+            {(candidate.biggestStrength || candidate.biggestWeakness) && (
+              <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 className="mb-3 text-lg font-semibold text-gray-900">Strengths & Growth Areas</h2>
+                <div className="space-y-3 text-sm text-gray-700 leading-relaxed">
+                  {candidate.biggestStrength && (
+                    <p><span className="font-medium text-gray-900">Biggest Strength:</span> {candidate.biggestStrength}</p>
+                  )}
+                  {candidate.biggestWeakness && (
+                    <p><span className="font-medium text-gray-900">Biggest Weakness:</span> {candidate.biggestWeakness}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Experience */}
             {candidate.experiences && candidate.experiences.length > 0 && (
               <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">

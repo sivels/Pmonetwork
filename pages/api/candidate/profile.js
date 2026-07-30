@@ -138,6 +138,10 @@ function mapProfileData(body) {
     'jobTitle': 'jobTitle',
     'job_title': 'jobTitle',
     'summary': 'summary',
+    'biggestStrength': 'biggestStrength',
+    'biggest_strength': 'biggestStrength',
+    'biggestWeakness': 'biggestWeakness',
+    'biggest_weakness': 'biggestWeakness',
     'bio': 'summary', // bio maps to summary
     'yearsExperience': 'yearsExperience',
     'years_experience': 'yearsExperience',

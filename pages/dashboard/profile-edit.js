@@ -25,6 +25,8 @@ export default function ProfileEditPage({ profile }) {
     fullName: profile.fullName || '',
     jobTitle: profile.jobTitle || '',
     summary: profile.summary || '',
+    biggestStrength: profile.biggestStrength || '',
+    biggestWeakness: profile.biggestWeakness || '',
     yearsExperience: profile.yearsExperience ?? '',
     sector: profile.sector || '',
     location: profile.location || '',
@@ -108,6 +110,14 @@ export default function ProfileEditPage({ profile }) {
               <label className="block text-sm font-medium text-gray-700 mb-1">Professional Summary</label>
               <textarea rows={6} value={form.summary} onChange={e=>updateField('summary', e.target.value)} className="w-full rounded-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Describe your PMO experience, key achievements, methodologies..." />
               <p className="mt-1 text-xs text-gray-500">Aim for at least 60 characters for better visibility.</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Biggest Strength</label>
+              <textarea rows={4} value={form.biggestStrength} onChange={e=>updateField('biggestStrength', e.target.value)} className="w-full rounded-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. Structured delivery under pressure" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Biggest Weakness</label>
+              <textarea rows={4} value={form.biggestWeakness} onChange={e=>updateField('biggestWeakness', e.target.value)} className="w-full rounded-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. I can over-focus on details, managed with clear timeboxing" />
             </div>
             {error && <div className="text-sm text-red-600">{error}</div>}
             {success && <div className="text-sm text-green-600">Profile updated successfully.</div>}

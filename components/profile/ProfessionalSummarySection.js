@@ -3,6 +3,8 @@ import { useAutosave } from '../../utils/useAutosave';
 
 export default function ProfessionalSummarySection({ profile, onUpdate }) {
   const [text, setText] = useState(profile?.summary || '');
+  const [biggestStrength, setBiggestStrength] = useState(profile?.biggestStrength || '');
+  const [biggestWeakness, setBiggestWeakness] = useState(profile?.biggestWeakness || '');
   const [toast, setToast] = useState('');
   const isComplete = text.trim().length > 0;
   const count = useMemo(() => ({
@@ -14,13 +16,21 @@ export default function ProfessionalSummarySection({ profile, onUpdate }) {
     const res = await fetch('/api/candidate/profile', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ summary: text })
+      body: JSON.stringify({
+        summary: text,
+        biggestStrength,
+        biggestWeakness,
+      })
     });
     if (res.ok) {
       const data = await res.json();
-      onUpdate({ summary: data.summary });
+      onUpdate({
+        summary: data.summary,
+        biggestStrength: data.biggestStrength,
+        biggestWeakness: data.biggestWeakness,
+      });
     }
-  }, [text]);
+  }, [text, biggestStrength, biggestWeakness]);
 
   // show subtle toast when autosave completes
   if (savedAt && !toast) {
@@ -82,6 +92,30 @@ export default function ProfessionalSummarySection({ profile, onUpdate }) {
         />
         <div className="editor-footer">
           <span className="muted">{count.words} words • {count.chars} chars</span>
+        </div>
+      </div>
+
+      <div className="strengths-grid">
+        <div className="rich-editor">
+          <label className="field-label" htmlFor="biggest-strength">Biggest Strength</label>
+          <textarea
+            id="biggest-strength"
+            value={biggestStrength}
+            onChange={(e) => setBiggestStrength(e.target.value)}
+            placeholder="Describe your strongest professional capability."
+            rows={4}
+          />
+        </div>
+
+        <div className="rich-editor">
+          <label className="field-label" htmlFor="biggest-weakness">Biggest Weakness</label>
+          <textarea
+            id="biggest-weakness"
+            value={biggestWeakness}
+            onChange={(e) => setBiggestWeakness(e.target.value)}
+            placeholder="Describe a growth area and how you manage it."
+            rows={4}
+          />
         </div>
       </div>
 

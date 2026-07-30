@@ -55,6 +55,10 @@ export default function CandidateEdit() {
         <input name="jobTitle" defaultValue={profile.jobTitle || ''} />
         <label>Professional Summary</label>
         <textarea name="summary" defaultValue={profile.summary || ''} />
+        <label>Biggest Strength</label>
+        <textarea name="biggestStrength" defaultValue={profile.biggestStrength || ''} placeholder="Describe your strongest professional capability" />
+        <label>Biggest Weakness</label>
+        <textarea name="biggestWeakness" defaultValue={profile.biggestWeakness || ''} placeholder="Describe a growth area and how you manage it" />
         <label>Years Experience</label>
         <input name="yearsExperience" type="number" defaultValue={profile.yearsExperience || ''} />
         <label>Sector</label>

@@ -330,7 +330,29 @@ export default function CandidateDashboard({ profile, profileScore }) {
                       </div>
                     </div>
 
+                    <div className="profile-grid" style={{ marginTop: '1rem' }}>
+                      <div className="profile-item">
+                        <span className="profile-label">Biggest Strength</span>
+                        <span className="profile-value">{profile.biggestStrength || '—'}</span>
+                      </div>
+                      <div className="profile-item">
+                        <span className="profile-label">Biggest Weakness</span>
+                        <span className="profile-value">{profile.biggestWeakness || '—'}</span>
+                      </div>
+                    </div>
+
                     {profile.summary && <p className="profile-summary">{profile.summary}</p>}
+
+                    <div className="profile-grid" style={{ marginTop: '1rem' }}>
+                      <div className="profile-item">
+                        <span className="profile-label">Biggest Strength</span>
+                        <span className="profile-value">{profile.biggestStrength || '—'}</span>
+                      </div>
+                      <div className="profile-item">
+                        <span className="profile-label">Biggest Weakness</span>
+                        <span className="profile-value">{profile.biggestWeakness || '—'}</span>
+                      </div>
+                    </div>
 
                     {skillsCount > 0 && (
                       <div className="skills-container">
