@@ -1,4 +1,3 @@
-
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -55,6 +54,8 @@ export default function CandidateEdit() {
         <input name="jobTitle" defaultValue={profile.jobTitle || ''} />
         <label>Professional Summary</label>
         <textarea name="summary" defaultValue={profile.summary || ''} />
+        <label>Proud Achievement</label>
+        <textarea name="proudAchievement" defaultValue={profile.proudAchievement || ''} placeholder="e.g. Delivered a high value critical project" />
         <label>Biggest Strength</label>
         <textarea name="biggestStrength" defaultValue={profile.biggestStrength || ''} placeholder="Describe your strongest professional capability" />
         <label>Biggest Weakness</label>

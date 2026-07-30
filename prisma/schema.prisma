@@ -66,6 +66,7 @@ model CandidateProfile {
   fullName         String
   jobTitle         String?
   summary          String?
+  proudAchievement String?
   biggestStrength  String?
   biggestWeakness  String?
   yearsExperience  Int?

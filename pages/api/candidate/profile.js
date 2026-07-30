@@ -138,6 +138,8 @@ function mapProfileData(body) {
     'jobTitle': 'jobTitle',
     'job_title': 'jobTitle',
     'summary': 'summary',
+    'proudAchievement': 'proudAchievement',
+    'proud_achievement': 'proudAchievement',
     'biggestStrength': 'biggestStrength',
     'biggest_strength': 'biggestStrength',
     'biggestWeakness': 'biggestWeakness',

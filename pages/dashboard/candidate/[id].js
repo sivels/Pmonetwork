@@ -63,6 +63,7 @@ export default function CandidateProfileView() {
       <h1>{profile.fullName}</h1>
       <p><b>Job Title:</b> {profile.jobTitle}</p>
       <p><b>Summary:</b> {profile.summary}</p>
+      <p><b>Proud Achievement:</b> {profile.proudAchievement || '—'}</p>
       <p><b>Biggest Strength:</b> {profile.biggestStrength || '—'}</p>
       <p><b>Biggest Weakness:</b> {profile.biggestWeakness || '—'}</p>
       <p><b>Skills:</b> {profile.skills?.map(s => s.name).join(', ')}</p>

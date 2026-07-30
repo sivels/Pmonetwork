@@ -332,6 +332,10 @@ export default function CandidateDashboard({ profile, profileScore }) {
 
                     <div className="profile-grid" style={{ marginTop: '1rem' }}>
                       <div className="profile-item">
+                        <span className="profile-label">Proud Achievement</span>
+                        <span className="profile-value">{profile.proudAchievement || '—'}</span>
+                      </div>
+                      <div className="profile-item">
                         <span className="profile-label">Biggest Strength</span>
                         <span className="profile-value">{profile.biggestStrength || '—'}</span>
                       </div>

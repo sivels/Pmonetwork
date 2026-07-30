@@ -183,10 +183,13 @@ export default function Preview({ profile, isOwnProfile, isHiringManager, userEm
             </section>
           )}
 
-          {(profile.biggestStrength || profile.biggestWeakness) && (
+          {(profile.proudAchievement || profile.biggestStrength || profile.biggestWeakness) && (
             <section className="preview-card skills-card">
-              <h2 className="card-title">Strengths & Growth Areas</h2>
+              <h2 className="card-title">Strengths & Highlights</h2>
               <div className="space-y-3 text-sm text-gray-700">
+                {profile.proudAchievement && (
+                  <p><strong>Proud Achievement:</strong> {profile.proudAchievement}</p>
+                )}
                 {profile.biggestStrength && (
                   <p><strong>Biggest Strength:</strong> {profile.biggestStrength}</p>
                 )}

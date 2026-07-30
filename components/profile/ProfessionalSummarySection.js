@@ -3,6 +3,7 @@ import { useAutosave } from '../../utils/useAutosave';
 
 export default function ProfessionalSummarySection({ profile, onUpdate }) {
   const [text, setText] = useState(profile?.summary || '');
+  const [proudAchievement, setProudAchievement] = useState(profile?.proudAchievement || '');
   const [biggestStrength, setBiggestStrength] = useState(profile?.biggestStrength || '');
   const [biggestWeakness, setBiggestWeakness] = useState(profile?.biggestWeakness || '');
   const [toast, setToast] = useState('');
@@ -18,6 +19,7 @@ export default function ProfessionalSummarySection({ profile, onUpdate }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         summary: text,
+        proudAchievement,
         biggestStrength,
         biggestWeakness,
       })
@@ -26,11 +28,12 @@ export default function ProfessionalSummarySection({ profile, onUpdate }) {
       const data = await res.json();
       onUpdate({
         summary: data.summary,
+        proudAchievement: data.proudAchievement,
         biggestStrength: data.biggestStrength,
         biggestWeakness: data.biggestWeakness,
       });
     }
-  }, [text, biggestStrength, biggestWeakness]);
+  }, [text, proudAchievement, biggestStrength, biggestWeakness]);
 
   // show subtle toast when autosave completes
   if (savedAt && !toast) {
@@ -96,6 +99,17 @@ export default function ProfessionalSummarySection({ profile, onUpdate }) {
       </div>
 
       <div className="strengths-grid">
+        <div className="rich-editor">
+          <label className="field-label" htmlFor="proud-achievement">Proud Achievement</label>
+          <textarea
+            id="proud-achievement"
+            value={proudAchievement}
+            onChange={(e) => setProudAchievement(e.target.value)}
+            placeholder="e.g. Delivered a high value critical project"
+            rows={4}
+          />
+        </div>
+
         <div className="rich-editor">
           <label className="field-label" htmlFor="biggest-strength">Biggest Strength</label>
           <textarea

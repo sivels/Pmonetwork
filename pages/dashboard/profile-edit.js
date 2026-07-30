@@ -25,6 +25,7 @@ export default function ProfileEditPage({ profile }) {
     fullName: profile.fullName || '',
     jobTitle: profile.jobTitle || '',
     summary: profile.summary || '',
+    proudAchievement: profile.proudAchievement || '',
     biggestStrength: profile.biggestStrength || '',
     biggestWeakness: profile.biggestWeakness || '',
     yearsExperience: profile.yearsExperience ?? '',
@@ -110,6 +111,10 @@ export default function ProfileEditPage({ profile }) {
               <label className="block text-sm font-medium text-gray-700 mb-1">Professional Summary</label>
               <textarea rows={6} value={form.summary} onChange={e=>updateField('summary', e.target.value)} className="w-full rounded-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Describe your PMO experience, key achievements, methodologies..." />
               <p className="mt-1 text-xs text-gray-500">Aim for at least 60 characters for better visibility.</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Proud Achievement</label>
+              <textarea rows={4} value={form.proudAchievement} onChange={e=>updateField('proudAchievement', e.target.value)} className="w-full rounded-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. Delivered a high value critical project" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Biggest Strength</label>
